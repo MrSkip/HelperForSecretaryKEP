@@ -1,0 +1,45 @@
+c:\users\mr skip\documents\visual studio 2013\Projects\myKR\myKR\bin\Debug\myKR.exe.config
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\bin\Debug\myKR.exe
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\bin\Debug\myKR.pdb
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.csprojResolveAssemblyReference.cache
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.csproj.ResolveComReference.cache
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.Properties.Resources.resources
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.csproj.GenerateResource.Cache
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.exe
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.pdb
+D:\Mr Skip\Project\myKR\myKR\myKR\bin\Debug\myKR.exe.config
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.csproj.ResolveComReference.cache
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.exe
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.pdb
+D:\Mr Skip\Project\myKR\myKR\myKR\bin\Debug\myKR.exe
+D:\Mr Skip\Project\myKR\myKR\myKR\bin\Debug\myKR.pdb
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.csprojResolveAssemblyReference.cache
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.Properties.Resources.resources
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.csproj.GenerateResource.Cache
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.MainForm.resources
+C:\Users\Mr Skip\documents\visual studio 2013\Projects\myKR\myKR\obj\Debug\myKR.StartForm.resources
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.MainForm.resources
+D:\Mr Skip\Project\myKR\myKR\myKR\obj\Debug\myKR.StartForm.resources
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\bin\Debug\myKR.exe.config
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.csproj.ResolveComReference.cache
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.exe
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.pdb
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\bin\Debug\myKR.exe
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\bin\Debug\myKR.pdb
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.csprojResolveAssemblyReference.cache
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.MainForm.resources
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.Properties.Resources.resources
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.StartForm.resources
+D:\Mr Skip\Project\myKR\myKR\myKR\myKR\obj\Debug\myKR.csproj.GenerateResource.Cache
+D:\myKR\myKR\bin\Debug\myKR.exe.config
+D:\myKR\myKR\obj\Debug\myKR.csproj.ResolveComReference.cache
+D:\myKR\myKR\obj\Debug\myKR.exe
+D:\myKR\myKR\obj\Debug\myKR.pdb
+D:\myKR\myKR\bin\Debug\myKR.exe
+D:\myKR\myKR\bin\Debug\myKR.pdb
+D:\myKR\myKR\obj\Debug\myKR.csprojResolveAssemblyReference.cache
+D:\myKR\myKR\obj\Debug\myKR.Coding.deleteStudents.resources
+D:\myKR\myKR\obj\Debug\myKR.MainForm.resources
+D:\myKR\myKR\obj\Debug\myKR.Properties.Resources.resources
+D:\myKR\myKR\obj\Debug\myKR.StartForm.resources
+D:\myKR\myKR\obj\Debug\myKR.csproj.GenerateResource.Cache

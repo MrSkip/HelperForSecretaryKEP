@@ -1,0 +1,2 @@
+[rp] |D:\Rp15.xls
+[bd] |C:\Users\Mr Skip\Documents\Visual Studio 2013\Projects\База.xls
