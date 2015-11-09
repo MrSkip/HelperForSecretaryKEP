@@ -98,6 +98,7 @@
     <EmbeddedResource Include="Coding\StartForm.resx">
       <DependentUpon>StartForm.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="ClassDiagram1.cd" />
     <None Include="Data\Empty book.xls" />
     <None Include="Data\Відомість обліку успішності %28Державний екзамен%29 - протокол.xls" />
     <None Include="Data\Відомість обліку успішності %28залік - диф. залік - екзамен%29.xls" />

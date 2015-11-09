@@ -136,6 +136,7 @@
             this.Controls.Add(this.label2);
             this.Name = "StartForm";
             this.Text = "Відкриття";
+            this.Load += new System.EventHandler(this.StartForm_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

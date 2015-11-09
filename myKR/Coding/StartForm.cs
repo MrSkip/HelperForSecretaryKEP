@@ -90,6 +90,7 @@ namespace myKR
             button2.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
+
             var thread = new Thread(
                 () =>
                 {
@@ -166,6 +167,11 @@ namespace myKR
             OpenFileDialog openFile = new OpenFileDialog();
             openFile.ShowDialog();
             ex.ArhiveZvedVid(openFile.FileName);
+        }
+
+        private void StartForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
