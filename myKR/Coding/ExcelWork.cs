@@ -362,7 +362,7 @@ namespace pacEcxelWork
         {
             xlApp = new Excel.Application();
             xlWorkBook = xlApp.Workbooks.Open(pathStudDB);
-            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(2);
+            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
 
             dsRobPlan.Tables.Add("Студенти");
             dsRobPlan.Tables["Студенти"].Columns.Add("пільги");
@@ -370,7 +370,7 @@ namespace pacEcxelWork
             dsRobPlan.Tables["Студенти"].Columns.Add("номер книги");
             dsRobPlan.Tables["Студенти"].Columns.Add("група");
             dsRobPlan.Tables["Студенти"].Columns.Add("форма");
-            
+                
 
             int xlIterator = 2;
             while (true)
@@ -550,33 +550,19 @@ namespace pacEcxelWork
             Excel.Worksheet tamplateSheet = (Excel.Worksheet)tamplateBook.Worksheets.get_Item(1);
 
             String nameSheet = xlWorkSheet.Name;
+
             xlApp.Visible = true;
+            xlApp.DisplayAlerts = false;
 
             //Переприсвоєння імені із видаленням листка
             tamplateSheet.Copy(xlWorkSheet);
-            xlWorkBook.Save();
-
-            xlWorkSheet.Application.DisplayAlerts = false;
             
             xlWorkSheet.Delete();
-            xlWorkBook.Save();
 
-            try
-            {
-                xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(nameSheet);
-            }
-            catch (Exception ex)
-            {
-                xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
-                xlWorkSheet.Name = nameSheet;
+            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(tamplateSheet.Name);
+            xlWorkSheet.Name = nameSheet;
 
-                xlWorkBook.Save();
-                tamplateBook.Close();
-                return;
-            }
-
-            xlWorkSheet.Application.DisplayAlerts = false;
-            xlWorkSheet.Delete();
+            tamplateBook.Close();
             xlWorkBook.Save();
         }
 
@@ -1083,8 +1069,8 @@ namespace pacEcxelWork
                 
                 for (int i = 11; i < studCount + 11; i++)
                 {
-                    xlWorkSheet.Range[averageBal.ToString() + i].Formula = "=AVERAGE(" + "F" + i + ":" + begin.ToString() + i + ")";
-                    xlWorkSheet.Range[averageBal.ToString() + i].NumberFormatLocal = "##,##";
+                    xlWorkSheet.Range[averageBal.ToString() + i].Formula = "=AVERAGE(" + "F" + i + ":" + begin.ToString() + i + ") - 0.5";
+                    xlWorkSheet.Range[averageBal.ToString() + i].NumberFormatLocal = "##";
                     String s1 = xlWorkSheet.Range["E" + i].Value;
                     Double s2;
                     try
