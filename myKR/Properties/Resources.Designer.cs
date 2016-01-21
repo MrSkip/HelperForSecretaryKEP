@@ -8,10 +8,10 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace myKR.Properties
-{
-
-
+namespace myKR.Properties {
+    using System;
+    
+    
     /// <summary>
     ///   A strongly-typed resource class, for looking up localized strings, etc.
     /// </summary>
@@ -22,49 +22,90 @@ namespace myKR.Properties
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources
-    {
-
+    internal class Resources {
+        
         private static global::System.Resources.ResourceManager resourceMan;
-
+        
         private static global::System.Globalization.CultureInfo resourceCulture;
-
+        
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources()
-        {
+        internal Resources() {
         }
-
+        
         /// <summary>
         ///   Returns the cached ResourceManager instance used by this class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager
-        {
-            get
-            {
-                if ((resourceMan == null))
-                {
+        internal static global::System.Resources.ResourceManager ResourceManager {
+            get {
+                if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("myKR.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
             }
         }
-
+        
         /// <summary>
         ///   Overrides the current thread's CurrentUICulture property for all
         ///   resource lookups using this strongly typed resource class.
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture
-        {
-            get
-            {
+        internal static global::System.Globalization.CultureInfo Culture {
+            get {
                 return resourceCulture;
             }
-            set
-            {
+            set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Помилка!
+        ///Назви excel-файлів повинні співпадати із назвами заданими у програмі.
+        /// </summary>
+        internal static string ExcelWork_ArhiveZvedVid_ {
+            get {
+                return ResourceManager.GetString("ExcelWork_ArhiveZvedVid_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to  півріччі вказаний предмет відсутній
+        ///Вкажіть інше півріччя.
+        /// </summary>
+        internal static string ExcelWork_CreateOblicUspishnosti_ {
+            get {
+                return ResourceManager.GetString("ExcelWork_CreateOblicUspishnosti_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Помилка!
+        ///При відкритті книги &apos;Студенти&apos; в клітині C2 очікувалося Ім&apos;я студента.
+        /// </summary>
+        internal static string ExcelWork_LoadData_StudDB_ {
+            get {
+                return ResourceManager.GetString("ExcelWork_LoadData_StudDB_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ) уже створено зведену відомість
+        /// Перезаписати?.
+        /// </summary>
+        internal static string ExcelWork_ZvedVidomist_ {
+            get {
+                return ResourceManager.GetString("ExcelWork_ZvedVidomist_", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Для поточної групи (.
+        /// </summary>
+        internal static string ExcelWork_ZvedVidomist_Для_поточної_групи__ {
+            get {
+                return ResourceManager.GetString("ExcelWork_ZvedVidomist_Для_поточної_групи__", resourceCulture);
             }
         }
     }

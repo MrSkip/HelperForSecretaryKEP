@@ -1,119 +1,130 @@
 ﻿using System;
 using System.Data;
+using System.Linq;
 using System.Windows.Forms;
-
+using myKR.Properties;
+using DataTable = System.Data.DataTable;
 using Excel = Microsoft.Office.Interop.Excel;
 
 
-namespace pacEcxelWork
+namespace myKR.Coding
 {
     public class ExcelWork
     {
-        private Excel.Application xlApp = null;
-        private Excel.Workbook xlWorkBook = null;
-        private Excel.Worksheet xlWorkSheet = null;
-        private object misValue = System.Reflection.Missing.Value;
+        private Excel.Application _xlApp;
+        private Excel.Workbook _xlWorkBook;
+        private Excel.Worksheet _xlWorkSheet;
 
         //Path to Excel file
-        private String pathRobPlan = null;
+        private readonly string _pathRobPlan;
 
         // where argDataSet.Tables[currentGroupName].Rows[0]["Напрям підготовки"].ToString() - "Напрям підготовки", .[1] - "Спеціальність", .[2] - "Курс", .[3] - "рік"
         // .[4] - перше півріччя, .[5] - друге півріччя, .[6] - код спеціальності
-        public DataSet argDataSet = new DataSet();
-        public String[] robPlanArgs = new String[7];
+        public DataSet ArgDataSet = new DataSet();
+        public string[] RobPlanArgs = new string[7];
 
         //Group names of sheets from excel file "PlanRob"
-        public String[] sheetNames_RobPlan = new String[20];
+        public string[] SheetNamesRobPlan = new string[20];
 
         //in this DataSet we load data from robBlan and StudDB
-        public DataSet dsRobPlan = new DataSet();
+        public DataSet DsRobPlan = new DataSet();
 
         //
-        public String currentGroupName = null;
+        public string CurrentGroupName;
 
-        public ExcelWork(String pathRobPlan)
+        public ExcelWork(string pathRobPlan)
         {
-            this.pathRobPlan = pathRobPlan;
+            _pathRobPlan = pathRobPlan;
+//            MisValue = misValue;
             LoadSheetName_RobPlan();
         }
+//        public ExcelWork(object misValue)
+//        {
+//            MisValue = misValue;
+//        }
+
         public ExcelWork()
         {
+        }
 
+        public object MisValue { get; set; }
+
+        public int Semestr
+        {
+            get { return _semestr; }
+            set { _semestr = value; }
         }
 
         private void LoadSheetName_RobPlan()
         {
-            xlApp = new Excel.Application();
-            xlApp.DisplayAlerts = false;
-            xlWorkBook = xlApp.Workbooks.Open(pathRobPlan);
+            _xlApp = new Excel.Application {DisplayAlerts = false};
+            _xlWorkBook = _xlApp.Workbooks.Open(_pathRobPlan);
 
             int countGroup = 0;
-            for (int i = 1; i <= xlWorkBook.Sheets.Count; i++)
+            for (int i = 1; i <= _xlWorkBook.Sheets.Count; i++)
             {
-                String name = xlWorkBook.Worksheets.get_Item(i).Name;
-                if (name.Length == 8 && name.IndexOf('-') == 2)
-                {
-                    sheetNames_RobPlan[countGroup] = xlWorkBook.Worksheets.get_Item(i).Name;
-                    countGroup++;
-                }
+                string name = _xlWorkBook.Worksheets.get_Item(i).Name;
+                if (name.Length != 8 || name.IndexOf('-') != 2) continue;
+                SheetNamesRobPlan[countGroup] = _xlWorkBook.Worksheets.get_Item(i).Name;
+                countGroup++;
             }
 
-            xlWorkBook.Close();
-            xlApp.Quit();
+            _xlWorkBook.Close();
+            _xlApp.Quit();
         }
 
         //Read need argument for our program from Ecxel file
-        public void LoadData_RobPlan(String currentGroupName)
+        public void LoadData_RobPlan(string currentGroupName)
         {
-            xlApp = new Excel.Application();
-            xlWorkBook = xlApp.Workbooks.Open(pathRobPlan);
+            _xlApp = new Excel.Application();
+            _xlWorkBook = _xlApp.Workbooks.Open(_pathRobPlan);
 
-            this.currentGroupName = currentGroupName;
-            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(currentGroupName);
+            CurrentGroupName = currentGroupName;
+            _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[currentGroupName];
 
             // where argDataSet.Tables[currentGroupName].Rows[0]["Напрям підготовки"].ToString() - "Напрям підготовки", .[1] - "Спеціальність", .[2] - "Курс", .[3] - "рік"
             // .[4] - перше півріччя, .[5] - друге півріччя, .[6] - код спеціальності
             try
             {
-                argDataSet.Tables.Add(currentGroupName);
+                ArgDataSet.Tables.Add(currentGroupName);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                xlWorkBook.Close();
-                xlApp.Quit();
+                _xlWorkBook.Close();
+                _xlApp.Quit();
                 return;
             }
 
-            argDataSet.Tables[currentGroupName].Columns.Add("Напрям підготовки");
-            argDataSet.Tables[currentGroupName].Columns.Add("Спеціальність");
-            argDataSet.Tables[currentGroupName].Columns.Add("Курс");
-            argDataSet.Tables[currentGroupName].Columns.Add("Рік");
-            argDataSet.Tables[currentGroupName].Columns.Add("Перше півріччя");
-            argDataSet.Tables[currentGroupName].Columns.Add("Друге півріччя");
-            argDataSet.Tables[currentGroupName].Columns.Add("Код спеціальності");
+            ArgDataSet.Tables[currentGroupName].Columns.Add("Напрям підготовки");
+            ArgDataSet.Tables[currentGroupName].Columns.Add("Спеціальність");
+            ArgDataSet.Tables[currentGroupName].Columns.Add("Курс");
+            ArgDataSet.Tables[currentGroupName].Columns.Add("Рік");
+            ArgDataSet.Tables[currentGroupName].Columns.Add("Перше півріччя");
+            ArgDataSet.Tables[currentGroupName].Columns.Add("Друге півріччя");
+            ArgDataSet.Tables[currentGroupName].Columns.Add("Код спеціальності");
 
-            DataRow argNewRow = argDataSet.Tables[currentGroupName].NewRow();
-            argDataSet.Tables[currentGroupName].Rows.Add(argNewRow);
+            var argNewRow = ArgDataSet.Tables[currentGroupName].NewRow();
+            ArgDataSet.Tables[currentGroupName].Rows.Add(argNewRow);
 
             //Read "Напряму підготовки"
-            String arg = xlWorkSheet.Cells[6, "R"].Value.ToString().Trim();
-            argDataSet.Tables[currentGroupName].Rows[0]["Напрям підготовки"] = arg.Substring(arg.IndexOf("\"") + 1, arg.LastIndexOf("\"") - arg.IndexOf("\"") - 1);
+            string arg = _xlWorkSheet.Cells[6, "R"].Value.ToString().Trim();
+            ArgDataSet.Tables[currentGroupName].Rows[0]["Напрям підготовки"] = arg.Substring(arg.IndexOf("\"", StringComparison.Ordinal) + 1, arg.LastIndexOf("\"", StringComparison.Ordinal) - arg.IndexOf("\"", StringComparison.Ordinal) - 1);
 
             //Read "Спеціальність"
-            arg = xlWorkSheet.Cells[7, "R"].Value;
-            argDataSet.Tables[currentGroupName].Rows[0]["Спеціальність"] = arg.Substring(arg.IndexOf("\"") + 1, arg.LastIndexOf("\"") - arg.IndexOf("\"") - 1);
+            arg = _xlWorkSheet.Cells[7, "R"].Value;
+            ArgDataSet.Tables[currentGroupName].Rows[0]["Спеціальність"] = arg.Substring(arg.IndexOf("\"", StringComparison.Ordinal) + 1, arg.LastIndexOf("\"", StringComparison.Ordinal) - arg.IndexOf("\"", StringComparison.Ordinal) - 1);
             
             //Код спеціальності
-            arg = arg.Trim().Substring(0, arg.Trim().IndexOf(" \""));
-            argDataSet.Tables[currentGroupName].Rows[0]["Код спеціальності"] = arg.Substring(arg.IndexOf(" "));
+            arg = arg.Trim().Substring(0, arg.Trim().IndexOf(" \"", StringComparison.Ordinal));
+            ArgDataSet.Tables[currentGroupName].Rows[0]["Код спеціальності"] = arg.Substring(arg.IndexOf(" ", StringComparison.Ordinal));
 
             //read "Курс"
-            arg = xlWorkSheet.Cells[9 , "R"].Value.Trim();
+            arg = _xlWorkSheet.Cells[9 , "R"].Value.Trim();
             arg = arg.Substring(7);
-            argDataSet.Tables[currentGroupName].Rows[0]["Курс"] = arg.Remove(arg.IndexOf("_"));
+            ArgDataSet.Tables[currentGroupName].Rows[0]["Курс"] = arg.Remove(arg.IndexOf("_", StringComparison.Ordinal));
 
             //Read "Рік"
-            argDataSet.Tables[currentGroupName].Rows[0]["Рік"] = xlWorkSheet.Cells[6, "B"].Value.ToString().Substring(xlWorkSheet.Cells[6, "B"].Value.ToString().Length - 9, 4);
+            ArgDataSet.Tables[currentGroupName].Rows[0]["Рік"] = _xlWorkSheet.Cells[6, "B"].Value.ToString().Substring(_xlWorkSheet.Cells[6, "B"].Value.ToString().Length - 9, 4);
 
             
             //Read need values from `RobPlan` to our `dsTable`
@@ -131,15 +142,14 @@ namespace pacEcxelWork
             {
                 xlIterator++;
 
-                String value = xlWorkSheet.Cells[xlIterator, "C"].Value;
+                String value = _xlWorkSheet.Cells[xlIterator, "C"].Value;
                 //MessageBox.Show(value);
                 if (value == null) continue;
                 else if (!value.Equals("Назви навчальних  дисциплін") && xlIterator == 15)
                 {
-                    MessageBox.Show("Назви значень полів у:\n" + pathRobPlan + "\nне співпадає із заданами значеннями у програмі\n" +
-                         "Джерело - " + currentGroupName + "\n У клітині \"С15\" очікувалося значення 'Назви навчальних  дисциплін'");
-                    xlWorkBook.Close();
-                    xlApp.Quit();
+                    MessageBox.Show(string.Format("Назви значень полів у:\n{0}\nне співпадає із заданами значеннями у програмі\n" + "Джерело - {1}\n У клітині \"С15\" очікувалося значення 'Назви навчальних  дисциплін'", _pathRobPlan, currentGroupName));
+                    _xlWorkBook.Close();
+                    _xlApp.Quit();
                     return;
                 }
                 else if (value.Trim().Equals("Разом")) break;
@@ -150,164 +160,157 @@ namespace pacEcxelWork
                     //[][0] - колонка з назвою екзамена, [][1] - колонка з рядком езамену, [][2] - колонка з назвою семестра проходження екзамену
                     //відповідно, назва екзамену і назва семестру будуть знаходитися у одному рядку
                     String[][] doubleCell = {
-                                                new String[] {"BE", "49", "BO"},
-                                                new String[] {"BE", "47", "BO"},
-                                                new String[] {"BE", "42", "BO"},
-                                                new String[] {"BE", "43", "BO"},
-                                                new String[] {"AX", "39", "BC"}
+                                                new[] {"BE", "49", "BO"},
+                                                new[] {"BE", "47", "BO"},
+                                                new[] {"BE", "42", "BO"},
+                                                new[] {"BE", "43", "BO"},
+                                                new[] {"AX", "39", "BC"}
                                             };
                     //Цикл для проходження усіх можливих місць знаходження назви державного екзамену, клітини із значенням "Назва"
-                    for (int i = 0; i < doubleCell.Length; i++)
+                    foreach (string[] t in doubleCell)
                     {
-                        //Для унеможливлення винекнинне помилок автоматично присвоюємо тип змінній howType
+//Для унеможливлення винекнинне помилок автоматично присвоюємо тип змінній howType
                         //Якщо у нашій клітині є якесь значення, то виконується умова
-                        var howType = xlWorkSheet.Cells[doubleCell[i][1], doubleCell[i][0]].Value;
-                        if (howType != null)
+                        var howType = _xlWorkSheet.Cells[t[1], t[0]].Value;
+                        if (howType == null) continue;
+                        //Перевіряємо чи це справді клітина з назвою про державний екзамен
+                        if (!howType.ToString().Trim().Equals("Назва")) continue;
+                        //Назви полів залишатимуться сталимим, натомість рядок постійно інкрементуватиметься, тому переводиму його до типу int
+                        var iter = Convert.ToInt32(t[1]) + 1;
+                        //Коли знайдено місце знаходження потрібної нам клітини, ми шукаємо чи є хоча б якісь екзамени
+                        while (true)
                         {
-                            //Перевіряємо чи це справді клітина з назвою про державний екзамен
-                            if (howType.ToString().Trim().Equals("Назва"))
+                            var whatType = _xlWorkSheet.Cells[iter, t[0]].Value;
+                            if (whatType != null)
                             {
-                                //Назви полів залишатимуться сталимим, натомість рядок постійно інкрементуватиметься, тому переводиму його до типу int
-                                int iter = System.Convert.ToInt32(doubleCell[i][1]) + 1;
-                                //Коли знайдено місце знаходження потрібної нам клітини, ми шукаємо чи є хоча б якісь екзамени
-                                while (true)
-                                {
-                                    var whatType = xlWorkSheet.Cells[iter, doubleCell[i][0]].Value;
-                                    if (whatType != null)
-                                    {
-                                        //Якщо екзамен знайдено то записуємо у таблицю його назву і семестр у якому проводитиметься екзамен
-                                        countryPas.Rows.Add(whatType,
-                                            arabNormalize(xlWorkSheet.Cells[iter, doubleCell[i][2]].Value.ToString().Trim()));
-                                        iter++;
-                                    }
-                                    else break;
-                                }
-                                break;
+                                //Якщо екзамен знайдено то записуємо у таблицю його назву і семестр у якому проводитиметься екзамен
+                                countryPas.Rows.Add(whatType,
+                                    ArabNormalize(_xlWorkSheet.Cells[iter, t[2]].Value.ToString().Trim()));
+                                iter++;
                             }
+                            else break;
                         }
+                        break;
                     }
                     //Зчитування практики, якщо практика існує для поточного семестру то заносимо її у масив Mas
                     //Create table "currentTable"
-                    dsRobPlan.Tables.Add(currentGroupName);
+                    DsRobPlan.Tables.Add(currentGroupName);
 
                     //Add to table column "Назви навчальних  дисциплін"
-                    dsRobPlan.Tables[currentGroupName].Columns.Add(value);
+                    DsRobPlan.Tables[currentGroupName].Columns.Add(value);
                     zaput[iZaput] = "C";
                     iZaput++;
 
                     
 
                     //непарний семестр
-                    argDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"] = xlWorkSheet.Cells[xlIterator, "Y"].Value.ToString().Substring(0,
-                        xlWorkSheet.Cells[xlIterator, "Y"].Value.ToString().IndexOf(" "));
-                    argDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"] = arabNormalize(argDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"].ToString());
+                    ArgDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"] = _xlWorkSheet.Cells[xlIterator, "Y"].Value.ToString().Substring(0,
+                        _xlWorkSheet.Cells[xlIterator, "Y"].Value.ToString().IndexOf(" "));
+                    ArgDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"] = ArabNormalize(ArgDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"].ToString());
 
                     //Create string name of current term
-                    String term = " [семестр " + argDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"].ToString() + "]";
+                    var term = " [семестр " + ArgDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"] + "]";
 
                     //Add to table column "всього годин"
-                    dsRobPlan.Tables[currentGroupName].Columns.Add(xlWorkSheet.Cells[16, "Y"].Value + " годин" + term);
+                    DsRobPlan.Tables[currentGroupName].Columns.Add(_xlWorkSheet.Cells[16, "Y"].Value + " годин" + term);
                     zaput[iZaput] = "Y";
                     iZaput++;
 
                     //Add to table column "курсові роботи, проекти"
-                    dsRobPlan.Tables[currentGroupName].Columns.Add("КП" + term);
+                    DsRobPlan.Tables[currentGroupName].Columns.Add("КП" + term);
                     zaput[iZaput] = "AK";
                     iZaput++;
 
                     //Add to table column "екзамен"
-                    dsRobPlan.Tables[currentGroupName].Columns.Add("Іспит" + term);
+                    DsRobPlan.Tables[currentGroupName].Columns.Add("Іспит" + term);
                     zaput[iZaput] = "AO";
                     iZaput++;
 
                     //Add to table column "диф  залік" or "залік"
-                    String s = xlWorkSheet.Cells[18, "AQ"].Value.ToString();
-                    String s2 = null;
-                    if (s.Trim().Equals("диф  залік")) s2 = "Д/З";
-                    else s2 = "Залік";
-                    dsRobPlan.Tables[currentGroupName].Columns.Add(s2 + term);
+                    string s = _xlWorkSheet.Cells[18, "AQ"].Value.ToString();
+                    var s2 = s.Trim().Equals("диф  залік") ? "Д/З" : "Залік";
+                    DsRobPlan.Tables[currentGroupName].Columns.Add(s2 + term);
                     zaput[iZaput] = "AQ";
                     iZaput++;
 
                     //Add to table column "диф  залік" - if exist
-                    if (xlWorkSheet.Cells[18, "AR"].Value != null) 
+                    if (_xlWorkSheet.Cells[18, "AR"].Value != null) 
                     {
-                        dsRobPlan.Tables[currentGroupName].Columns.Add("Д/З" + term);
+                        DsRobPlan.Tables[currentGroupName].Columns.Add("Д/З" + term);
                         countFormControl = 3;
                         zaput[iZaput] = "AR";
                         iZaput++;
                     }
 
                     //парний семестр
-                    argDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"] = xlWorkSheet.Cells[xlIterator, "AW"].Value.Trim().Substring(0,
-                        xlWorkSheet.Cells[xlIterator, "AW"].Value.Trim().IndexOf(" "));
-                    argDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"] = arabNormalize(argDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"].ToString());
-                    term = " [семестр " + argDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"].ToString() + "]";
+                    ArgDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"] = _xlWorkSheet.Cells[xlIterator, "AW"].Value.Trim().Substring(0,
+                        _xlWorkSheet.Cells[xlIterator, "AW"].Value.Trim().IndexOf(" "));
+                    ArgDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"] = ArabNormalize(ArgDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"].ToString());
+                    term = " [семестр " + ArgDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"] + "]";
                     //Add to table column "всього"
-                    dsRobPlan.Tables[currentGroupName].Columns.Add(xlWorkSheet.Cells[16, "AS"].Value+ " годин" + term);
+                    DsRobPlan.Tables[currentGroupName].Columns.Add(_xlWorkSheet.Cells[16, "AS"].Value+ " годин" + term);
                     zaput[iZaput] = "AS";
                     iZaput++;
 
                     //Add to table column "курсові роботи, проекти"
-                    dsRobPlan.Tables[currentGroupName].Columns.Add("КП" + term);
+                    DsRobPlan.Tables[currentGroupName].Columns.Add("КП" + term);
                     zaput[iZaput] = "BE";
                     iZaput++;
 
                     //Add to table column "екзамен"
-                    dsRobPlan.Tables[currentGroupName].Columns.Add("Іспит" + term);
+                    DsRobPlan.Tables[currentGroupName].Columns.Add("Іспит" + term);
                     zaput[iZaput] = "BI";
                     iZaput++;
 
                     //Add to table column "диф  залік" or "залік"
-                    s = xlWorkSheet.Cells[18, "BK"].Value.ToString();
-                    if (s.Trim().Equals("диф  залік")) s2 = "Д/З";
-                    else s2 = "Залік";
-                    dsRobPlan.Tables[currentGroupName].Columns.Add(s2 + term);
+                    s = _xlWorkSheet.Cells[18, "BK"].Value.ToString();
+                    s2 = s.Trim().Equals("диф  залік") ? "Д/З" : "Залік";
+                    DsRobPlan.Tables[currentGroupName].Columns.Add(s2 + term);
                     zaput[iZaput] = "BK";
                     iZaput++;
 
                     //Add to table column "диф  залік" - if exist
                     if (countFormControl == 3)
                     {
-                        dsRobPlan.Tables[currentGroupName].Columns.Add("Д/З" + term);
+                        DsRobPlan.Tables[currentGroupName].Columns.Add("Д/З" + term);
                         zaput[iZaput] = "BL";
                         iZaput++;
                     }
 
                     //Add to table collumn "Циклова комісія,\nвикладач"
-                    if (xlWorkSheet.Cells[15, "BN"].Value.Equals("Циклова комісія,\nвикладач"))
+                    if (_xlWorkSheet.Cells[15, "BN"].Value.Equals("Циклова комісія,\nвикладач"))
                     {
-                        dsRobPlan.Tables[currentGroupName].Columns.Add("викладач");
+                        DsRobPlan.Tables[currentGroupName].Columns.Add("викладач");
                         zaput[iZaput] = "BN";
                         iZaput++;
                     }
                     continue;
                 }
-                DataRow dataRow = dsRobPlan.Tables[currentGroupName].NewRow();
+                DataRow dataRow = DsRobPlan.Tables[currentGroupName].NewRow();
 
                 //Записування усіх даних у нашу таблицю
-                for (int i = 0; i < dsRobPlan.Tables[currentGroupName].Columns.Count; i++)
+                for (int i = 0; i < DsRobPlan.Tables[currentGroupName].Columns.Count; i++)
                 {
-                    var whatType = xlWorkSheet.Cells[xlIterator, zaput[i]].Value;
+                    var whatType = _xlWorkSheet.Cells[xlIterator, zaput[i]].Value;
                     if (whatType != null) dataRow[i] = whatType;
                     else dataRow[i] = 0;
 
                     //Збільшення значень у полу 'Іспит' на 100, якщо це є державний екзамен
-                    if(countryPas.Rows.Count > 0)
-                    if (countryPas.Rows[0][0] != null && (dataRow.Table.Columns[i].ColumnName.ToString().Contains("Назви") ||
-                        dataRow.Table.Columns[i].ColumnName.ToString().Contains("Іспит")) )
+                    if (countryPas.Rows.Count <= 0) continue;
+                    if (countryPas.Rows[0][0] != null && (dataRow.Table.Columns[i].ColumnName.Contains("Назви") ||
+                                                          dataRow.Table.Columns[i].ColumnName.Contains("Іспит")) )
                     {
                         foreach (DataRow dr in countryPas.Rows)
                         {
                             if (dr[0].ToString().ToLower().Contains(dataRow[0].ToString().ToLower()) 
-                                && dataRow.Table.Columns[i].ColumnName.ToString().Equals("Іспит [семестр " + dr[1].ToString().Trim() + "]"))
+                                && dataRow.Table.Columns[i].ColumnName.Equals("Іспит [семестр " + dr[1].ToString().Trim() + "]"))
                             {
                                 dataRow[i] = Convert.ToDouble(dataRow[i].ToString()) + 100;
                             }
                         }
                     }
                 }
-                dsRobPlan.Tables[currentGroupName].Rows.Add(dataRow);
+                DsRobPlan.Tables[currentGroupName].Rows.Add(dataRow);
             }
 
             //Зчитування та записування у dsRobPlan практик
@@ -316,7 +319,7 @@ namespace pacEcxelWork
             int[] locRow = { 40, 41, 43, 47, 49 };
             for (int i = 0; i < locRow.Length; i++)
             {
-                var xl = xlWorkSheet.Cells[locRow[i], locColumn[1]].Value;
+                var xl = _xlWorkSheet.Cells[locRow[i], locColumn[1]].Value;
                 if (xl != null)
                 {
                     if (xl.ToString().Contains("Назва практики"))
@@ -324,69 +327,67 @@ namespace pacEcxelWork
                         while (true)
                         {
                             locRow[i]++;
-                            var xl2 = xlWorkSheet.Cells[locRow[i], locColumn[1]].Value;
+                            var xl2 = _xlWorkSheet.Cells[locRow[i], locColumn[1]].Value;
                             if (xl2 == null) break;
                             if (xl2.ToString().Contains("Навчальна") || xl2.ToString().Contains("Виробнича")) continue;
                             
-                            DataRow newRow = dsRobPlan.Tables[currentGroupName].NewRow();
-                            newRow[0] = xlWorkSheet.Cells[locRow[i], locColumn[1]].Value.ToString();
+                            DataRow newRow = DsRobPlan.Tables[currentGroupName].NewRow();
+                            newRow[0] = _xlWorkSheet.Cells[locRow[i], locColumn[1]].Value.ToString();
 
                             for (int j = 1; j < newRow.Table.Columns.Count; j++)
                             {
-                                if (newRow.Table.Columns[j].ColumnName.ToString().Contains("всього годин [семестр " +
-                                    arabNormalize(xlWorkSheet.Cells[locRow[i], locColumn[0]].Value.ToString()) + "]"))
+                                if (newRow.Table.Columns[j].ColumnName.Contains("всього годин [семестр " +
+                                    ArabNormalize(_xlWorkSheet.Cells[locRow[i], locColumn[0]].Value.ToString()) + "]"))
                                 {
-                                    newRow[j] = xlWorkSheet.Cells[locRow[i], locColumn[2]].Value.ToString();
+                                    newRow[j] = _xlWorkSheet.Cells[locRow[i], locColumn[2]].Value.ToString();
                                 }
-                                else if (newRow.Table.Columns[j].ColumnName.ToString().Contains("КП [семестр " +
-                                            arabNormalize(xlWorkSheet.Cells[locRow[i], locColumn[0]].Value.ToString()) + "]"))
+                                else if (newRow.Table.Columns[j].ColumnName.Contains("КП [семестр " +
+                                            ArabNormalize(_xlWorkSheet.Cells[locRow[i], locColumn[0]].Value.ToString()) + "]"))
                                     newRow[j] = -1;
                                 else
                                     newRow[j] = 0;
-                                if (j == newRow.Table.Columns.Count - 1)
-                                {
-                                    newRow[j] = xlWorkSheet.Cells[locRow[i], locColumn[3]].Value.ToString();
-                                    dsRobPlan.Tables[currentGroupName].Rows.Add(newRow);
-                                }
+                                if (j != newRow.Table.Columns.Count - 1) continue;
+                                newRow[j] = _xlWorkSheet.Cells[locRow[i], locColumn[3]].Value.ToString();
+                                DsRobPlan.Tables[currentGroupName].Rows.Add(newRow);
                             }
                         }
                     }
                 }
             }
 
-            xlWorkBook.Close();
-            xlApp.Quit();
+            _xlWorkBook.Close();
+            _xlApp.Quit();
         }
 
-        public void LoadData_StudDB(String pathStudDB)
+        public void LoadData_StudDB(String pathStudDb)
         {
-            xlApp = new Excel.Application();
-            xlWorkBook = xlApp.Workbooks.Open(pathStudDB);
-            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
+            _xlApp = new Excel.Application();
+            _xlWorkBook = _xlApp.Workbooks.Open(pathStudDb);
+            _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[1];
 
-            dsRobPlan.Tables.Add("Студенти");
-            dsRobPlan.Tables["Студенти"].Columns.Add("пільги");
-            dsRobPlan.Tables["Студенти"].Columns.Add("піб");
-            dsRobPlan.Tables["Студенти"].Columns.Add("номер книги");
-            dsRobPlan.Tables["Студенти"].Columns.Add("група");
-            dsRobPlan.Tables["Студенти"].Columns.Add("форма");
+            DsRobPlan.Tables.Add("Студенти");
+            DsRobPlan.Tables["Студенти"].Columns.Add("пільги");
+            DsRobPlan.Tables["Студенти"].Columns.Add("піб");
+            DsRobPlan.Tables["Студенти"].Columns.Add("номер книги");
+            DsRobPlan.Tables["Студенти"].Columns.Add("група");
+            DsRobPlan.Tables["Студенти"].Columns.Add("форма");
                 
 
             int xlIterator = 2;
             while (true)
             {
                 xlIterator++;
-                if (xlIterator == 2 && xlWorkSheet.Cells[xlIterator, "C"].Value == null)
+                if (xlIterator == 2 && _xlWorkSheet.Cells[xlIterator, "C"].Value == null)
                 {
-                    MessageBox.Show("Помилка!\nПри відкритті книги 'Студенти' в клітині C2 очікувалося Ім'я студента");
-                    xlWorkBook.Close();
-                    xlApp.Quit();
+                    MessageBox.Show(Resources.ExcelWork_LoadData_StudDB_);
+                    _xlWorkBook.Close();
+                    _xlApp.Quit();
                     return;
                 }
-                if (xlWorkSheet.Cells[xlIterator, "C"].Value == null) break;
+                if (_xlWorkSheet.Cells[xlIterator, "C"].Value == null) break;
 
-                DataRow dataRow = dsRobPlan.Tables["Студенти"].NewRow();
-                String cells = null;
+                var dataRow = DsRobPlan.Tables["Студенти"].NewRow();
+                string cells = null;
                 for (int i = 1; i < 6; i++)
                 {
                     switch (i)
@@ -407,32 +408,33 @@ namespace pacEcxelWork
                             cells = "G";
                             break;
                     }
-                    if (xlWorkSheet.Cells[xlIterator, cells].Value == null)
+                    if (_xlWorkSheet.Cells[xlIterator, cells].Value == null)
                         dataRow[i - 1] = " ";
-                    else dataRow[i - 1] = xlWorkSheet.Cells[xlIterator, cells].Value.ToString();
+                    else dataRow[i - 1] = _xlWorkSheet.Cells[xlIterator, cells].Value.ToString();
                 }
-                dsRobPlan.Tables["Студенти"].Rows.Add(dataRow);
+                DsRobPlan.Tables["Студенти"].Rows.Add(dataRow);
             }
 
-            xlWorkBook.Close();
-            xlApp.Quit();
+            _xlWorkBook.Close();
+            _xlApp.Quit();
         }
 
-        private String numberOfOblic = null, subject = null, arabSemestr = null;
-        private int semestr = 0;
-        public void createOblicUspishnosti(String numberOfOblic, int semestr, String subject)
+        private String _numberOfOblic, _subject, _arabSemestr;
+        private int _semestr;
+        public void CreateOblicUspishnosti(string numberOfOblic, int semestr, string subject)
         {
-            xlApp = new Excel.Application();
-            xlApp.DisplayAlerts = false;
+            if (numberOfOblic == null) throw new ArgumentNullException("numberOfOblic");
+            _xlApp = new Excel.Application();
+            _xlApp.DisplayAlerts = false;
 
-            this.numberOfOblic = numberOfOblic;
-            this.semestr = semestr;
-            this.subject = subject;
+            _numberOfOblic = numberOfOblic;
+            _semestr = semestr;
+            _subject = subject;
 
-            if (semestr == 1) arabSemestr = argDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"].ToString();
-            else arabSemestr = argDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"].ToString();
+            if (semestr == 1) _arabSemestr = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Перше півріччя"].ToString();
+            else _arabSemestr = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Друге півріччя"].ToString();
 
-            foreach (DataRow dr in dsRobPlan.Tables[currentGroupName].Rows)
+            foreach (DataRow dr in DsRobPlan.Tables[CurrentGroupName].Rows)
             {
                 if (dr[0].ToString().Equals(subject))
                 {
@@ -440,84 +442,83 @@ namespace pacEcxelWork
                     bool bl = true;
                     foreach (DataColumn dc in dr.Table.Columns)
                     {
-                        if (dc.ColumnName.ToString().Contains(" [семестр " + arabSemestr + "]")
+                        if (dc.ColumnName.Contains(" [семестр " + _arabSemestr + "]")
                             && !dr[dc.ToString()].ToString().Equals("0")
-                            && !dc.ColumnName.ToString().Contains("всього"))
+                            && !dc.ColumnName.Contains("всього"))
                         {
                             bl = false;
                             String path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
-                                + @"User Data\Облік Успішності\" + currentGroupName + ".xls";
+                                + @"User Data\Облік Успішності\" + CurrentGroupName + ".xls";
                             if (System.IO.File.Exists(path))
                             {
-                                xlWorkBook = xlApp.Workbooks.Open(path);
-                                xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
+                                _xlWorkBook = _xlApp.Workbooks.Open(path);
+                                _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[1];
 
                                 //Якщо у назві листа не міститься поточного семестру то така робоча книга перезаписується
-                                if (!xlWorkSheet.Name.ToString().Contains("_" + arabSemestr + "_"))
+                                if (!_xlWorkSheet.Name.Contains("_" + _arabSemestr + "_"))
                                 {
-                                    if (MessageBox.Show("Відомість успішності для групи " + currentGroupName +
+                                    if (MessageBox.Show("Відомість успішності для групи " + CurrentGroupName +
                                         " буде перезаписана", "Увага!", MessageBoxButtons.OKCancel) == DialogResult.Cancel)
                                     {
-                                        xlWorkBook.Close();
-                                        xlApp.Quit();
+                                        _xlWorkBook.Close();
+                                        _xlApp.Quit();
                                         return;
                                     }
 
-                                    xlWorkBook.Close();
+                                    _xlWorkBook.Close();
                                     System.IO.File.Copy(Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                             + @"Data\Empty book.xls", path, true);
-                                    xlWorkBook = xlApp.Workbooks.Open(path);
+                                    _xlWorkBook = _xlApp.Workbooks.Open(path);
                                 }
                             }
                             else
                             {
                                 System.IO.File.Copy(Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                     + @"Data\Empty book.xls", path, true);
-                                xlWorkBook = xlApp.Workbooks.Open(path);
+                                _xlWorkBook = _xlApp.Workbooks.Open(path);
                             }
 
                             //Якщо предмет у робочій книзі створено, то його перезаписується
                             bool ifExist = true;
-                            for (int i = 1; i <= xlWorkBook.Sheets.Count; i++)
+                            for (int i = 1; i <= _xlWorkBook.Sheets.Count; i++)
                             {
-                                xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(i);
+                                _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[i];
                                 
-                                if (xlWorkSheet.Name.Contains("Sheet") || xlWorkSheet.Name.Contains("Листок") || xlWorkSheet.Name.Contains("Лист")
-                                    || xlWorkSheet.Name.Contains("Аркуш"))
+                                if (_xlWorkSheet.Name.Contains("Sheet") || _xlWorkSheet.Name.Contains("Листок") || _xlWorkSheet.Name.Contains("Лист")
+                                    || _xlWorkSheet.Name.Contains("Аркуш"))
                                 {
-                                    xlWorkSheet.Name = cutSheetName(subject, "_" + arabSemestr + "_");
+                                    _xlWorkSheet.Name = CutSheetName(subject, "_" + _arabSemestr + "_");
                                     ifExist = false;
-                                    xlWorkBook.Save();
+                                    _xlWorkBook.Save();
                                     break;
                                 }
-                                else if (subject.Contains(xlWorkSheet.Name.Substring(0, xlWorkSheet.Name.IndexOf("_"))))
-                                {
-                                    //xlWorkSheet.Delete();
-                                    //xlWorkBook.Save();
+                                if (!subject.Contains(_xlWorkSheet.Name.Substring(0, _xlWorkSheet.Name.IndexOf("_", StringComparison.Ordinal))))
+                                    continue;
+                                //xlWorkSheet.Delete();
+                                //xlWorkBook.Save();
 
-                                    ifExist = false;
-                                    break;
-                                }
+                                ifExist = false;
+                                break;
                             }
                             if (ifExist)
                             {
-                                xlWorkBook.Worksheets.Add(Type.Missing, Type.Missing, Type.Missing, Type.Missing);
-                                xlWorkBook.Worksheets.get_Item(1).Name = cutSheetName(subject, "_" + arabSemestr + "_");
-                                xlWorkBook.Save();
+                                _xlWorkBook.Worksheets.Add(Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                                _xlWorkBook.Worksheets.get_Item(1).Name = CutSheetName(subject, "_" + _arabSemestr + "_");
+                                _xlWorkBook.Save();
                             }
 
                             String tamplatePath = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9) + @"Data\";
 
-                            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(cutSheetName(subject, "_" + arabSemestr + "_"));
+                            _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[CutSheetName(subject, "_" + _arabSemestr + "_")];
 
                             //Визначення форми здачі та запущення відповідного механізму
-                            if (dc.ColumnName.ToString().Contains("КП") || dr[dc.ToString()].ToString().Equals("-1"))
+                            if (dc.ColumnName.Contains("КП") || dr[dc.ToString()].ToString().Equals("-1"))
                             {
                                 tamplatePath += "Відомість обліку успішності (КП - Технологічна практика).xls";
-                                if (dr[dc.ToString()].ToString().Equals("-1")) driverToKP(tamplatePath, true);
-                                else driverToKP(tamplatePath, false);
+                                if (dr[dc.ToString()].ToString().Equals("-1")) DriverToKp(tamplatePath, true);
+                                else DriverToKp(tamplatePath, false);
                             }
-                            else if (dc.ColumnName.ToString().Contains("Іспит") && Convert.ToDouble(dr[dc.ToString()]) > 100)
+                            else if (dc.ColumnName.Contains("Іспит") && Convert.ToDouble(dr[dc.ToString()]) > 100)
                             {
                                 tamplatePath += "Відомість обліку успішності (Державний екзамен) - протокол.xls";
                                 DriverToDerzPas(tamplatePath);
@@ -525,15 +526,15 @@ namespace pacEcxelWork
                             else
                             {
                                 tamplatePath += "Відомість обліку успішності (залік - диф. залік - екзамен).xls";
-                                driverToOblicOfZalic(tamplatePath);
+                                DriverToOblicOfZalic(tamplatePath);
                             }
-                            xlWorkBook.Close();
+                            _xlWorkBook.Close();
                         }
                     }
                     if (bl)
                     {
-                        MessageBox.Show("У " + semestr.ToString() + " півріччі вказаний предмет відсутній\nВкажіть інше півріччя");
-                        xlApp.Quit();
+                        MessageBox.Show(string.Format("У {0}{1}", semestr, Resources.ExcelWork_CreateOblicUspishnosti_));
+                        _xlApp.Quit();
                         return;
                     }
                     break;
@@ -541,332 +542,313 @@ namespace pacEcxelWork
 
             }
             
-            xlApp.Quit();
+            _xlApp.Quit();
         }
 
-        private void reloadSheet(String path)
+        private void ReloadSheet(string path)
         {
-            Excel.Workbook tamplateBook = xlApp.Workbooks.Open(path);
-            Excel.Worksheet tamplateSheet = (Excel.Worksheet)tamplateBook.Worksheets.get_Item(1);
+            var tamplateBook = _xlApp.Workbooks.Open(path);
+            Excel.Worksheet tamplateSheet = (Excel.Worksheet)tamplateBook.Worksheets.Item[1];
 
-            String nameSheet = xlWorkSheet.Name;
+            String nameSheet = _xlWorkSheet.Name;
 
-            xlApp.Visible = true;
-            xlApp.DisplayAlerts = false;
+            _xlApp.Visible = true;
+            _xlApp.DisplayAlerts = false;
 
             //Переприсвоєння імені із видаленням листка
-            tamplateSheet.Copy(xlWorkSheet);
+            tamplateSheet.Copy(_xlWorkSheet);
             
-            xlWorkSheet.Delete();
+            _xlWorkSheet.Delete();
 
-            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(tamplateSheet.Name);
-            xlWorkSheet.Name = nameSheet;
+            _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[tamplateSheet.Name];
+            _xlWorkSheet.Name = nameSheet;
 
             tamplateBook.Close();
-            xlWorkBook.Save();
+            _xlWorkBook.Save();
         }
 
         private void DriverToDerzPas(String path)
         {
-            reloadSheet(path);
+            ReloadSheet(path);
 
-            xlWorkSheet.Cells[4, "H"].Value = subject;
-            xlWorkSheet.Cells[9, "C"].Value = argDataSet.Tables[currentGroupName].Rows[0]["Код спеціальності"].ToString() + "_" + currentGroupName;
-            for (int i = 0; i < dsRobPlan.Tables[currentGroupName].Rows.Count; i++)
+            _xlWorkSheet.Cells[4, "H"].Value = _subject;
+            _xlWorkSheet.Cells[9, "C"].Value = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Код спеціальності"] + "_" + CurrentGroupName;
+            for (int i = 0; i < DsRobPlan.Tables[CurrentGroupName].Rows.Count; i++)
             {
-                if (dsRobPlan.Tables[currentGroupName].Rows[i][0].Equals(subject))
+                if (DsRobPlan.Tables[CurrentGroupName].Rows[i][0].Equals(_subject))
                 {
-                    for (int j = 1; j < dsRobPlan.Tables[currentGroupName].Columns.Count; j++)
+                    for (int j = 1; j < DsRobPlan.Tables[CurrentGroupName].Columns.Count; j++)
                     {
-                        if (dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Contains("викладач"))
-                        {
-                            //Викладач
-                            xlWorkSheet.Cells[20, "G"].Value = dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString() + "_________________________________";
-                            xlWorkSheet.Cells[84, "H"].Value = "_____" + dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString() + "__";
-                        }
+                        if (!DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Contains("викладач")) continue;
+                        //Викладач
+                        _xlWorkSheet.Cells[20, "G"].Value = DsRobPlan.Tables[CurrentGroupName].Rows[i][j] + "_________________________________";
+                        _xlWorkSheet.Cells[84, "H"].Value = "_____" + DsRobPlan.Tables[CurrentGroupName].Rows[i][j] + "__";
                     }
-                    xlWorkBook.Save();
+                    _xlWorkBook.Save();
                     break;
                 }
             }
             int n = 46;
-            foreach (DataRow dr in dsRobPlan.Tables["Студенти"].Rows)
+            foreach (DataRow dr in DsRobPlan.Tables["Студенти"].Rows)
             {
-                if (dr[3].ToString().Equals(currentGroupName))
+                if (dr[3].ToString().Equals(CurrentGroupName))
                 {
-                    xlWorkSheet.Cells[n, "C"].Value = dr[1].ToString();
+                    _xlWorkSheet.Cells[n, "C"].Value = dr[1].ToString();
                     n++;
                 }
             }
 
             //Кількість студентів у групі
-            xlWorkSheet.Cells[12, "G"] = "__" + (n - 46) + "__";
+            _xlWorkSheet.Cells[12, "G"] = "__" + (n - 46) + "__";
 
-            xlWorkBook.Save();
+            _xlWorkBook.Save();
             if (n != 76)
-                xlWorkSheet.Range["B" + n, "Q" + 75].Delete();
-            xlWorkBook.Save();
+                _xlWorkSheet.Range["B" + n, "Q" + 75].Delete();
+            _xlWorkBook.Save();
         }
 
-        private void driverToKP(String path, bool practuca)
+        private void DriverToKp(String path, bool practuca)
         {
-            reloadSheet(path);
+            ReloadSheet(path);
 
             //Відділення
-            String viddilenia = null;
-            if (argDataSet.Tables[currentGroupName].Rows[0]["Напрям підготовки"].ToString().Equals("Програмна інженерія")) viddilenia = "Програмної інженерії";
-            else viddilenia = "Метрології та інформаційно-вимірювальної технології";
-            xlWorkSheet.Cells[13, "E"].Value = viddilenia;
+            var viddilenia = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Напрям підготовки"].ToString().Equals("Програмна інженерія") ? "Програмної інженерії" : "Метрології та інформаційно-вимірювальної технології";
+            _xlWorkSheet.Cells[13, "E"].Value = viddilenia;
 
             //Спеціальність
-            xlWorkSheet.Cells[15, "F"].Value = argDataSet.Tables[currentGroupName].Rows[0]["Спеціальність"].ToString();
+            _xlWorkSheet.Cells[15, "F"].Value = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Спеціальність"].ToString();
 
             //Курс
-            xlWorkSheet.Cells[17, "D"].Value = argDataSet.Tables[currentGroupName].Rows[0]["Курс"].ToString();
+            _xlWorkSheet.Cells[17, "D"].Value = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Курс"].ToString();
 
             //Група
-            xlWorkSheet.Cells[17, "G"].Value = currentGroupName;
+            _xlWorkSheet.Cells[17, "G"].Value = CurrentGroupName;
 
             //Навчальний рік
-            int year = Convert.ToInt32(argDataSet.Tables[currentGroupName].Rows[0]["Рік"].ToString()) + 1;
-            xlWorkSheet.Cells[19, "I"].Value = argDataSet.Tables[currentGroupName].Rows[0]["Рік"].ToString() + "-" + year;
+            int year = Convert.ToInt32(ArgDataSet.Tables[CurrentGroupName].Rows[0]["Рік"].ToString()) + 1;
+            _xlWorkSheet.Cells[19, "I"].Value = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Рік"] + "-" + year;
 
             //Назва дисципліни
-            xlWorkSheet.Cells[26, "F"].Value = subject;
+            _xlWorkSheet.Cells[26, "F"].Value = _subject;
 
             //Семестр
-            xlWorkSheet.Cells[28, "D"].Value = arabSemestr;
+            _xlWorkSheet.Cells[28, "D"].Value = _arabSemestr;
 
             //Номер відомості
-            xlWorkSheet.Cells[22, "M"].Value = numberOfOblic.ToString();
+            _xlWorkSheet.Cells[22, "M"].Value = _numberOfOblic;
 
-            for (int i = 0; i < dsRobPlan.Tables[currentGroupName].Rows.Count; i++)
+            for (int i = 0; i < DsRobPlan.Tables[CurrentGroupName].Rows.Count; i++)
             {
-                if (dsRobPlan.Tables[currentGroupName].Rows[i][0].Equals(subject))
+                if (!DsRobPlan.Tables[CurrentGroupName].Rows[i][0].Equals(_subject)) continue;
+                for (int j = 1; j < DsRobPlan.Tables[CurrentGroupName].Columns.Count; j++)
                 {
-                    for (int j = 1; j < dsRobPlan.Tables[currentGroupName].Columns.Count; j++)
+                    if (DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Contains("[семестр " + _arabSemestr + "]"))
                     {
-                        if (dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Contains("[семестр " + arabSemestr + "]"))
+                        if (DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Contains("всього годин"))
                         {
-                            if (dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Contains("всього годин"))
-                            {
-                                //Всього годин
-                                if (!dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString().Equals("0"))
-                                xlWorkSheet.Cells[30, "Q"].Value = dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString();
-                            }
-                            else if (!dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString().Equals("0"))
-                            {
-                                //Форма здачі
-                                if (!practuca) xlWorkSheet.Cells[30, "F"].Value = "курсовий проект";
-                                else
-                                {
-                                    if (subject.Trim().Equals("Технологічна практика") || subject.Trim().Equals("Переддипломна практика"))
-                                        xlWorkSheet.Cells[30, "F"].Value = "захист";
-                                    else
-                                        xlWorkSheet.Cells[30, "F"].Value = "Д/З";
-                                }
-                            }
+                            //Всього годин
+                            if (!DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString().Equals("0"))
+                                _xlWorkSheet.Cells[30, "Q"].Value = DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString();
                         }
-                        else if (dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Contains("викладач"))
+                        else if (!DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString().Equals("0"))
                         {
-                            //Викладач
-                            xlWorkSheet.Cells[37, "K"].Value = dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString() + "_____";
-                            xlWorkSheet.Cells[100, "N"].Value = dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString();
+                            //Форма здачі
+                            if (!practuca) _xlWorkSheet.Cells[30, "F"].Value = "курсовий проект";
+                            else
+                            {
+                                if (_subject.Trim().Equals("Технологічна практика") || _subject.Trim().Equals("Переддипломна практика"))
+                                    _xlWorkSheet.Cells[30, "F"].Value = "захист";
+                                else
+                                    _xlWorkSheet.Cells[30, "F"].Value = "Д/З";
+                            }
                         }
                     }
-                    xlWorkBook.Save();
-                    break;
+                    else if (DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Contains("викладач"))
+                    {
+                        //Викладач
+                        _xlWorkSheet.Cells[37, "K"].Value = DsRobPlan.Tables[CurrentGroupName].Rows[i][j] + "_____";
+                        _xlWorkSheet.Cells[100, "N"].Value = DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString();
+                    }
                 }
+                _xlWorkBook.Save();
+                break;
             }
             int n = 45;
-            foreach (DataRow dr in dsRobPlan.Tables["Студенти"].Rows)
+            foreach (DataRow dr in DsRobPlan.Tables["Студенти"].Rows.Cast<DataRow>().Where(dr => dr[3].ToString().Equals(CurrentGroupName)))
             {
-                if (dr[3].ToString().Equals(currentGroupName))
-                {
-                    xlWorkSheet.Cells[n, "C"].Value = dr[1].ToString();
-                    xlWorkSheet.Cells[n, "H"].Value = dr[2].ToString();
-                    n++;
-                }
+                _xlWorkSheet.Cells[n, "C"].Value = dr[1].ToString();
+                _xlWorkSheet.Cells[n, "H"].Value = dr[2].ToString();
+                n++;
             }
-            xlWorkBook.Save();
+            _xlWorkBook.Save();
             if (n != 75)
-                xlWorkSheet.Range["B" + n, "Q" + 74].Delete();
-            xlWorkBook.Save();
+                _xlWorkSheet.Range["B" + n, "Q" + 74].Delete();
+            _xlWorkBook.Save();
         }
 
-        private void driverToOblicOfZalic(String path)
+        private void DriverToOblicOfZalic(String path)
         {
-            reloadSheet(path);
+            ReloadSheet(path);
 
             //Відділення
-            String viddilenia = null;
-            if (argDataSet.Tables[currentGroupName].Rows[0]["Напрям підготовки"].ToString().Equals("Програмна інженерія")) viddilenia = "Програмної інженерії";
-            else viddilenia = "Метрології та інформаційно-вимірювальної технології";
-            xlWorkSheet.Cells[13, "E"].Value = viddilenia;
+            string viddilenia;
+            viddilenia = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Напрям підготовки"].ToString().Equals("Програмна інженерія") ? "Програмної інженерії" : "Метрології та інформаційно-вимірювальної технології";
+            _xlWorkSheet.Cells[13, "E"].Value = viddilenia;
 
             //Спеціальність
-            xlWorkSheet.Cells[15, "F"].Value = argDataSet.Tables[currentGroupName].Rows[0]["Спеціальність"].ToString();
+            _xlWorkSheet.Cells[15, "F"].Value = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Спеціальність"].ToString();
 
             //Курс
-            xlWorkSheet.Cells[17, "D"].Value = argDataSet.Tables[currentGroupName].Rows[0]["Курс"].ToString();
+            _xlWorkSheet.Cells[17, "D"].Value = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Курс"].ToString();
 
             //Група
-            xlWorkSheet.Cells[17, "G"].Value = currentGroupName;
+            _xlWorkSheet.Cells[17, "G"].Value = CurrentGroupName;
 
             //Навчальний рік
-            int year = Convert.ToInt32(argDataSet.Tables[currentGroupName].Rows[0]["Рік"].ToString()) + 1;
-            xlWorkSheet.Cells[19, "I"].Value = argDataSet.Tables[currentGroupName].Rows[0]["Рік"].ToString() + "-" + year;
+            int year = Convert.ToInt32(ArgDataSet.Tables[CurrentGroupName].Rows[0]["Рік"].ToString()) + 1;
+            _xlWorkSheet.Cells[19, "I"].Value = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Рік"] + "-" + year;
 
             //Назва дисципліни
-            xlWorkSheet.Cells[26, "F"].Value = subject;
+            _xlWorkSheet.Cells[26, "F"].Value = _subject;
 
             //Семестр
-            xlWorkSheet.Cells[28, "D"].Value = arabSemestr;
+            _xlWorkSheet.Cells[28, "D"].Value = _arabSemestr;
 
             //Номер відомості
-            xlWorkSheet.Cells[22, "M"].Value = numberOfOblic.ToString();
+            _xlWorkSheet.Cells[22, "M"].Value = _numberOfOblic;
 
-            for (int i = 0; i < dsRobPlan.Tables[currentGroupName].Rows.Count; i++)
+            for (int i = 0; i < DsRobPlan.Tables[CurrentGroupName].Rows.Count; i++)
             {
-                if (dsRobPlan.Tables[currentGroupName].Rows[i][0].Equals(subject))
+                if (DsRobPlan.Tables[CurrentGroupName].Rows[i][0].Equals(_subject))
                 {
-                    for (int j = 1; j < dsRobPlan.Tables[currentGroupName].Columns.Count; j++)
+                    for (int j = 1; j < DsRobPlan.Tables[CurrentGroupName].Columns.Count; j++)
                     {
-                        if (dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Contains("[семестр " + arabSemestr + "]"))
+                        if (DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Contains("[семестр " + _arabSemestr + "]"))
                         {
-                            if (dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Contains("всього годин"))
+                            if (DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Contains("всього годин"))
                             {
                                 //Всього годин
-                                xlWorkSheet.Cells[30, "Q"].Value = dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString();
+                                _xlWorkSheet.Cells[30, "Q"].Value = DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString();
                             }
-                            else if (!dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString().Equals("0"))
+                            else if (!DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString().Equals("0"))
                             {
                                 //Форма здачі
-                                xlWorkSheet.Cells[30, "F"].Value =
-                                    dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Substring(0, dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.IndexOf(" "));
+                                _xlWorkSheet.Cells[30, "F"].Value =
+                                    DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Substring(0, DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.IndexOf(" ", StringComparison.Ordinal));
                             }
                         }
-                        else if (dsRobPlan.Tables[currentGroupName].Columns[j].ColumnName.Contains("викладач"))
+                        else if (DsRobPlan.Tables[CurrentGroupName].Columns[j].ColumnName.Contains("викладач"))
                         {
                             //Викладач
-                            xlWorkSheet.Cells[32, "E"].Value = dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString();
-                            xlWorkSheet.Cells[94, "N"].Value = dsRobPlan.Tables[currentGroupName].Rows[i][j].ToString();
+                            _xlWorkSheet.Cells[32, "E"].Value = DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString();
+                            _xlWorkSheet.Cells[94, "N"].Value = DsRobPlan.Tables[CurrentGroupName].Rows[i][j].ToString();
                         }
                     }
-                    xlWorkBook.Save();
+                    _xlWorkBook.Save();
                     break;
                 }
             }
             int n = 39;
-            foreach (DataRow dr in dsRobPlan.Tables["Студенти"].Rows)
+            foreach (DataRow dr in DsRobPlan.Tables["Студенти"].Rows.Cast<DataRow>().Where(dr => dr[3].ToString().Equals(CurrentGroupName)))
             {
-                if (dr[3].ToString().Equals(currentGroupName))
-                {
-                    xlWorkSheet.Cells[n, "C"].Value = dr[1].ToString();
-                    xlWorkSheet.Cells[n, "H"].Value = dr[2].ToString();
-                    n++;
-                }
+                _xlWorkSheet.Cells[n, "C"].Value = dr[1].ToString();
+                _xlWorkSheet.Cells[n, "H"].Value = dr[2].ToString();
+                n++;
             }
-            xlWorkBook.Save();
+            _xlWorkBook.Save();
             if (n != 69)
-            xlWorkSheet.Range["B" + n, "Q" + 68].Delete();
-            xlWorkBook.Save();
+            _xlWorkSheet.Range["B" + n, "Q" + 68].Delete();
+            _xlWorkBook.Save();
         }
 
-        private String arabNormalize(String str)
+        private string ArabNormalize(string str)
         {
             char[] ch = str.ToCharArray();
             for (int i = 0; i < str.Length; i++)
             {
-                int arg = (int)ch[i];
+                var arg = (int)ch[i];
                 if (arg == 1030) arg = 73;
                 ch[i] = (char)arg;
             }
-            return new String(ch);
+            return new string(ch);
         }
 
-        private String cutSheetName(String s, String arab)
+        private static string CutSheetName(string s, string arab)
         {
-            int lenght = s.Length + arab.Length;
+            var lenght = s.Length + arab.Length;
             if (lenght <= 32){
                 return (s.Replace("*","&") + arab);
-
             }
-                
-            else
-                return (s.Substring(0, 31 - arab.Length).Replace("*", "&") + arab);
+
+            return (s.Substring(0, 31 - arab.Length).Replace("*", "&") + arab);
         }
 
-        public DataTable dtSo = null;
-        public void zvedVidomist(int semestr, String subject, String mount)
+        public DataTable DtSo = null;
+        public void ZvedVidomist(int semestr, string subject, string mount)
         {
-            this.subject = subject;
-            this.semestr = semestr;
+            _subject = subject;
+            _semestr = semestr;
 
 
-            if (semestr == 1) arabSemestr = argDataSet.Tables[currentGroupName].Rows[0]["Перше півріччя"].ToString();
-            else arabSemestr = argDataSet.Tables[currentGroupName].Rows[0]["Друге півріччя"].ToString();
+            _arabSemestr = semestr == 1 ? ArgDataSet.Tables[CurrentGroupName].Rows[0]["Перше півріччя"].ToString() : ArgDataSet.Tables[CurrentGroupName].Rows[0]["Друге півріччя"].ToString();
 
-            String sT = null;
+            string sT;
             if (mount.Equals(""))
             {
-                if (semestr == 1) sT = "1-ше півріччя";
-                else sT = "2-ге півріччя";
+                sT = semestr == 1 ? "1-ше півріччя" : "2-ге півріччя";
             }
             else sT = mount + " місяць";
 
-            String existsPath = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
+            var existsPath = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                 + @"Data\" + "Empty book.xls";
 
-            String pathTogroup = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
+            var pathTogroup = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                 + @"User Data\Зведена відомість успішності\" + "Зведена відомість успішності за " + sT + ".xls";
 
-            String pathToTamplateVidomist = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
+            var pathToTamplateVidomist = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                 + @"Data\" + "Зведена відомість.xls";
 
             if (!System.IO.File.Exists(pathTogroup))
                 System.IO.File.Copy(existsPath, pathTogroup, true);
 
-            xlApp = new Excel.Application();
-            xlApp.DisplayAlerts = false;
+            _xlApp = new Excel.Application();
+            _xlApp.DisplayAlerts = false;
 
-            xlWorkBook = xlApp.Workbooks.Open(pathTogroup);
-            xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(1);
+            _xlWorkBook = _xlApp.Workbooks.Open(pathTogroup);
+            _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[1];
 
             bool ifExist = true;
-            for (int i = 1; i <= xlWorkBook.Sheets.Count; i++)
+            for (int i = 1; i <= _xlWorkBook.Sheets.Count; i++)
             {
-                xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(i);
-                if (xlWorkSheet.Name.Contains("Sheet") || xlWorkSheet.Name.Contains("Аркуш") || xlWorkSheet.Name.Contains("Лист"))
+                _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[i];
+                if (_xlWorkSheet.Name.Contains("Sheet") || _xlWorkSheet.Name.Contains("Аркуш") || _xlWorkSheet.Name.Contains("Лист"))
                 {
-                    xlWorkSheet.Name = currentGroupName;
+                    _xlWorkSheet.Name = CurrentGroupName;
                     ifExist = false;
-                    xlWorkBook.Save(); 
+                    _xlWorkBook.Save(); 
                     break;
                 }
-                else if (xlWorkSheet.Name.Equals(currentGroupName))
+                if (!_xlWorkSheet.Name.Equals(CurrentGroupName)) continue;
+                if (MessageBox.Show(Resources.ExcelWork_ZvedVidomist_Для_поточної_групи__ + CurrentGroupName + Resources.ExcelWork_ZvedVidomist_, "Обережно, ви можете втратити дані", MessageBoxButtons.YesNo) == DialogResult.No)
                 {
-                    if (MessageBox.Show("Для поточної групи (" + currentGroupName + ") уже створено зведену відомість\n Перезаписати?", "Обережно, ви можете втратити дані", MessageBoxButtons.YesNo) == DialogResult.No)
-                    {
-                        xlWorkBook.Close();
-                        xlApp.Quit();
-                        return;
-                    }
-                    //xlWorkSheet.Delete();
-                    ifExist = false;
-                    //xlWorkBook.Save();
-                    break;
+                    _xlWorkBook.Close();
+                    _xlApp.Quit();
+                    return;
                 }
+                //xlWorkSheet.Delete();
+                ifExist = false;
+                //xlWorkBook.Save();
+                break;
             }
             if (ifExist)
             {
-                xlWorkBook.Worksheets.Add(Type.Missing, Type.Missing, Type.Missing, Type.Missing);
-                xlApp.DisplayAlerts = false;
-                xlWorkBook.Worksheets.get_Item(1).Name = currentGroupName;
-                xlWorkBook.Save();
+                _xlWorkBook.Worksheets.Add(Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                _xlApp.DisplayAlerts = false;
+                _xlWorkBook.Worksheets.get_Item(1).Name = CurrentGroupName;
+                _xlWorkBook.Save();
             }
-            xlWorkSheet = xlWorkBook.Worksheets.get_Item(currentGroupName);
-            reloadSheet(pathToTamplateVidomist);
+            _xlWorkSheet = _xlWorkBook.Worksheets.get_Item(CurrentGroupName);
+            ReloadSheet(pathToTamplateVidomist);
 
             String[] forma = { "Іспит", "Д/З", "КП", "Залік", "КП" };
             char startX = 'E';
@@ -877,36 +859,36 @@ namespace pacEcxelWork
             for (int i = 0; i < forma.Length; i++)
             {
                 bool bl = false;
-                for (int row = 0; row < dsRobPlan.Tables[currentGroupName].Rows.Count; row++)
+                for (int row = 0; row < DsRobPlan.Tables[CurrentGroupName].Rows.Count; row++)
                 {
                     try
                     {
-                        if (!dsRobPlan.Tables[currentGroupName].Rows[row][forma[i] + " [семестр " + arabSemestr + "]"].ToString().Equals("0") && i != 2 && i != 4)
+                        if (!DsRobPlan.Tables[CurrentGroupName].Rows[row][forma[i] + " [семестр " + _arabSemestr + "]"].ToString().Equals("0") && i != 2 && i != 4)
                         {
                             bl = true;
                             startX++;
-                            xlWorkSheet.Cells[9, startX.ToString()].Value = dsRobPlan.Tables[currentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString();
-                            xlWorkSheet.Cells[43, startX.ToString()].Value = dsRobPlan.Tables[currentGroupName].Rows[row]["викладач"].ToString();
+                            _xlWorkSheet.Cells[9, startX.ToString()].Value = DsRobPlan.Tables[CurrentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString();
+                            _xlWorkSheet.Cells[43, startX.ToString()].Value = DsRobPlan.Tables[CurrentGroupName].Rows[row]["викладач"].ToString();
 
-                            xlWorkSheet.Cells[43, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
-                            xlWorkSheet.Cells[9, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
-                            xlWorkSheet.Cells[9, startX.ToString()].ColumnWidth = columnWidth(dsRobPlan.Tables[currentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString());
+                            _xlWorkSheet.Cells[43, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                            _xlWorkSheet.Cells[9, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                            _xlWorkSheet.Cells[9, startX.ToString()].ColumnWidth = ColumnWidth(DsRobPlan.Tables[CurrentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString());
 
                             count++;
                         }
                     }
-                    catch (ArgumentException ar)
+                    catch (ArgumentException)
                     {
                         continue;
                     }
-                    if (row == dsRobPlan.Tables[currentGroupName].Rows.Count - 1 && i != 2 && i != 4 && bl)
+                    if (row == DsRobPlan.Tables[CurrentGroupName].Rows.Count - 1 && i != 2 && i != 4 && bl)
                     {
-                        xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].Merge();
+                        _xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].Merge();
                         
-                        xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].Value = forma[i];
+                        _xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].Value = forma[i];
 
-                        xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-                        xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                        _xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                        _xlWorkSheet.Range[pos.ToString() + 8, startX.ToString() + 8].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
 
 
                         pos = startX;
@@ -917,109 +899,106 @@ namespace pacEcxelWork
 
                     if (!mount.Equals("")) continue;
 
-                    if (!dsRobPlan.Tables[currentGroupName].Rows[row][forma[i] + " [семестр " + arabSemestr + "]"].ToString().Equals("0") && i == 2 && i != 4
-                        && !dsRobPlan.Tables[currentGroupName].Rows[row][forma[i] + " [семестр " + arabSemestr + "]"].ToString().Equals("-1"))
+                    if (!DsRobPlan.Tables[CurrentGroupName].Rows[row][forma[i] + " [семестр " + _arabSemestr + "]"].ToString().Equals("0") && i == 2 && i != 4
+                        && !DsRobPlan.Tables[CurrentGroupName].Rows[row][forma[i] + " [семестр " + _arabSemestr + "]"].ToString().Equals("-1"))
                     {
                         startX++;
-                        xlWorkSheet.Cells[9, startX.ToString()].Value = dsRobPlan.Tables[currentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString();
-                        xlWorkSheet.Cells[43, startX.ToString()].Value = dsRobPlan.Tables[currentGroupName].Rows[row]["викладач"].ToString();
+                        _xlWorkSheet.Cells[9, startX.ToString()].Value = DsRobPlan.Tables[CurrentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString();
+                        _xlWorkSheet.Cells[43, startX.ToString()].Value = DsRobPlan.Tables[CurrentGroupName].Rows[row]["викладач"].ToString();
 
-                        xlWorkSheet.Cells[9, startX.ToString()].HorizontalAlignment = Excel.XlLineStyle.xlContinuous;
-                        xlWorkSheet.Cells[9, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
-                        xlWorkSheet.Cells[43, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                        _xlWorkSheet.Cells[9, startX.ToString()].HorizontalAlignment = Excel.XlLineStyle.xlContinuous;
+                        _xlWorkSheet.Cells[9, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                        _xlWorkSheet.Cells[43, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
 
-                        xlWorkSheet.Cells[43, startX.ToString()].ColumnWidth = columnWidth(dsRobPlan.Tables[currentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString());
+                        _xlWorkSheet.Cells[43, startX.ToString()].ColumnWidth = ColumnWidth(DsRobPlan.Tables[CurrentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString());
 
                         count++;
                         pos = startX;
                         pos++;
                     }
 
-                    if (i == 4 && dsRobPlan.Tables[currentGroupName].Rows[row][forma[i] + " [семестр " + arabSemestr + "]"].ToString().Equals("-1"))
+                    if (i == 4 && DsRobPlan.Tables[CurrentGroupName].Rows[row][forma[i] + " [семестр " + _arabSemestr + "]"].ToString().Equals("-1"))
                     {
                         otherCount++;
                         startX++;
-                        xlWorkSheet.Cells[9, startX.ToString()].Value = dsRobPlan.Tables[currentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString();
-                        xlWorkSheet.Cells[43, startX.ToString()].Value = dsRobPlan.Tables[currentGroupName].Rows[row]["викладач"].ToString();
+                        _xlWorkSheet.Cells[9, startX.ToString()].Value = DsRobPlan.Tables[CurrentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString();
+                        _xlWorkSheet.Cells[43, startX.ToString()].Value = DsRobPlan.Tables[CurrentGroupName].Rows[row]["викладач"].ToString();
 
-                        xlWorkSheet.Cells[9, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
-                        xlWorkSheet.Cells[43, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
-                        xlWorkSheet.Cells[43, startX.ToString()].ColumnWidth = columnWidth(dsRobPlan.Tables[currentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString());
+                        _xlWorkSheet.Cells[9, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                        _xlWorkSheet.Cells[43, startX.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                        _xlWorkSheet.Cells[43, startX.ToString()].ColumnWidth = ColumnWidth(DsRobPlan.Tables[CurrentGroupName].Rows[row]["Назви навчальних  дисциплін"].ToString());
                         
                     }
                 }
-                xlWorkBook.Save();
+                _xlWorkBook.Save();
             }
             //добавлення та формування клітини з середнім балом
             startX++;
-            xlWorkSheet.Cells[9, startX.ToString()].Value = "Середній бал";
-            xlWorkSheet.Cells[9, startX.ToString()].ColumnWidth = 6.2;
-            xlWorkSheet.Cells[9, startX.ToString()].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+            _xlWorkSheet.Cells[9, startX.ToString()].Value = "Середній бал";
+            _xlWorkSheet.Cells[9, startX.ToString()].ColumnWidth = 6.2;
+            _xlWorkSheet.Cells[9, startX.ToString()].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
 
             pos = 'E';
             for (int i = 0; i < count; i++)
                 pos++;
 
-            xlWorkSheet.Range["F7", pos.ToString() + 7].Merge();
-            xlWorkSheet.Range["F7", pos.ToString() + 7].Value = "Предмети";
-            xlWorkSheet.Range["F7", pos.ToString() + 7].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-            xlWorkSheet.Range["F7", pos.ToString() + 7].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
-            xlWorkBook.Save();
+            _xlWorkSheet.Range["F7", pos.ToString() + 7].Merge();
+            _xlWorkSheet.Range["F7", pos.ToString() + 7].Value = "Предмети";
+            _xlWorkSheet.Range["F7", pos.ToString() + 7].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+            _xlWorkSheet.Range["F7", pos.ToString() + 7].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+            _xlWorkBook.Save();
 
             
             int startY = 11;
             int studCount = 0;
-            foreach (DataRow dt in dsRobPlan.Tables["Студенти"].Rows)
+            foreach (DataRow dt in DsRobPlan.Tables["Студенти"].Rows.Cast<DataRow>().Where(dt => dt[3].ToString().Equals(CurrentGroupName)))
             {
-                if (dt[3].ToString().Equals(currentGroupName))
-                {
-                    xlWorkSheet.Range["D" + startY].Value = dt[1].ToString();
-                    if (dt[4].ToString().Equals("п")) xlWorkSheet.Range["E" + startY].Value = dt[4].ToString();
-                    startY++;
-                    studCount++;
-                }
+                _xlWorkSheet.Range["D" + startY].Value = dt[1].ToString();
+                if (dt[4].ToString().Equals("п")) _xlWorkSheet.Range["E" + startY].Value = dt[4].ToString();
+                startY++;
+                studCount++;
             }
 
             //куратор
-            xlWorkSheet.Range["K45"].Value = "/ " + currentCurator() + " /";
+            _xlWorkSheet.Range["K45"].Value = "/ " + CurrentCurator() + " /";
 
             if (startY != 40)
-                xlWorkSheet.Range["A" + startY, "IV" + 40].Delete();
+                _xlWorkSheet.Range["A" + startY, "IV" + 40].Delete();
 
             startY += 3;
-            xlWorkSheet.Range["C7", startX + startY.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+            _xlWorkSheet.Range["C7", startX + startY.ToString()].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
 
 
             if (mount.Equals(""))
             {
-                xlWorkSheet.Range["C4"].Value = "спеціальності \"" + argDataSet.Tables[currentGroupName].Rows[0]["Спеціальність"].ToString() + "\"";
-                int year = Convert.ToInt32(argDataSet.Tables[currentGroupName].Rows[0]["Рік"].ToString()) + 1;
-                xlWorkSheet.Range["D5"].Value = "групи " + currentGroupName + " за " + arabSemestr + " семестр " +
-                argDataSet.Tables[currentGroupName].Rows[0]["Рік"].ToString() + "-" + year.ToString() + " навчального року";
+                _xlWorkSheet.Range["C4"].Value = "спеціальності \"" + ArgDataSet.Tables[CurrentGroupName].Rows[0]["Спеціальність"] + "\"";
+                int year = Convert.ToInt32(ArgDataSet.Tables[CurrentGroupName].Rows[0]["Рік"].ToString()) + 1;
+                _xlWorkSheet.Range["D5"].Value = "групи " + CurrentGroupName + " за " + _arabSemestr + " семестр " +
+                ArgDataSet.Tables[CurrentGroupName].Rows[0]["Рік"] + "-" + year + " навчального року";
             }
             else
             {
-                xlWorkSheet.Range["D4"].Value = "спеціальності \"" + argDataSet.Tables[currentGroupName].Rows[0]["Спеціальність"].ToString() + "\"";
-                int year = Convert.ToInt32(argDataSet.Tables[currentGroupName].Rows[0]["Рік"].ToString()) + 1;
-                xlWorkSheet.Range["C5"].Value = "за місяць " + mount + year + "р.";
-                xlWorkSheet.Range["C6"].Value = "група " + currentGroupName;
+                _xlWorkSheet.Range["D4"].Value = "спеціальності \"" + ArgDataSet.Tables[CurrentGroupName].Rows[0]["Спеціальність"] + "\"";
+                int year = Convert.ToInt32(ArgDataSet.Tables[CurrentGroupName].Rows[0]["Рік"].ToString()) + 1;
+                _xlWorkSheet.Range["C5"].Value = "за місяць " + mount + year + "р.";
+                _xlWorkSheet.Range["C6"].Value = "група " + CurrentGroupName;
             }
             
-            String pathToOblic  = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
-                                + @"User Data\Облік успішності\" + currentGroupName + ".xls";
+            var pathToOblic  = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
+                                + @"User Data\Облік успішності\" + CurrentGroupName + ".xls";
 
-            xlWorkBook.Save();
+            _xlWorkBook.Save();
             //занесення оцінок
             if (System.IO.File.Exists(pathToOblic) && mount.Equals(""))
             {
                 //прохід через усі записані у зведену відомість предмети
-                DataTable dataTable = getThePas(pathToOblic);
+                DataTable dataTable = GetThePas(pathToOblic);
 
                 startX = 'E';
                 for (int i = 0; i < count + otherCount; i++)
                 {
                     startX++;
-                    String likeSheet = cutSheetName(xlWorkSheet.Range[startX.ToString() + 9].Value.ToString(), "_" + arabSemestr + "_");
+                    string likeSheet = CutSheetName(_xlWorkSheet.Range[startX.ToString() + 9].Value.ToString(), "_" + _arabSemestr + "_");
                     //MessageBox.Show(likeSheet);
                     int negatPasCount = 0, superNegativPasCount = 0;
                     int currentRow = 0;
@@ -1030,34 +1009,35 @@ namespace pacEcxelWork
                             bool bl = dataTable.Rows[j - 1][likeSheet].ToString().Equals("0");
                             if (bl) continue;
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
                             break;
                         }
                         currentRow++;
-                        String pas = dataTable.Rows[currentRow - 1][likeSheet].ToString();
+                        var pas = dataTable.Rows[currentRow - 1][likeSheet].ToString();
                         int cell = j + 10;
-                        xlWorkSheet.Range[startX.ToString() + cell].Value = pas;
+                        _xlWorkSheet.Range[startX.ToString() + cell].Value = pas;
                         if (pas == null || pas.Equals("") || pas.Equals(" "))
                         {
                             continue;
                         }
 
-                        if (!pas.Contains("з"))
+                        if (pas.Contains("з")) continue;
+                        try
                         {
-                            try
-                            {
-                                int number = Convert.ToInt32(pas);
-                                if (number <= 3) superNegativPasCount++;
-                                else if (number < 7) negatPasCount++;
-                            }
-                            catch (Exception ex) { }
+                            int number = Convert.ToInt32(pas);
+                            if (number <= 3) superNegativPasCount++;
+                            else if (number < 7) negatPasCount++;
+                        }
+                        catch (Exception)
+                        {
+                            // ignored
                         }
                     }
-                    xlWorkSheet.Range[startX.ToString() + (studCount + 11)].Formula = "=" + (studCount - superNegativPasCount) + "/" + studCount;
-                    xlWorkSheet.Range[startX.ToString() + (studCount + 12)].Formula = "=" + (studCount - (superNegativPasCount + negatPasCount)) + "/" + studCount;
+                    _xlWorkSheet.Range[startX.ToString() + (studCount + 11)].Formula = "=" + (studCount - superNegativPasCount) + "/" + studCount;
+                    _xlWorkSheet.Range[startX.ToString() + (studCount + 12)].Formula = "=" + (studCount - (superNegativPasCount + negatPasCount)) + "/" + studCount;
                 }
-                xlWorkBook.Save();
+                _xlWorkBook.Save();
                 startX = 'E';
 
                 for (int i = 0; i < count + otherCount; i++)
@@ -1069,27 +1049,27 @@ namespace pacEcxelWork
                 
                 for (int i = 11; i < studCount + 11; i++)
                 {
-                    xlWorkSheet.Range[averageBal.ToString() + i].Formula = "=AVERAGE(" + "F" + i + ":" + begin.ToString() + i + ") - 0.5";
-                    xlWorkSheet.Range[averageBal.ToString() + i].NumberFormatLocal = "##";
-                    String s1 = xlWorkSheet.Range["E" + i].Value;
-                    Double s2;
+                    _xlWorkSheet.Range[averageBal.ToString() + i].Formula = "=AVERAGE(" + "F" + i + ":" + begin.ToString() + i + ") - 0.5";
+                    _xlWorkSheet.Range[averageBal.ToString() + i].NumberFormatLocal = "##";
+                    string s1 = _xlWorkSheet.Range["E" + i].Value;
+                    double s2;
                     try
                     {
-                        s2 = xlWorkSheet.Range[averageBal.ToString() + i].Value;
+                        s2 = _xlWorkSheet.Range[averageBal.ToString() + i].Value;
                     }
-                    catch (Exception ex) { continue; }
+                    catch (Exception) { continue; }
 
                     if (s1 == null)
                     {
                         if (s2 > 7)
                         {
-                            xlWorkSheet.Range[startX.ToString() + i].Value = "1";
+                            _xlWorkSheet.Range[startX.ToString() + i].Value = "1";
                             if (dataTable.Rows[i - 11]["підвищена стипендія"].ToString().Equals("1"))
-                                xlWorkSheet.Range[startX.ToString() + i].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                                _xlWorkSheet.Range[startX.ToString() + i].Interior.Color = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
                         }
                     }
                 }
-                xlWorkBook.Save();
+                _xlWorkBook.Save();
             }
 
             startX = 'E';
@@ -1100,38 +1080,34 @@ namespace pacEcxelWork
             char stypendia = ++startX;
             startX++;
             int xlIter = 10;
-            foreach (DataRow dt in dsRobPlan.Tables["Студенти"].Rows)
+            foreach (DataRow dt in DsRobPlan.Tables["Студенти"].Rows.Cast<DataRow>().Where(dt => dt[3].ToString().Equals(CurrentGroupName)))
             {
-                if (dt[3].ToString().Equals(currentGroupName))
+                xlIter++;
+                var whatType = dt[0];
+                if (whatType != null)
                 {
-                    xlIter++;
-                    var whatType = dt[0];
-                    if (whatType != null)
-                    {
-                        bool bl = true;
-                        var whatype2 = xlWorkSheet.Range[stypendia.ToString() + xlIter].Value;
-                        if (whatype2 == null) bl = false;
+                    bool bl = true;
+                    var whatype2 = _xlWorkSheet.Range[stypendia.ToString() + xlIter].Value;
+                    if (whatype2 == null) bl = false;
 
-                        if (whatType.ToString().Contains("сир"))
-                            xlWorkSheet.Range[startX.ToString() + xlIter].Value = "с";
-                        else if (whatType.ToString().Contains("гір") && bl)
-                            xlWorkSheet.Range[startX.ToString() + xlIter].Value = "г";
-                        else if (whatType.ToString().Contains("інва"))
-                            xlWorkSheet.Range[startX.ToString() + xlIter].Value = "і";
-                    }
+                    if (whatType.ToString().Contains("сир"))
+                        _xlWorkSheet.Range[startX.ToString() + xlIter].Value = "с";
+                    else if (whatType.ToString().Contains("гір") && bl)
+                        _xlWorkSheet.Range[startX.ToString() + xlIter].Value = "г";
+                    else if (whatType.ToString().Contains("інва"))
+                        _xlWorkSheet.Range[startX.ToString() + xlIter].Value = "і";
                 }
             }
-            xlWorkBook.Save();
-            xlWorkBook.Close();
-            xlApp.Quit();
+            _xlWorkBook.Save();
+            _xlWorkBook.Close();
+            _xlApp.Quit();
         }
 
-        private DataTable getThePas(String path)
+        private DataTable GetThePas(String path)
         {
-            DataTable dt = new System.Data.DataTable();
+            DataTable dt = new DataTable();
 
-            Excel.Workbook newBook = xlApp.Workbooks.Open(path);
-            Excel.Worksheet newSheet = null;
+            var newBook = _xlApp.Workbooks.Open(path);
 
             dt.Columns.Add("ID", typeof(Int32));
             dt.Columns[0].AllowDBNull = false;
@@ -1141,24 +1117,22 @@ namespace pacEcxelWork
 
             for (int i = 1; i <= newBook.Worksheets.Count; i++)
             {
-                dt.Columns.Add(newBook.Worksheets.get_Item(i).Name.ToString(), typeof(String));
+                dt.Columns.Add(newBook.Worksheets.get_Item(i).Name.ToString(), typeof(string));
             }
             
             String [] st = {"B", "J", "46", "B", "L", "39", "B", "L", "45"};
             int pos = 0;
             for (int i = 1; i <= newBook.Worksheets.Count; i++)
             {
-                newSheet = (Excel.Worksheet)newBook.Worksheets.get_Item(i);
+                var newSheet = (Excel.Worksheet)newBook.Worksheets.Item[i];
                 for (int j = 0; j < st.Length; j += 3)
                 {
                     var whatType = newSheet.Range[st[j] + st[j + 2]].Value;
-                    if (whatType != null)
-                    {
-                        if (whatType.Equals("1."))
-                        { 
-                            pos = j;
-                            break;
-                        }
+                    if (whatType == null) continue;
+                    if (whatType.Equals("1."))
+                    { 
+                        pos = j;
+                        break;
                     }
                 }
 
@@ -1171,9 +1145,8 @@ namespace pacEcxelWork
                     }
                     var whatType = newSheet.Range[st[pos] + j].Value;
                     if (whatType == null) break;
-                    var ocinka = newSheet.Range[st[pos + 1] + j].Value;
-                    if (ocinka == null) ocinka = " ";
-                    dt.Rows[j - Convert.ToInt32(st[pos + 2])][newSheet.Name.ToString()] = ocinka.ToString();
+                    var ocinka = newSheet.Range[st[pos + 1] + j].Value ?? " ";
+                    dt.Rows[j - Convert.ToInt32(st[pos + 2])][newSheet.Name] = ocinka.ToString();
                 }
             }
 
@@ -1189,7 +1162,10 @@ namespace pacEcxelWork
                         if (Convert.ToInt32(dt.Rows[i][j]) < 10)
                             ifHight = false;
                     }
-                    catch (Exception ex) {  }
+                    catch (Exception)
+                    {
+                        // ignored
+                    }
                 }
 
                 if (ifHight)
@@ -1200,7 +1176,7 @@ namespace pacEcxelWork
             return dt;
         }
 
-        private double columnWidth(String s)
+        private static double ColumnWidth(string s)
         {
             if (s.Length <= 21) return 5.57;
             else if (s.Length <= 40) return 9.70;
@@ -1208,17 +1184,17 @@ namespace pacEcxelWork
             else return 13.43;
         }
 
-        public void ArhiveZvedVid(String path)
+        public void ArhiveZvedVid(string path)
         {
             if (!path.Contains("Зведена відомість успішності за"))
             {
-                MessageBox.Show("Помилка!\nНазви excel-файлів повинні співпадати із назвами заданими у програмі");
+                MessageBox.Show(Resources.ExcelWork_ArhiveZvedVid_);
                 return;
             }
 
-            xlApp = new Excel.Application();
-            xlApp.DisplayAlerts = false;
-            xlWorkBook = xlApp.Workbooks.Open(path);
+            _xlApp = new Excel.Application();
+            _xlApp.DisplayAlerts = false;
+            _xlWorkBook = _xlApp.Workbooks.Open(path);
             
             String groupArxivePath = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                 + @"User Data\Зведена відомість успішності\Архів\";
@@ -1226,10 +1202,10 @@ namespace pacEcxelWork
             String emptyBookPath = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                 + @"Data\Empty book.xls";
 
-            for (int i = 1; i <= xlWorkBook.Worksheets.Count; i++)
+            for (int i = 1; i <= _xlWorkBook.Worksheets.Count; i++)
             {
-                xlWorkSheet = (Excel.Worksheet)xlWorkBook.Worksheets.get_Item(i);
-                String sheetName = xlWorkSheet.Name;
+                _xlWorkSheet = (Excel.Worksheet)_xlWorkBook.Worksheets.Item[i];
+                String sheetName = _xlWorkSheet.Name;
 
                 if (!System.IO.File.Exists(groupArxivePath + sheetName + ".xls"))
                 {
@@ -1238,42 +1214,42 @@ namespace pacEcxelWork
 
                     System.IO.File.Copy(emptyBookPath, groupArxivePath + sheetName + ".xls", true);
 
-                    Excel.Workbook bookNew = xlApp.Workbooks.Open(groupArxivePath + sheetName + ".xls");
+                    Excel.Workbook bookNew = _xlApp.Workbooks.Open(groupArxivePath + sheetName + ".xls");
 
                     for (int j = 1; j <= semestCount; j++)
                     {
                         bookNew.Worksheets.Add();
                         bookNew.Save();
-                        bookNew.Worksheets.get_Item(1).Name = "семестр " + arabToRome(j);
+                        bookNew.Worksheets.get_Item(1).Name = "семестр " + ArabToRome(j);
                         bookNew.Save();
                     }
                     bookNew.Close();
 
                 }
-                reloadSheet2(groupArxivePath + sheetName + ".xls");
+                ReloadSheet2(groupArxivePath + sheetName + ".xls");
             }
         }
 
-        private void reloadSheet2(String path)
+        private void ReloadSheet2(String path)
         {
-            Excel.Workbook bookNew = xlApp.Workbooks.Open(path);
+            Excel.Workbook bookNew = _xlApp.Workbooks.Open(path);
 
             for (int j = 1; j <= bookNew.Worksheets.Count - 1; j++)
             {
-                Excel.Worksheet sheetNew = (Excel.Worksheet)bookNew.Worksheets.get_Item(j);
+                Excel.Worksheet sheetNew = (Excel.Worksheet)bookNew.Worksheets.Item[j];
 
-                String semestr = xlWorkSheet.Range["D5"].Value.ToString().Substring(18);
-                semestr = semestr.Substring(0, semestr.IndexOf(" "));
+                String semestr = _xlWorkSheet.Range["D5"].Value.ToString().Substring(18);
+                semestr = semestr.Substring(0, semestr.IndexOf(" ", StringComparison.Ordinal));
                 //MessageBox.Show(">" + semestr + "<\n");
 
-                String sheet = sheetNew.Name.Substring(sheetNew.Name.IndexOf(" ") + 1);
+                String sheet = sheetNew.Name.Substring(sheetNew.Name.IndexOf(" ", StringComparison.Ordinal) + 1);
                 //semestr.Substring(0, semestr.IndexOf(" "));
 
                 //MessageBox.Show(">" + sheet + "<\n" + ">" + semestr + "<");
                 if (semestr.Equals(sheet))
                 {
                     //Переприсвоєння імені із видаленням листка
-                    xlWorkSheet.Copy(sheetNew);
+                    _xlWorkSheet.Copy(sheetNew);
                     bookNew.Save();
                     String name = sheetNew.Name;
 
@@ -1283,11 +1259,11 @@ namespace pacEcxelWork
 
                     try
                     {
-                        sheetNew = (Excel.Worksheet)bookNew.Worksheets.get_Item(name);
+                        sheetNew = (Excel.Worksheet)bookNew.Worksheets.Item[name];
                     }
                     catch (Exception ex)
                     {
-                        sheetNew = (Excel.Worksheet)bookNew.Worksheets.get_Item(xlWorkSheet.Name);
+                        sheetNew = (Excel.Worksheet)bookNew.Worksheets.Item[_xlWorkSheet.Name];
                         sheetNew.Name = name;
 
                         bookNew.Save();
@@ -1297,44 +1273,51 @@ namespace pacEcxelWork
             bookNew.Close();
         }
 
-        public String arabToRome(int arab)
+        public String ArabToRome(int arab)
         {
-            String rome = "";
+            var rome = "";
             switch (arab)
             {
                 case 1:
-                    rome = "I"; break;
+                    rome = "I";
+                    break;
                 case 2:
-                    rome = "II"; break;
+                    rome = "II";
+                    break;
                 case 3:
-                    rome = "III"; break;
+                    rome = "III";
+                    break;
                 case 4:
-                    rome = "IV"; break;
+                    rome = "IV";
+                    break;
                 case 5:
-                    rome = "V"; break;
+                    rome = "V";
+                    break;
                 case 6:
-                    rome = "VI"; break;
+                    rome = "VI";
+                    break;
                 case 7:
-                    rome = "VII"; break;
+                    rome = "VII";
+                    break;
                 case 8:
-                    rome = "VIII"; break;
-
+                    rome = "VIII";
+                    break;
             }
             return rome;
         }
 
-        public String currentCurator()
+        public string CurrentCurator()
         {
             String path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                  + @"Data\Куратори.xls";
 
-            Excel.Workbook book = xlApp.Workbooks.Open(path);
-            Excel.Worksheet sheet = (Excel.Worksheet)book.Worksheets.get_Item("Куратори");
+            var book = _xlApp.Workbooks.Open(path);
+            var sheet = (Excel.Worksheet)book.Worksheets.Item["Куратори"];
 
             for (int i = 2; ; i++)
             {
                 if (sheet.Range["A" + i].Value == null) break;
-                else if (sheet.Range["A" + i].Value.ToString().Equals(currentGroupName))
+                if (sheet.Range["A" + i].Value.ToString().Equals(CurrentGroupName))
                 {
                     return sheet.Range["B" + i].Value.ToString();
                 }

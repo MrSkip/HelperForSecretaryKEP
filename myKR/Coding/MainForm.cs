@@ -1,22 +1,15 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using pacEcxelWork;
 using Excel = Microsoft.Office.Interop.Excel;
 
-namespace myKR
+namespace myKR.Coding
 {
     public partial class MainForm : Form
     {
-        public String studDBPath = null;
-        public ExcelWork exWork = null;
+        public string StudDbPath;
+        public ExcelWork ExWork;
 
         public MainForm()
         {
@@ -31,25 +24,28 @@ namespace myKR
             StreamReader readFile = new StreamReader(path);
 
             Visible = false;
-            StartForm startForm = new StartForm(readFile.ReadLine().Substring(6), readFile.ReadLine().Substring(6));
-            readFile.Close();
-
-            startForm.ShowDialog();
-            if (startForm.CANCEL) Environment.Exit(-1);
-
-            StreamWriter writeFile = new StreamWriter(path);
-            writeFile.WriteLine("[rp] |" + startForm.getTextBox()[0] + "\n"
-                              + "[bd] |" + startForm.getTextBox()[1]);
-            writeFile.Close();
-
-            studDBPath = startForm.getTextBox()[1];
-
-            exWork = startForm.excelWork;
-
-            for (int i = 0; i < exWork.sheetNames_RobPlan.Length; i++)
+            var readLine = readFile.ReadLine();
+            if (readLine != null)
             {
-                if (exWork.sheetNames_RobPlan[i] == null) break;
-                comboBox1.Items.Add(exWork.sheetNames_RobPlan[i]);
+                StartForm startForm = new StartForm(readLine.Substring(6), readLine.Substring(6));
+                readFile.Close();
+
+                startForm.ShowDialog();
+                if (startForm.Cancel) Environment.Exit(-1);
+
+                StreamWriter writeFile = new StreamWriter(path);
+                writeFile.WriteLine("[rp] |" + startForm.GetTextBox()[0] + "\n"
+                                    + "[bd] |" + startForm.GetTextBox()[1]);
+                writeFile.Close();
+
+                StudDbPath = startForm.GetTextBox()[1];
+
+                ExWork = startForm.ExcelWork;
+            }
+
+            foreach (string t in ExWork.SheetNamesRobPlan.TakeWhile(t => t != null))
+            {
+                comboBox1.Items.Add(t);
             }
 
             comboBox1.Items.Add("Усі групи");
@@ -57,23 +53,21 @@ namespace myKR
             Visible = true;
         }
 
-        private void reloadSubject()
+        private void ReloadSubject()
         {
             comboBox3.Items.Clear();
 
             int clock = 1;
             if (comboBox2.Text.Equals("2"))
             {
-                if (exWork.dsRobPlan.Tables[comboBox1.Text].Columns[5].ColumnName.ToLower().Contains("всього"))
-                    clock = 5;
-                else clock = 6;
+                clock = ExWork.DsRobPlan.Tables[comboBox1.Text].Columns[5].ColumnName.ToLower().Contains("всього") ? 5 : 6;
             }
 
             int kp = clock + 1;
-            for (int i = 0; i < exWork.dsRobPlan.Tables[comboBox1.Text].Rows.Count; i++)
+            for (int i = 0; i < ExWork.DsRobPlan.Tables[comboBox1.Text].Rows.Count; i++)
             {
-                if (!exWork.dsRobPlan.Tables[comboBox1.Text].Rows[i][clock].Equals("0") || !exWork.dsRobPlan.Tables[comboBox1.Text].Rows[i][kp].Equals("0"))
-                    comboBox3.Items.Add(exWork.dsRobPlan.Tables[comboBox1.Text].Rows[i][0].ToString());
+                if (!ExWork.DsRobPlan.Tables[comboBox1.Text].Rows[i][clock].Equals("0") || !ExWork.DsRobPlan.Tables[comboBox1.Text].Rows[i][kp].Equals("0"))
+                    comboBox3.Items.Add(ExWork.DsRobPlan.Tables[comboBox1.Text].Rows[i][0].ToString());
             }
 
             comboBox3.Items.Add("Усі предмети");
@@ -86,20 +80,18 @@ namespace myKR
         {
             if (comboBox1.Text != null)
             {
-                for (int i = 0; i < exWork.dsRobPlan.Tables.Count; i++)
+                for (int i = 0; i < ExWork.DsRobPlan.Tables.Count; i++)
                 {
-                    if (exWork.dsRobPlan.Tables[i].TableName.Equals(comboBox1.Text))
-                    {
-                        exWork.currentGroupName = comboBox1.Text;
-                        reloadSubject();
-                    }
+                    if (!ExWork.DsRobPlan.Tables[i].TableName.Equals(comboBox1.Text)) continue;
+                    ExWork.CurrentGroupName = comboBox1.Text;
+                    ReloadSubject();
                 }
             }
         }
 
         private void comboBox2_TextChanged(object sender, EventArgs e)
         {
-            reloadSubject();
+            ReloadSubject();
         }
 
         private void button1_Click_1(object sender, EventArgs e)
@@ -116,12 +108,12 @@ namespace myKR
             {
                 if (groupCount > 1)
                 {
-                    comboBox1.Text = exWork.sheetNames_RobPlan[i];
-                    reloadSubject();
+                    comboBox1.Text = ExWork.SheetNamesRobPlan[i];
+                    ReloadSubject();
                     subjectCount = comboBox3.Items.Count - 1;
-                    exWork.currentGroupName = exWork.sheetNames_RobPlan[i];
+                    ExWork.CurrentGroupName = ExWork.SheetNamesRobPlan[i];
                 }
-                else exWork.currentGroupName = comboBox1.Text.ToString();
+                else ExWork.CurrentGroupName = comboBox1.Text.ToString();
                 
                 for (int j = 0; j < subjectCount; j++)
                 {
@@ -131,7 +123,7 @@ namespace myKR
                     }
                     label4.Text = "Створення обліку успішності для групи - " + comboBox1.Text + " з предмету "
                         + comboBox3.Text;
-                    exWork.createOblicUspishnosti("123", Convert.ToInt32(comboBox2.Text.ToString()), comboBox3.Text);
+                    ExWork.CreateOblicUspishnosti("123", Convert.ToInt32(comboBox2.Text.ToString()), comboBox3.Text);
                 }
             }
             label4.Visible = false;
@@ -150,11 +142,11 @@ namespace myKR
             {
                 if (groupCount > 1)
                 {
-                    comboBox1.Text = exWork.sheetNames_RobPlan[i];
-                    exWork.currentGroupName = exWork.sheetNames_RobPlan[i];
+                    comboBox1.Text = ExWork.SheetNamesRobPlan[i];
+                    ExWork.CurrentGroupName = ExWork.SheetNamesRobPlan[i];
                 }
                 label4.Text = "Cтворення зведеної відомості за " + comboBox2.Text + " півріччя для групи - " + comboBox1.Text;
-                exWork.zvedVidomist(Convert.ToInt32(comboBox2.Text), comboBox1.Text, "");
+                ExWork.ZvedVidomist(Convert.ToInt32(comboBox2.Text), comboBox1.Text, "");
             }
             label4.Visible = false;
         }
@@ -162,17 +154,17 @@ namespace myKR
         private void button3_Click(object sender, EventArgs e)
         {
             ExcelWork ex = new ExcelWork();
-            OpenFileDialog openFile = new OpenFileDialog();
-            openFile.Filter = "Excel *.xls|*.xls";
-            openFile.Title = "Виберіть зведену відомість за поточне півріччя";
-            openFile.FileName = "Зведена відомість успішності за";
-            if (openFile.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            OpenFileDialog openFile = new OpenFileDialog
             {
-                label4.Visible = true;
-                label4.Text = "Занесення у архів зведеної відомості";
-                ex.ArhiveZvedVid(openFile.FileName);
-                label4.Visible = false;
-            }
+                Filter = "Excel *.xls|*.xls",
+                Title = "Виберіть зведену відомість за поточне півріччя",
+                FileName = "Зведена відомість успішності за"
+            };
+            if (openFile.ShowDialog() != DialogResult.OK) return;
+            label4.Visible = true;
+            label4.Text = "Занесення у архів зведеної відомості";
+            ex.ArhiveZvedVid(openFile.FileName);
+            label4.Visible = false;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -192,11 +184,11 @@ namespace myKR
             {
                 if (groupCount > 1)
                 {
-                    comboBox1.Text = exWork.sheetNames_RobPlan[i];
-                    exWork.currentGroupName = exWork.sheetNames_RobPlan[i];
+                    comboBox1.Text = ExWork.SheetNamesRobPlan[i];
+                    ExWork.CurrentGroupName = ExWork.SheetNamesRobPlan[i];
                 }
                 label4.Text = "Cтворення зведеної відомості за " + comboBox2.Text + " півріччя для групи - " + comboBox1.Text;
-                exWork.zvedVidomist(Convert.ToInt32(comboBox2.Text), comboBox1.Text, comboBox4.Text);
+                ExWork.ZvedVidomist(Convert.ToInt32(comboBox2.Text), comboBox1.Text, comboBox4.Text);
             }
             label4.Visible = false;
         }
@@ -220,8 +212,7 @@ namespace myKR
             String path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                  + @"Data\Куратори.xls";
 
-            Excel.Application xlApp = new Excel.Application();
-            xlApp.Visible = true;
+            Excel.Application xlApp = new Excel.Application {Visible = true};
             xlApp.Workbooks.Open(path);
         }
         

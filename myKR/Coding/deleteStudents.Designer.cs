@@ -1,6 +1,6 @@
 ﻿namespace myKR.Coding
 {
-    partial class deleteStudents
+    partial class DeleteStudents
     {
         /// <summary>
         /// Required designer variable.
@@ -109,8 +109,9 @@
             this.Controls.Add(this.comboBox1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Name = "deleteStudents";
+            this.Name = "DeleteStudents";
             this.Text = "Видалення";
+            this.Load += new System.EventHandler(this.deleteStudents_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 

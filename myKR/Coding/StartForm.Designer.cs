@@ -1,4 +1,4 @@
-﻿namespace myKR
+﻿namespace myKR.Coding
 {
     partial class StartForm
     {

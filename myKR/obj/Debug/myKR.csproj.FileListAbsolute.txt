@@ -43,3 +43,15 @@ D:\myKR\myKR\obj\Debug\myKR.MainForm.resources
 D:\myKR\myKR\obj\Debug\myKR.Properties.Resources.resources
 D:\myKR\myKR\obj\Debug\myKR.StartForm.resources
 D:\myKR\myKR\obj\Debug\myKR.csproj.GenerateResource.Cache
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\myKR.exe.config
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.csproj.ResolveComReference.cache
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.exe
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\myKR.exe
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\myKR.pdb
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.csprojResolveAssemblyReference.cache
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.DeleteStudents.resources
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Properties.Resources.resources
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.StartForm.resources
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.csproj.GenerateResource.Cache
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.pdb
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.MainForm.resources

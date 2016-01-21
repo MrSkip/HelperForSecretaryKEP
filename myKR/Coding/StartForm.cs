@@ -1,30 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using pacEcxelWork;
 using System.Threading;
-
+using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
-namespace myKR
+namespace myKR.Coding
 {
     public partial class StartForm : Form
     {
-        public ExcelWork excelWork = null;
-        public bool CANCEL = true;
+        public ExcelWork ExcelWork;
+        public bool Cancel = true;
 
-        public StartForm(String box1, String box2)
+        public StartForm(string field1, string fiedl2)
         {
             InitializeComponent();
             label4.Visible = false;
 
-            textBox1.Text = box1;
-            textBox2.Text = box2;
+            textBox1.Text = field1;
+            textBox2.Text = fiedl2;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -39,10 +32,12 @@ namespace myKR
 
         private void button1_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFile = new OpenFileDialog();
-            openFile.Title = "Відкриття поточного навчального плану";
-            openFile.Filter = "Excel *.xls|*.xls";
-            if (openFile.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            OpenFileDialog openFile = new OpenFileDialog
+            {
+                Title = "Відкриття поточного навчального плану",
+                Filter = "Excel *.xls|*.xls"
+            };
+            if (openFile.ShowDialog() == DialogResult.OK)
             {
                 textBox1.Text = openFile.FileName;
             }
@@ -50,10 +45,12 @@ namespace myKR
 
         private void button2_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openFile = new OpenFileDialog();
-            openFile.Title = "Відкриття бази даних студентів:";
-            openFile.Filter = "Excel *.xls|*.xls";
-            if (openFile.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            OpenFileDialog openFile = new OpenFileDialog
+            {
+                Title = "Відкриття бази даних студентів:",
+                Filter = "Excel *.xls|*.xls"
+            };
+            if (openFile.ShowDialog() == DialogResult.OK)
             {
                 textBox2.Text = openFile.FileName;
             }
@@ -61,30 +58,26 @@ namespace myKR
 
         private void button3_Click(object sender, EventArgs e)
         {
-            if (textBox1.Text != null && textBox1.Text != "" && textBox2.Text != null && textBox2.Text != "")
+            if (string.IsNullOrEmpty(textBox1.Text) || string.IsNullOrEmpty(textBox2.Text))
             {
-
-            }
-            else
-            {
-                MessageBox.Show("Усі поля обов'язкові для заповнення!","Попередження");
+                MessageBox.Show("Усі поля обов'язкові для заповнення!", "Попередження");
                 return;
             }
-            label4.Visible = true;
-            if (!System.IO.File.Exists(textBox1.Text))
+            if (!File.Exists(textBox1.Text))
             {
                 MessageBox.Show("заданий вами файл -" + textBox1.Text + " НЕ ІСНУЄ" +
-                    " НЕ ІСНУЄ\nВкажіть правильне розташування файлу");
+                    "\nВкажіть правильне розташування файлу");
                 return;
             }
-            if (!System.IO.File.Exists(textBox2.Text))
+            if (!File.Exists(textBox2.Text))
             {
                 MessageBox.Show("заданий вами файл -" + textBox1.Text + 
                     " НЕ ІСНУЄ\nВкажіть правильне розташування файлу");
                 return;
             }
 
-            CANCEL = false;
+            label4.Visible = true;
+            Cancel = false;
             button3.Enabled = false;
             button1.Enabled = false;
             button2.Enabled = false;
@@ -95,18 +88,17 @@ namespace myKR
                 () =>
                 {
                     AssignLabel("Підключення до поточного плану ...");
-                    excelWork = new ExcelWork(textBox1.Text);
+                    ExcelWork = new ExcelWork(textBox1.Text);
                     AssignLabel("Зчитування студентів ...");
-                    excelWork.LoadData_StudDB(textBox2.Text);
+                    ExcelWork.LoadData_StudDB(textBox2.Text);
 
-                    for (int i = 0; i < excelWork.sheetNames_RobPlan.Length; i++)
+                    foreach (string t in ExcelWork.SheetNamesRobPlan.TakeWhile(t => t != null))
                     {
-                        if (excelWork.sheetNames_RobPlan[i] == null) break;
-                        AssignLabel("Занесення предметів групи - " + excelWork.sheetNames_RobPlan[i]);
-                        excelWork.LoadData_RobPlan(excelWork.sheetNames_RobPlan[i]);
+                        AssignLabel("Занесення предметів групи - " + t);
+                        ExcelWork.LoadData_RobPlan(t);
                     }
 
-                    this.Invoke((MethodInvoker)delegate
+                    Invoke((MethodInvoker)delegate
                     {
                         // close the form on the forms thread
                         System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
@@ -118,7 +110,7 @@ namespace myKR
                             proc.Kill();
                             //bl = false;
                         }
-                        this.Close();
+                        Close();
                     });
                     Thread.CurrentThread.Abort();
                 });
@@ -126,7 +118,7 @@ namespace myKR
         }
 
 
-        void AssignLabel(string text)
+        private void AssignLabel(string text)
         {
             if (InvokeRequired)
             {
@@ -134,12 +126,6 @@ namespace myKR
                 return;
             }
             label4.Text = text;
-        }
-
-
-        public static void tre()
-        {
-            MessageBox.Show("Done");
         }
 
         private void button5_Click(object sender, EventArgs e)
@@ -156,9 +142,9 @@ namespace myKR
             xlApp.Quit();
         }
 
-        public String[] getTextBox()
+        public string[] GetTextBox()
         {
-            return new String[] { textBox1.Text, textBox2.Text };
+            return new[] { textBox1.Text, textBox2.Text };
         }
 
         private void button5_Click_1(object sender, EventArgs e)

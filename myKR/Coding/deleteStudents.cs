@@ -1,21 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace myKR.Coding
 {
-    public partial class deleteStudents : Form
+    public partial class DeleteStudents : Form
     {
-        public String studDBPath = null;
-        public deleteStudents(String studDBPath)
+        public string StudDbPath;
+        public DeleteStudents(string studDbPath)
         {
-            this.studDBPath = studDBPath;
+            StudDbPath = studDbPath;
             InitializeComponent();
         }
 
@@ -28,16 +21,14 @@ namespace myKR.Coding
         {
             if (comboBox1.Text != null && comboBox2.Text != null)
             {
-                if (!comboBox1.Text.ToString().Equals("ПІ") || !comboBox1.Text.ToString().Equals("МТ"))
+                if (!comboBox1.Text.Equals("ПІ") || !comboBox1.Text.Equals("МТ"))
                 {
                     MessageBox.Show("Заповніть коректно текстове поле 1", "Помилка!");
                     return;
                 }
-                if (!comboBox2.Text.ToString().Equals("3") || !comboBox2.Text.ToString().Equals("4"))
-                {
-                    MessageBox.Show("Заповніть коректно текстове поле 2", "Помилка!");
-                    return;
-                }
+                if (comboBox2.Text.Equals("3") && comboBox2.Text.Equals("4")) return;
+                MessageBox.Show("Заповніть коректно текстове поле 2", "Помилка!");
+                return;
             }
             else
             {
@@ -48,6 +39,11 @@ namespace myKR.Coding
             //як саме записуватиметься курс у бд - арабськими чи римськими символами
             ///
             //
+        }
+
+        private void deleteStudents_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
