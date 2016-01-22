@@ -148,7 +148,7 @@ namespace myKR.Coding
                     //Задаємо усі можиливі місця розміщення клітини з назвою про державний екзамен  - "Назва"
                     //[][0] - колонка з назвою екзамена, [][1] - колонка з рядком езамену, [][2] - колонка з назвою семестра проходження екзамену
                     //відповідно, назва екзамену і назва семестру будуть знаходитися у одному рядку
-                    String[][] doubleCell = {
+                    string[][] doubleCell = {
                                                 new[] {"BE", "49", "BO"},
                                                 new[] {"BE", "47", "BO"},
                                                 new[] {"BE", "42", "BO"},
@@ -223,7 +223,7 @@ namespace myKR.Coding
                     iZaput++;
 
                     //Add to table column "диф  залік" - if exist
-                    if (_xlWorkSheet.Cells[18, "AR"].Value != null) 
+                    if (_xlWorkSheet.Cells[18, "AR"].Value != null)
                     {
                         DsRobPlan.Tables[currentGroupName].Columns.Add("Д/З" + term);
                         countFormControl = 3;

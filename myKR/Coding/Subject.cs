@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace myKR.Coding
 {
@@ -11,10 +12,10 @@ namespace myKR.Coding
         public string Curator;
         public string Course;
         public string Year;
-        public Subject Subject;
-        public Practice Practice;
-        public StateExamination StateExamination;
-        public Students Students;
+        public List<Subject> Subjects;
+        public List<Practice> Practice;
+        public List<StateExamination> StateExamination;
+        public List<Students> Students;
 
         public int GetYearInIneget()
         {
@@ -32,11 +33,11 @@ namespace myKR.Coding
 
     public class Semestr
     {
-        public int CountOfHours;
-        public int CursovaRobota;
-        public int Isput;
-        public int DyfZalikOrZalic;
-        public int DyfZalik;
+        public double CountOfHours = 0;
+        public double CursovaRobota = 0;
+        public double Isput = 0;
+        public double Zalic = 0;
+        public double DyfZalik = 0;
     }
 
     public class Practice
@@ -44,7 +45,7 @@ namespace myKR.Coding
         public string Name;
         public string Semestr;
         public string FormOfControll;
-        public int CountOfHours;
+        public double CountOfHours;
         public string Teacher;
     }
 

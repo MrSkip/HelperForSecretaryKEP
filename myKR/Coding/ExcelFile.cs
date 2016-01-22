@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -139,35 +140,126 @@ namespace myKR.Coding
 
             group.Year = s;
 
-            ReadSubject(group.Subject, sheet);
+            group.Subjects = ReadSubject(sheet);
 
             return group;
         }
 
-        private static void ReadSubject(Subject subject, Excel.Worksheet sheet)
+        private static List<Subject> ReadSubject(Excel.Worksheet sheet)
         {
+            List<Subject> subjects = new List<Subject>();
             //[0] - Hours; [1] - Cursova; [2] - Ispyt (Examen) [3] - DyfZalikOrZalic; [4] - DyfZalik (if exist)
             string[]
-                firstSemestr = {"Y", "AK", "AO", "AQ", "AR"},
-                secondSemestr = {"AS", "BE", "BI", "BK", "BL" };
+                firstSemestr = { "Y", "AK", "AO", "AQ", "AR" },
+                secondSemestr = { "AS", "BE", "BI", "BK", "BL" },
+                help = { "всього", "курсові роботи, проекти", "екзамен", "залік", "диф  залік" };
+            bool existingDyfZalik = false;
+            bool ifDufZalic = true;
+
+            // check the cells
+            var s = sheet.Cells[15, "C"].Value;
+            if (s == null || string.IsNullOrWhiteSpace(s.ToString()) || !s.Trim().ToLower().Equals("назви навчальних  дисциплін"))
+            {
+                MassageError(sheet.Name, "C15", "Назви навчальних  дисциплін");
+                return new List<Subject>();
+            }
+
+            // check the cells
+            s = sheet.Cells[18, "AR"].Value;
+            if (!string.IsNullOrEmpty(s) && s.Trim().ToLower().Equals("диф  залік"))
+                ifDufZalic = false;
+
+            // check the cells
+            s = sheet.Cells[18, "AQ"].Value;
+            if (!string.IsNullOrEmpty(s) && s.Trim().ToLower().Equals("диф  залік"))
+                existingDyfZalik = true;
+
             int n = 14;
+
             while (true)
             {
                 n++;
-                string value = sheet.Cells[n, "C"].Value;
-                if (string.IsNullOrEmpty(value))
+                
+                var subjectName = sheet.Cells[n, "C"].Value;
+                if (subjectName == null || string.IsNullOrEmpty(subjectName.ToString()) || n == 15)
                     continue;
-                if (value.Trim().ToLower().Equals("разом"))
+                if (subjectName.ToString().Trim().ToLower().Equals("разом"))
                     break;
-                value = value.Trim();
 
+                string teacher = sheet.Cells[n, "BN"].Value;
+                if (string.IsNullOrEmpty(teacher))
+                    teacher = "";
+
+                Subject subject = new Subject();
+                try
+                {
+                    subject.Name = subjectName.ToString().Trim();
+                    subject.Teacher = teacher;
+                    for (int i = 0; i < 2; i++)
+                    {
+                        string[] list = i == 0 ? firstSemestr :  secondSemestr;
+                        var ss = sheet.Cells[n, list[0]].Value;
+
+                        // if cursova robota has same of the pas the not continue
+                        bool bl = true;
+                        var kp = sheet.Cells[n, list[1]].Value;
+                        if (kp != null && !string.IsNullOrEmpty(kp.ToString()))
+                            bl = false;
+
+                        if ((ss == null || string.IsNullOrEmpty(ss.ToString())) && bl)
+                            continue;
+
+                        Semestr semestr = new Semestr();
+
+                        if (ss == null || string.IsNullOrEmpty(ss.ToString()))
+                            semestr.CountOfHours = 0;
+                        else semestr.CountOfHours = ss;
+
+                        ss = sheet.Cells[n, list[1]].Value;
+                        if (ss != null && (!string.IsNullOrEmpty(ss.ToString()) || !ss.ToString().Equals("0")))
+                            semestr.CursovaRobota = ss;
+
+                        ss = sheet.Cells[n, list[2]].Value;
+                        if (ss != null && (!string.IsNullOrEmpty(ss.ToString()) || !ss.ToString().Equals("0")))
+                            semestr.Isput = ss;
+
+                        ss = sheet.Cells[n, list[3]].Value;
+                        if (ss != null && (!string.IsNullOrEmpty(ss.ToString()) || !ss.ToString().Equals("0")))
+                        {
+                            if (ifDufZalic) semestr.DyfZalik = ss;
+                            else semestr.Zalic = ss;
+                        }
+
+                        if (!existingDyfZalik)
+                        {
+                            ss = sheet.Cells[n, list[4]].Value;
+                            if (ss != null && (!string.IsNullOrEmpty(ss.ToString()) || !ss.ToString().Equals("0")))
+                                semestr.DyfZalik = ss;
+                        }
+
+                        if (i == 0) subject.FirstSemestr = semestr;
+                        else subject.SecondSemestr = semestr;
+                    }
+                    subjects.Add(subject);
+                }
+                catch (Exception exception)
+                {
+                    MassageError(sheet.Name, "", "Щось не гараз із записами про предмет\n" + exception);
+                }
             }
-            
+            return subjects;
+        }
+
+        private static List<Practice> ReadPractice(Excel.Worksheet sheet)
+        {
+            List<Practice> practices = new List<Practice>();
+
+            return practices;
         }
 
         private static void MassageError(string sheetName, string cell, string format)
         {
-            MessageBox.Show("Помилка у робочому листі [" + sheetName + "]!\nСлід дотримуватися цього формату для клітини [" + cell + "]:\n" + format);
+            MessageBox.Show("Помилка у робочому листі [" + sheetName + "]!\nСлід дотримуватися цього формату для клітини [" + cell + "]:\n[" + format + "]");
         }
 
         private static int GetPositionForCellCource(string str)
