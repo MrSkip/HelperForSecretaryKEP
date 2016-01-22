@@ -85,6 +85,7 @@
     <Compile Include="Coding\deleteStudents.Designer.cs">
       <DependentUpon>deleteStudents.cs</DependentUpon>
     </Compile>
+    <Compile Include="Coding\ExcelFile.cs" />
     <Compile Include="Coding\ExcelWork.cs" />
     <Compile Include="Coding\MainForm.cs">
       <SubType>Form</SubType>
@@ -92,6 +93,7 @@
     <Compile Include="Coding\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Coding\Manager.cs" />
     <Compile Include="Coding\Subject.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

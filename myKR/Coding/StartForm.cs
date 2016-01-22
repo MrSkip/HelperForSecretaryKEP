@@ -83,34 +83,34 @@ namespace myKR.Coding
             button2.Enabled = false;
             textBox1.Enabled = false;
             textBox2.Enabled = false;
-
-            var thread = new Thread(
-                () =>
-                {
-                    AssignLabel("Підключення до поточного плану ...");
-                    ExcelWork = new ExcelWork(textBox1.Text);
-                    AssignLabel("Зчитування студентів ...");
-                    ExcelWork.LoadData_StudDB(textBox2.Text);
-
-                    foreach (string t in ExcelWork.SheetNamesRobPlan.TakeWhile(t => t != null))
-                    {
-                        AssignLabel("Занесення предметів групи - " + t);
-                        ExcelWork.LoadData_RobPlan(t);
-                    }
-
-                    Invoke((MethodInvoker)delegate
-                    {
-                        // close the form on the forms thread
-                        System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
-                        foreach (System.Diagnostics.Process proc in excelProcs)
-                        {
-                            proc.Kill();
-                        }
-                        Close();
-                    });
-                    Thread.CurrentThread.Abort();
-                });
-            thread.Start();
+            Manager.ReadData(textBox1.Text, textBox2.Text);
+//            var thread = new Thread(
+//                () =>
+//                {
+//                    AssignLabel("Підключення до поточного плану ...");
+//                    ExcelWork = new ExcelWork(textBox1.Text);
+//                    AssignLabel("Зчитування студентів ...");
+//                    ExcelWork.LoadData_StudDB(textBox2.Text);
+//
+//                    foreach (string t in ExcelWork.SheetNamesRobPlan.TakeWhile(t => t != null))
+//                    {
+//                        AssignLabel("Занесення предметів групи - " + t);
+//                        ExcelWork.LoadData_RobPlan(t);
+//                    }
+//
+//                    Invoke((MethodInvoker)delegate
+//                    {
+//                        // close the form on the forms thread
+//                        System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
+//                        foreach (System.Diagnostics.Process proc in excelProcs)
+//                        {
+//                            proc.Kill();
+//                        }
+//                        Close();
+//                    });
+//                    Thread.CurrentThread.Abort();
+//                });
+//            thread.Start();
         }
 
 
