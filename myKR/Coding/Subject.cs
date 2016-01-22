@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace myKR.Coding
 {
@@ -46,7 +45,7 @@ namespace myKR.Coding
         public string Semestr;
         public string FormOfControll;
         public double CountOfHours;
-        public string Teacher;
+        public List<string> Teacher;
     }
 
     public class StateExamination

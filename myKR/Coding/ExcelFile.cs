@@ -141,6 +141,8 @@ namespace myKR.Coding
             group.Year = s;
 
             group.Subjects = ReadSubject(sheet);
+            group.Practice = ReadPractice(sheet);
+            group.StateExamination = ReadStateExamination(sheet);
 
             return group;
         }
@@ -151,8 +153,7 @@ namespace myKR.Coding
             //[0] - Hours; [1] - Cursova; [2] - Ispyt (Examen) [3] - DyfZalikOrZalic; [4] - DyfZalik (if exist)
             string[]
                 firstSemestr = { "Y", "AK", "AO", "AQ", "AR" },
-                secondSemestr = { "AS", "BE", "BI", "BK", "BL" },
-                help = { "всього", "курсові роботи, проекти", "екзамен", "залік", "диф  залік" };
+                secondSemestr = { "AS", "BE", "BI", "BK", "BL" };
             bool existingDyfZalik = false;
             bool ifDufZalic = true;
 
@@ -253,8 +254,78 @@ namespace myKR.Coding
         private static List<Practice> ReadPractice(Excel.Worksheet sheet)
         {
             List<Practice> practices = new List<Practice>();
+            string[][] position =
+            {
+                // Rows - PositionNameOfPractice - Semest - CountOfHours - FormaControlling - Teacher1 - Teacher2
+                new[] {"40", "C", "A", "AA", "AE", "AJ", "AS"},
+                new[] {"41", "C", "A", "AA", "AE", "AJ", "AS"},
+                new[] {"43", "C", "A", "AA", "AE", "AJ", "AS"},
+                new[] {"47", "C", "A", "AA", "AE", "AJ", "AS"},
+                new[] {"49", "C", "A", "AA", "AE", "AJ", "AS"}
+            };
+            foreach (string[] strings in position)
+            {
+                var value = sheet.Cells[int.Parse(strings[0]), strings[1]].Value;
+                if (value != null && value.ToString().Trim().ToLower().Equals("назва практики"))
+                {
+                    int n = int.Parse(strings[0]);
+                    while (true)
+                    {
+                        n++;
+                        value = sheet.Cells[n, strings[1]].Value;
 
+                        if (value == null || string.IsNullOrEmpty(value.ToString()))
+                            break;
+
+                        if (!value.ToString().Trim().ToLower().Equals("навчальна") &&
+                            !value.ToString().Trim().ToLower().Equals("виробнича"))
+                        {
+                            try
+                            {
+                                Practice practice = new Practice();
+                                List<string> list = new List<string>();
+
+                                practice.Name = value.ToString().Trim();
+
+                                value = sheet.Cells[n, strings[2]].Value;
+                                practice.Semestr = value == null ? "" : value.ToString();
+
+                                value = sheet.Cells[n, strings[3]].Value;
+                                if (value == null || string.IsNullOrEmpty(value.ToString()))
+                                    practice.CountOfHours = 0;
+                                else practice.CountOfHours = double.Parse(value.ToString());
+
+                                value = sheet.Cells[n, strings[4]].Value;
+                                practice.FormOfControll = value == null ? "" : value.ToString();
+
+                                value = sheet.Cells[n, strings[5]].Value;
+                                if (value != null && !string.IsNullOrEmpty(value.ToString()))
+                                    list.Add(value.ToString());
+
+                                value = sheet.Cells[n, strings[6]].Value;
+                                if (value != null && !string.IsNullOrEmpty(value.ToString()))
+                                    list.Add(value.ToString());
+
+                                practice.Teacher = list;
+                                practices.Add(practice);
+                            }
+                            catch (Exception e)
+                            {
+                                MassageError(sheet.Name, "", "Щось не гаразд із зчитуванням практики\n" + e);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
             return practices;
+        }
+
+        private static List<StateExamination> ReadStateExamination(Excel.Worksheet sheet)
+        {
+            List<StateExamination> examinations = new List<StateExamination>();
+
+            return examinations;
         }
 
         private static void MassageError(string sheetName, string cell, string format)
