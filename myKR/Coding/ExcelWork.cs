@@ -6,7 +6,6 @@ using myKR.Properties;
 using DataTable = System.Data.DataTable;
 using Excel = Microsoft.Office.Interop.Excel;
 
-
 namespace myKR.Coding
 {
     public class ExcelWork
@@ -32,28 +31,19 @@ namespace myKR.Coding
         //
         public string CurrentGroupName;
 
+        private string _numberOfOblic, _subject, _arabSemestr;
+
         public ExcelWork(string pathRobPlan)
         {
             _pathRobPlan = pathRobPlan;
-//            MisValue = misValue;
             LoadSheetName_RobPlan();
         }
-//        public ExcelWork(object misValue)
-//        {
-//            MisValue = misValue;
-//        }
 
         public ExcelWork()
         {
         }
 
-        public object MisValue { get; set; }
-
-        public int Semestr
-        {
-            get { return _semestr; }
-            set { _semestr = value; }
-        }
+        public int Semestr { get; set; }
 
         private void LoadSheetName_RobPlan()
         {
@@ -103,8 +93,8 @@ namespace myKR.Coding
             ArgDataSet.Tables[currentGroupName].Columns.Add("Друге півріччя");
             ArgDataSet.Tables[currentGroupName].Columns.Add("Код спеціальності");
 
-            var argNewRow = ArgDataSet.Tables[currentGroupName].NewRow();
-            ArgDataSet.Tables[currentGroupName].Rows.Add(argNewRow);
+
+            ArgDataSet.Tables[currentGroupName].Rows.Add(ArgDataSet.Tables[currentGroupName].NewRow());
 
             //Read "Напряму підготовки"
             string arg = _xlWorkSheet.Cells[6, "R"].Value.ToString().Trim();
@@ -131,7 +121,7 @@ namespace myKR.Coding
             int xlIterator = 14;
             int countFormControl = 2;
 
-            String[] zaput = new String[12];
+            string[] zaput = new string[12];
             int iZaput = 0;
 
             DataTable countryPas = new DataTable();
@@ -143,16 +133,15 @@ namespace myKR.Coding
                 xlIterator++;
 
                 String value = _xlWorkSheet.Cells[xlIterator, "C"].Value;
-                //MessageBox.Show(value);
                 if (value == null) continue;
-                else if (!value.Equals("Назви навчальних  дисциплін") && xlIterator == 15)
+                if (!value.Equals("Назви навчальних  дисциплін") && xlIterator == 15)
                 {
                     MessageBox.Show(string.Format("Назви значень полів у:\n{0}\nне співпадає із заданами значеннями у програмі\n" + "Джерело - {1}\n У клітині \"С15\" очікувалося значення 'Назви навчальних  дисциплін'", _pathRobPlan, currentGroupName));
                     _xlWorkBook.Close();
                     _xlApp.Quit();
                     return;
                 }
-                else if (value.Trim().Equals("Разом")) break;
+                if (value.Trim().Equals("Разом")) break;
 
                 if (xlIterator == 15)
                 {
@@ -297,16 +286,15 @@ namespace myKR.Coding
 
                     //Збільшення значень у полу 'Іспит' на 100, якщо це є державний екзамен
                     if (countryPas.Rows.Count <= 0) continue;
-                    if (countryPas.Rows[0][0] != null && (dataRow.Table.Columns[i].ColumnName.Contains("Назви") ||
-                                                          dataRow.Table.Columns[i].ColumnName.Contains("Іспит")) )
+                    if (countryPas.Rows[0][0] == null ||
+                        (!dataRow.Table.Columns[i].ColumnName.Contains("Назви") &&
+                         !dataRow.Table.Columns[i].ColumnName.Contains("Іспит"))) continue;
+                    foreach (DataRow dr in countryPas.Rows)
                     {
-                        foreach (DataRow dr in countryPas.Rows)
+                        if (dr[0].ToString().ToLower().Contains(dataRow[0].ToString().ToLower()) 
+                            && dataRow.Table.Columns[i].ColumnName.Equals("Іспит [семестр " + dr[1].ToString().Trim() + "]"))
                         {
-                            if (dr[0].ToString().ToLower().Contains(dataRow[0].ToString().ToLower()) 
-                                && dataRow.Table.Columns[i].ColumnName.Equals("Іспит [семестр " + dr[1].ToString().Trim() + "]"))
-                            {
-                                dataRow[i] = Convert.ToDouble(dataRow[i].ToString()) + 100;
-                            }
+                            dataRow[i] = Convert.ToDouble(dataRow[i].ToString()) + 100;
                         }
                     }
                 }
@@ -418,9 +406,6 @@ namespace myKR.Coding
             _xlWorkBook.Close();
             _xlApp.Quit();
         }
-
-        private String _numberOfOblic, _subject, _arabSemestr;
-        private int _semestr;
         public void CreateOblicUspishnosti(string numberOfOblic, int semestr, string subject)
         {
             if (numberOfOblic == null) throw new ArgumentNullException("numberOfOblic");
@@ -428,7 +413,7 @@ namespace myKR.Coding
             _xlApp.DisplayAlerts = false;
 
             _numberOfOblic = numberOfOblic;
-            _semestr = semestr;
+            Semestr = semestr;
             _subject = subject;
 
             if (semestr == 1) _arabSemestr = ArgDataSet.Tables[CurrentGroupName].Rows[0]["Перше півріччя"].ToString();
@@ -787,7 +772,7 @@ namespace myKR.Coding
         public void ZvedVidomist(int semestr, string subject, string mount)
         {
             _subject = subject;
-            _semestr = semestr;
+            Semestr = semestr;
 
 
             _arabSemestr = semestr == 1 ? ArgDataSet.Tables[CurrentGroupName].Rows[0]["Перше півріччя"].ToString() : ArgDataSet.Tables[CurrentGroupName].Rows[0]["Друге півріччя"].ToString();

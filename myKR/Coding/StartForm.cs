@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
-using Excel = Microsoft.Office.Interop.Excel;
+
 namespace myKR.Coding
 {
     public partial class StartForm : Form
@@ -102,13 +102,9 @@ namespace myKR.Coding
                     {
                         // close the form on the forms thread
                         System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
-                       // bool bl = true;
                         foreach (System.Diagnostics.Process proc in excelProcs)
                         {
-                            //if (bl)
-                            //    MessageBox.Show("Переконайтеся, що всі застосунки Excel закриті,\n не збережені дані будуть втрачені!", "Уважно!");
                             proc.Kill();
-                            //bl = false;
                         }
                         Close();
                     });
@@ -128,31 +124,9 @@ namespace myKR.Coding
             label4.Text = text;
         }
 
-        private void button5_Click(object sender, EventArgs e)
-        {
-            Excel.Application xlApp = new Excel.Application();
-            Excel.Workbook xlBook = xlApp.Workbooks.Open(@"D:\Книга11.xls");
-            Excel.Worksheet xlSheet = xlBook.Worksheets.get_Item(1);
-
-            //xlSheet.Range["A1"].Value = 123;
-            xlSheet.Range["A1"].NumberFormatLocal = "##,##";
-
-            xlBook.Save();
-            xlBook.Close();
-            xlApp.Quit();
-        }
-
         public string[] GetTextBox()
         {
             return new[] { textBox1.Text, textBox2.Text };
-        }
-
-        private void button5_Click_1(object sender, EventArgs e)
-        {
-            ExcelWork ex = new ExcelWork(textBox1.Text);
-            OpenFileDialog openFile = new OpenFileDialog();
-            openFile.ShowDialog();
-            ex.ArhiveZvedVid(openFile.FileName);
         }
 
         private void StartForm_Load(object sender, EventArgs e)

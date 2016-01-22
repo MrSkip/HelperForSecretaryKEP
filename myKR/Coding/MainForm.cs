@@ -19,7 +19,7 @@ namespace myKR.Coding
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            String path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
+            string path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                             + @"Data\start.txt";
             StreamReader readFile = new StreamReader(path);
 
@@ -74,18 +74,14 @@ namespace myKR.Coding
             comboBox3.Text = comboBox3.Items[0].ToString();
         }
 
-        
-
         private void comboBox1_TextChanged(object sender, EventArgs e)
         {
-            if (comboBox1.Text != null)
+            if (string.IsNullOrEmpty(comboBox1.Text)) return;
+            for (int i = 0; i < ExWork.DsRobPlan.Tables.Count; i++)
             {
-                for (int i = 0; i < ExWork.DsRobPlan.Tables.Count; i++)
-                {
-                    if (!ExWork.DsRobPlan.Tables[i].TableName.Equals(comboBox1.Text)) continue;
-                    ExWork.CurrentGroupName = comboBox1.Text;
-                    ReloadSubject();
-                }
+                if (!ExWork.DsRobPlan.Tables[i].TableName.Equals(comboBox1.Text)) continue;
+                ExWork.CurrentGroupName = comboBox1.Text;
+                ReloadSubject();
             }
         }
 
