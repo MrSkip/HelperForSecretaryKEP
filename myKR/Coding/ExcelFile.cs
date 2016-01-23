@@ -8,10 +8,11 @@ namespace myKR.Coding
 {
     public static class ExcelFile
     {
+        public static Excel.Application App;
         public static void ReadRobPlan(string pathToRobPlan)
         {
-            Excel.Application app = new Excel.Application();
-            Excel.Workbook book = app.Workbooks.Open(pathToRobPlan);
+            App = new Excel.Application();
+            Excel.Workbook book = App.Workbooks.Open(pathToRobPlan);
 
             foreach (Excel.Worksheet sheet in book.Worksheets)
             {
@@ -21,8 +22,69 @@ namespace myKR.Coding
                     Manager.Groups.Add(ReadSheetFromRobPlan(sheet));
                 }
             }
+            book.Close();
+            App.Quit();
+        }
 
-            app.Quit();
+        public static void SetStudentsIntoGroup(string pathToStudents)
+        {
+            List<Student> students = ReadStudents(pathToStudents);
+            foreach (Group group in Manager.Groups)
+            {
+                group.Students = students.FindAll(student => student.Group.Equals(group.Name));
+            }
+        }
+
+        public static List<Student> ReadStudents(string pathToStudents)
+        {
+            App = new Excel.Application();
+            Excel.Workbook book = App.Workbooks.Open(pathToStudents);
+            Excel.Worksheet sheet = sheet = (Excel.Worksheet)book.Worksheets.Item[1];
+
+            List<Student> students = new List<Student>();
+
+            string[] position = {"C", "D", "E", "G", "L"};
+            int n = 1;
+
+            while (true)
+            {
+                try
+                {
+                    n++;
+                    var value = sheet.Cells[n, "C"].Value;
+                    if (value == null || string.IsNullOrEmpty(value.ToString()))
+                        if (n >= 5) break;
+                        else continue;
+
+                    Student student = new Student {Pib = value.ToString().Trim()};
+
+                    value = sheet.Cells[n, "D"].Value;
+                    if (value != null)
+                        student.NumberOfBook = value.ToString();
+
+                    value = sheet.Cells[n, "E"].Value;
+                    if (value != null)
+                        student.Group = value.ToString();
+
+                    value = sheet.Cells[n, "G"].Value;
+                    if (value != null)
+                        student.FormaTeaching = value.ToString();
+
+                    value = sheet.Cells[n, "L"].Value;
+                    if (value != null)
+                        student.Benefits = value.ToString();
+
+                    students.Add(student);
+                }
+                catch (Exception e)
+                {
+                    MassageError(sheet.Name, "", "Щось не гаразд із зчитуванням студентів\n" + e);
+                }
+            }
+
+            book.Close();
+            App.Quit();
+            return students;
         }
 
         private static Group ReadSheetFromRobPlan(Excel.Worksheet sheet)
@@ -324,7 +386,48 @@ namespace myKR.Coding
         private static List<StateExamination> ReadStateExamination(Excel.Worksheet sheet)
         {
             List<StateExamination> examinations = new List<StateExamination>();
+            string[][] position =
+            {
+                new []{"49", "BE", "BO"},
+                new []{"40", "BE", "BO"},
+                new []{"40", "AX", "BO"},
+                new []{"47", "BE", "BO"},
+                new []{"41", "BE", "BO"},
+                new []{"43", "BE", "BO"},
+                new []{"38", "AX", "BO"}
+            };
 
+            foreach (string[] strings in position)
+            {
+                try
+                {
+                    var value = sheet.Cells[int.Parse(strings[0]), strings[1]].Value;
+                    if (value != null && value.ToString().Trim().ToLower().Equals("назва"))
+                    {
+                        int n = Int32.Parse(strings[0]);
+                        while (true)
+                        {
+                            n++;
+                            value = sheet.Cells[n, strings[2]].Value;
+                            if (value == null || string.IsNullOrEmpty(value.ToString()))
+                                break;
+                            StateExamination examination = new StateExamination();
+                            var nameOfExamen = sheet.Cells[n, strings[1]].Value;
+                            if (nameOfExamen != null && !string.IsNullOrEmpty(nameOfExamen.ToString()))
+                            {
+                                examination.Name = nameOfExamen.ToString();
+                                examination.Semestr = value.ToString();
+                                examinations.Add(examination);
+                            }
+                        }
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    MassageError(sheet.Name, "", "Щось не гаразд із зчитуванням державних екзаменів\n" + e);
+                }
+            }
             return examinations;
         }
 

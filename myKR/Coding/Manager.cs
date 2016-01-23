@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace myKR.Coding
 {
@@ -11,6 +13,7 @@ namespace myKR.Coding
         {
             if (Groups.Count >= 0) Groups.Clear();
             ExcelFile.ReadRobPlan(pathToRobPlan);
+            ExcelFile.SetStudentsIntoGroup(pathToStudent);
         }
 
         public static List<string> GetlistOfGroupsName()

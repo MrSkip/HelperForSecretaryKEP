@@ -14,7 +14,7 @@ namespace myKR.Coding
         public List<Subject> Subjects;
         public List<Practice> Practice;
         public List<StateExamination> StateExamination;
-        public List<Students> Students;
+        public List<Student> Students;
 
         public int GetYearInIneget()
         {
@@ -51,13 +51,14 @@ namespace myKR.Coding
     public class StateExamination
     {
         public string Name;
-        public int Semestr;
+        public string Semestr;
     }
 
-    public class Students
+    public class Student
     {
         public string Pib;
         public string NumberOfBook;
+        public string Group;
         public string FormaTeaching;
         public string Benefits;
     }
