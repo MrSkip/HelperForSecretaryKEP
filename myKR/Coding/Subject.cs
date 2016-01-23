@@ -25,6 +25,7 @@ namespace myKR.Coding
     {
         public string Name;
         public string Teacher;
+        public string NumberOfOlic;
         public Semestr
             FirstSemestr,
             SecondSemestr;
@@ -45,6 +46,7 @@ namespace myKR.Coding
         public string Semestr;
         public string FormOfControll;
         public double CountOfHours;
+        public string NumberOfOlic;
         public List<string> Teacher;
     }
 
@@ -61,5 +63,12 @@ namespace myKR.Coding
         public string Group;
         public string FormaTeaching;
         public string Benefits;
+    }
+
+    public class NumberOfOblic
+    {
+        public string Number;
+        public string Subject;
+        public string Group;
     }
 }

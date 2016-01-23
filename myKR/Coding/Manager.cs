@@ -13,7 +13,8 @@ namespace myKR.Coding
         {
             if (Groups.Count >= 0) Groups.Clear();
             ExcelFile.ReadRobPlan(pathToRobPlan);
-            ExcelFile.SetStudentsIntoGroup(pathToStudent);
+            ExcelFile.ReadStudentsAndOlicAndCurators(pathToStudent);
+            
         }
 
         public static List<string> GetlistOfGroupsName()

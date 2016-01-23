@@ -26,24 +26,150 @@ namespace myKR.Coding
             App.Quit();
         }
 
-        public static void SetStudentsIntoGroup(string pathToStudents)
-        {
-            List<Student> students = ReadStudents(pathToStudents);
-            foreach (Group group in Manager.Groups)
-            {
-                group.Students = students.FindAll(student => student.Group.Equals(group.Name));
-            }
-        }
-
-        public static List<Student> ReadStudents(string pathToStudents)
+        public static void ReadStudentsAndOlicAndCurators(string pathToDb)
         {
             App = new Excel.Application();
-            Excel.Workbook book = App.Workbooks.Open(pathToStudents);
-            Excel.Worksheet sheet = sheet = (Excel.Worksheet)book.Worksheets.Item[1];
+            Excel.Workbook book = App.Workbooks.Open(pathToDb);
 
+            // Read [База студентів]
+//            try
+//            {
+//                List<Student> students = ReadStudents((Excel.Worksheet)book.Worksheets.Item["База студентів"]);
+//                foreach (Group group in Manager.Groups)
+//                {
+//                    group.Students = students.FindAll(student => student.Group.Equals(group.Name));
+//                }
+//            }
+//            catch (Exception e)
+//            {
+//                MassageError("База студентів", "", "Щось не гаразд із зчитуванням студентів\nМожливо, лист [База студентів] відсунтій - створіть його\n" + e);
+//            }
+
+            // Read [Реєстраційна відомість (журнал)]
+            try
+            {
+                List<NumberOfOblic> oblics = ReadNumbersOfOblic((Excel.Worksheet)book.Worksheets.Item["Реєстраційна відомість (журнал)"]);
+                foreach (Group group in Manager.Groups)
+                {
+                    foreach (NumberOfOblic numberOfOblic in oblics.FindAll(oblic => CustomEquals(oblic.Group, @group.Name)))
+                    {
+                        Subject find = @group.Subjects.Find(subject => CustomEquals(subject.Name, numberOfOblic.Subject));
+                        if (find != null)
+                            find.NumberOfOlic = numberOfOblic.Number;
+
+                        Practice practice =
+                            group.Practice.Find(practice1 => CustomEquals(practice1.Name, numberOfOblic.Subject));
+                        if (practice != null)
+                            practice.NumberOfOlic = numberOfOblic.Number;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                MassageError("Реєстраційна відомість (журнал)", "", "Щось не гаразд із зчитуванням реєстраційної відомості\nМожливо, лист [Реєстраційна відомість (журнал)] відсунтій - створіть його\n" + e);
+            }
+
+            // Read [Куратори]
+            try
+            {
+                List<string[]> list =
+                    ReadCurator((Excel.Worksheet) book.Worksheets.Item["Куратори"]);
+                foreach (Group group in Manager.Groups)
+                {
+                    string[] s = list.Find(strings => CustomEquals(strings[1], group.Name));
+                    if (s != null)
+                        group.Curator = s[0];
+                }
+            }
+            catch (Exception e)
+            {
+                MassageError("[Куратори]", "", "Щось не гараз із зчитування кураторів груп\n" + e);
+            }
+
+            book.Close();
+            App.Quit();
+        }
+
+        public static List<string[]> ReadCurator(Excel.Worksheet sheet)
+        {
+            List<string[]> curators = new List<string[]>();
+            try
+            {
+                int n = 1;
+                while (true)
+                {
+                    n++;
+                    var value = sheet.Cells[n, "A"].Value;
+                    if (value == null || string.IsNullOrEmpty(value.ToString()))
+                        break;
+                    string curatorName = value.ToString();
+
+                    value = sheet.Cells[n, "B"].Value;
+                    if (value == null || string.IsNullOrEmpty(value.ToString()))
+                        continue;
+                    string groupName = value.ToString();
+
+                    curators.Add(new[] {curatorName.Trim(), groupName.Trim()});
+                }
+            }
+            catch (Exception e)
+            {
+                MassageError(sheet.Name, "", "Щось не гараз із зчитування кураторів груп\n" + e);
+            }
+            return curators;
+        }
+
+        private static bool CustomEquals(string first, string second)
+        {
+            first = first.ToLower().Trim().Replace("*", "");
+            second = second.ToLower().Trim().Replace("*", "");
+            return first.Equals(second);
+        }
+
+        public static List<NumberOfOblic> ReadNumbersOfOblic(Excel.Worksheet sheet)
+        {
+            List<NumberOfOblic> oblics = new List<NumberOfOblic>();
+
+            int n = 2;
+            try
+            {
+                while (true)
+                {
+                    n++;
+                    var value = sheet.Cells[n, "A"].Value;
+                    if (value == null || string.IsNullOrEmpty(value.ToString()))
+                        break;
+                    string number = value.ToString();
+
+                    value = sheet.Cells[n, "B"].Value;
+                    if (value == null || string.IsNullOrEmpty(value))
+                        continue;
+                    string sujectName = value.ToString();
+
+                    value = sheet.Cells[n, "D"].Value;
+                    if (value == null || string.IsNullOrEmpty(value))
+                        continue;
+                    string groupName = value.ToString();
+
+                    oblics.Add(new NumberOfOblic
+                    {
+                        Number = number,
+                        Subject = sujectName,
+                        Group = groupName
+                    });
+                }
+            }
+            catch (Exception e)
+            {
+                MassageError(sheet.Name, "", "Щось не гараз із зчитуванням реєстрації відомостей (журнал)\n" + e);
+            }
+            return oblics;
+        }
+
+        public static List<Student> ReadStudents(Excel.Worksheet sheet)
+        {
             List<Student> students = new List<Student>();
 
-            string[] position = {"C", "D", "E", "G", "L"};
             int n = 1;
 
             while (true)
@@ -81,9 +207,6 @@ namespace myKR.Coding
                     MassageError(sheet.Name, "", "Щось не гаразд із зчитуванням студентів\n" + e);
                 }
             }
-
-            book.Close();
-            App.Quit();
             return students;
         }
 
@@ -253,17 +376,16 @@ namespace myKR.Coding
                 if (string.IsNullOrEmpty(teacher))
                     teacher = "";
 
-                Subject subject = new Subject();
+                
                 try
                 {
-                    subject.Name = subjectName.ToString().Trim();
-                    subject.Teacher = teacher;
+                    Subject subject = null;
                     for (int i = 0; i < 2; i++)
                     {
                         string[] list = i == 0 ? firstSemestr :  secondSemestr;
                         var ss = sheet.Cells[n, list[0]].Value;
 
-                        // if cursova robota has same of the pas the not continue
+                        // if cursova robota have same of the pas the not continue
                         bool bl = true;
                         var kp = sheet.Cells[n, list[1]].Value;
                         if (kp != null && !string.IsNullOrEmpty(kp.ToString()))
@@ -271,6 +393,11 @@ namespace myKR.Coding
 
                         if ((ss == null || string.IsNullOrEmpty(ss.ToString())) && bl)
                             continue;
+                        subject = new Subject
+                        {
+                            Name = subjectName.ToString().Trim(),
+                            Teacher = teacher
+                        };
 
                         Semestr semestr = new Semestr();
 
@@ -303,7 +430,8 @@ namespace myKR.Coding
                         if (i == 0) subject.FirstSemestr = semestr;
                         else subject.SecondSemestr = semestr;
                     }
-                    subjects.Add(subject);
+
+                    if (subject != null) subjects.Add(subject);
                 }
                 catch (Exception exception)
                 {
