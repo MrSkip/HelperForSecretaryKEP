@@ -55,3 +55,4 @@ D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.StartForm.re
 D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.csproj.GenerateResource.Cache
 D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.pdb
 D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.MainForm.resources
+D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.Control.resources

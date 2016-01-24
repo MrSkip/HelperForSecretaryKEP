@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -17,39 +18,83 @@ namespace myKR.Coding
             label4.Visible = false;
         }
 
+        private void create()
+        {
+            try
+            {
+                ExcelFile.App.Visible = true;
+                Excel.Workbook workbook = ExcelFile.App.Workbooks.Open("D:\\s.xls");
+                Excel.Workbook newWorkbook = ExcelFile.App.Workbooks.Open("D:\\d.xls");
+
+                Excel.Worksheet newWorksheet = newWorkbook.Worksheets[1];
+                Excel.Worksheet worksheet = workbook.Worksheets[1];
+
+//                worksheet.Cells.Copy();
+                worksheet.Cells.PasteSpecial(newWorksheet.Cells.Copy());
+
+                workbook.Save();
+//                Excel.Worksheet worksheet = workbook.Worksheets.Add(Type.Missing);
+//                workbook.Worksheets.Add(Type.Missing);
+//                Excel.Worksheet worksheet = workbook.Worksheets[1];
+//                worksheet.Select();
+
+
+//                worksheet.Name = "sd";
+
+//                Excel.Workbook newWorkbook = ExcelFile.App.Workbooks.Open("D:\\lold.xls");
+//                Excel.Worksheet worksheetd = newWorkbook.Sheets[1];
+//                worksheetd.Cells[1, "A"].Value = "Mula";
+//
+//                worksheetd.Copy(workbook.Sheets[1]);
+
+//                workbook.Save();
+//                workbook.SaveAs("lol", Excel.XlFileFormat.xlAddIn8);
+//                newWorkbook.Save();
+
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Errorc- " + e);
+                throw;
+            }
+            
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
-            string path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
-                                            + @"Data\start.txt";
-            StreamReader readFile = new StreamReader(path);
+            create();
 
-            Visible = false;
-            var readLine = readFile.ReadLine();
-            if (readLine != null)
-            {
-                StartForm startForm = new StartForm(readLine.Substring(6), readLine.Substring(6));
-                readFile.Close();
-
-                startForm.ShowDialog();
-                if (startForm.Cancel) Environment.Exit(-1);
-
-                StreamWriter writeFile = new StreamWriter(path);
-                writeFile.WriteLine("[rp] |" + startForm.GetTextBox()[0] + "\n"
-                                    + "[bd] |" + startForm.GetTextBox()[1]);
-                writeFile.Close();
-
-                StudDbPath = startForm.GetTextBox()[1];
-
-                ExWork = startForm.ExcelWork;
-            }
-
-            foreach (string t in ExWork.SheetNamesRobPlan.TakeWhile(t => t != null))
-            {
-                comboBox1.Items.Add(t);
-            }
-
-            comboBox1.Items.Add("Усі групи");
-            comboBox1.Text = comboBox1.Items[0].ToString();
+//            string path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
+//                                            + @"Data\start.txt";
+//            StreamReader readFile = new StreamReader(path);
+//
+//            Visible = false;
+//            var readLine = readFile.ReadLine();
+//            if (readLine != null)
+//            {
+//                StartForm startForm = new StartForm(readLine.Substring(6), readLine.Substring(6));
+//                readFile.Close();
+//
+//                startForm.ShowDialog();
+//                if (startForm.Cancel) Environment.Exit(-1);
+//
+//                StreamWriter writeFile = new StreamWriter(path);
+//                writeFile.WriteLine("[rp] |" + startForm.GetTextBox()[0] + "\n"
+//                                    + "[bd] |" + startForm.GetTextBox()[1]);
+//                writeFile.Close();
+//
+//                StudDbPath = startForm.GetTextBox()[1];
+//
+//                ExWork = startForm.ExcelWork;
+//            }
+//
+//            foreach (string t in ExWork.SheetNamesRobPlan.TakeWhile(t => t != null))
+//            {
+//                comboBox1.Items.Add(t);
+//            }
+//
+//            comboBox1.Items.Add("Усі групи");
+//            comboBox1.Text = comboBox1.Items[0].ToString();
             Visible = true;
         }
 
@@ -191,15 +236,16 @@ namespace myKR.Coding
 
         private void button5_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
-            bool bl = true;
-            foreach (System.Diagnostics.Process proc in excelProcs)
-            {
-                if (bl)
-                    MessageBox.Show("Переконайтеся, що всі застосунки Excel закриті,\n не збережені дані будуть втрачені!", "Уважно!");
-                proc.Kill();
-                bl = false;
-            }
+            ExcelFile.App.Quit();
+//            System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
+//            bool bl = true;
+//            foreach (System.Diagnostics.Process proc in excelProcs)
+//            {
+//                if (bl)
+//                    MessageBox.Show("Переконайтеся, що всі застосунки Excel закриті,\n не збережені дані будуть втрачені!", "Уважно!");
+//                proc.Kill();
+//                bl = false;
+//            }
             Environment.Exit(-1);
         }
 

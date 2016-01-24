@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -8,10 +9,10 @@ namespace myKR.Coding
 {
     public static class ExcelFile
     {
-        public static Excel.Application App;
+        public static Excel.Application App = new Excel.Application();
+        public static string CurrentFolder = Environment.CurrentDirectory + "\\";
         public static void ReadRobPlan(string pathToRobPlan)
         {
-            App = new Excel.Application();
             Excel.Workbook book = App.Workbooks.Open(pathToRobPlan);
 
             foreach (Excel.Worksheet sheet in book.Worksheets)
@@ -23,27 +24,25 @@ namespace myKR.Coding
                 }
             }
             book.Close();
-            App.Quit();
         }
 
         public static void ReadStudentsAndOlicAndCurators(string pathToDb)
         {
-            App = new Excel.Application();
             Excel.Workbook book = App.Workbooks.Open(pathToDb);
 
             // Read [База студентів]
-//            try
-//            {
-//                List<Student> students = ReadStudents((Excel.Worksheet)book.Worksheets.Item["База студентів"]);
-//                foreach (Group group in Manager.Groups)
-//                {
-//                    group.Students = students.FindAll(student => student.Group.Equals(group.Name));
-//                }
-//            }
-//            catch (Exception e)
-//            {
-//                MassageError("База студентів", "", "Щось не гаразд із зчитуванням студентів\nМожливо, лист [База студентів] відсунтій - створіть його\n" + e);
-//            }
+            try
+            {
+                List<Student> students = ReadStudents((Excel.Worksheet)book.Worksheets.Item["База студентів"]);
+                foreach (Group group in Manager.Groups)
+                {
+                    group.Students = students.FindAll(student => student.Group.Equals(group.Name));
+                }
+            }
+            catch (Exception e)
+            {
+                MassageError("База студентів", "", "Щось не гаразд із зчитуванням студентів\nМожливо, лист [База студентів] відсунтій - створіть його\n" + e);
+            }
 
             // Read [Реєстраційна відомість (журнал)]
             try
@@ -87,7 +86,6 @@ namespace myKR.Coding
             }
 
             book.Close();
-            App.Quit();
         }
 
         public static List<string[]> ReadCurator(Excel.Worksheet sheet)
@@ -574,6 +572,164 @@ namespace myKR.Coding
                     break;
             }
             return x;
+        }
+
+        /*
+         *      Create Oblic Uspishosti
+         *      if `groupName` is null or empty and `subjectName` is null or empty than create for all groups
+         *      else if `groupName` is not null and not empty and `subjectName` is null or empty than create for one group
+         *      else if `groupName` is not null and not empty and `subjectName` is not null and not empty than create for one subject
+        */
+        public static void CreateOblicUspishnosti(string groupName, string subjectName)
+        {
+            if (!File.Exists(CurrentFolder + "Data\\DataToProgram.xls"))
+            {
+                MessageBox.Show("В папці [" + CurrentFolder + "Data] повинен знайходитися файл [DataToProgram.xls]");
+                return;
+            }
+            Excel.Workbook bookCore = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
+            if (string.IsNullOrEmpty(groupName) && string.IsNullOrEmpty(subjectName))
+                foreach (Group group in Manager.Groups)
+                {
+                    foreach (Subject subject in @group.Subjects)
+                    {
+                        CreateOblicForOneSubject(bookCore, subject.Name, @group.Name);
+                    }
+                    foreach (Practice practice in @group.Practice)
+                    {
+                        CreateOblicForOneSubject(bookCore, practice.Name, @group.Name);
+                    }
+                }
+            else if (string.IsNullOrEmpty(subjectName) && !string.IsNullOrEmpty(groupName))
+            {
+                Group gropu = Manager.Groups.Find(group => group.Name.Equals(groupName));
+                if (gropu != null)
+                {
+                    foreach (Subject subject in gropu.Subjects)
+                    {
+                        CreateOblicForOneSubject(bookCore, subject.Name, gropu.Name);
+                    }
+                    foreach (Practice practice in gropu.Practice)
+                    {
+                        CreateOblicForOneSubject(bookCore, practice.Name, gropu.Name);
+                    }
+                }
+            }
+            else if (!string.IsNullOrEmpty(subjectName) && !string.IsNullOrEmpty(groupName))
+                CreateOblicForOneSubject(bookCore, groupName, subjectName);
+
+            Control.IfShow = false;
+            bookCore.Close();
+        }
+
+        private static void CreateOblicForOneSubject(Excel.Workbook book, string groupName, string subjectName)
+        {
+            try
+            {
+                Excel.Workbook bookOfOblic = null;
+                Excel.Worksheet sheetOfOblic;
+
+                string nameOfOblic = CreateSheetName(subjectName);
+                bool exist = false;
+
+                if (File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + groupName + ".xls"))
+                {
+                    bookOfOblic =
+                        App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + groupName + ".xls");
+                    exist = true;
+                }
+
+                if (!exist)
+                {
+                    bookOfOblic = App.Workbooks.Add(Type.Missing);
+                    sheetOfOblic = bookOfOblic.Worksheets[1];
+                    sheetOfOblic.Name = nameOfOblic;
+                    bookOfOblic.SaveAs(CurrentFolder + "User Data\\Облік успішності\\" + groupName,
+                        Excel.XlFileFormat.xlAddIn8);
+                }
+                else
+                {
+                    exist =
+                        bookOfOblic.Worksheets.Cast<object>()
+                            .Any(sheet => ((Excel.Worksheet) sheet).Name.Equals(nameOfOblic));
+                    if (exist)
+                    {
+                        if (!Control.IfShow)
+                        {
+                            Control control =
+                                new Control("Група [" + groupName + "]. Уже існує облік успішності для предмету:\n" +
+                                            subjectName);
+                            control.ShowDialog();
+                            if (Control.ButtonClick == 1)
+                            {
+                                Excel.Application newApp = new Excel.Application() {Visible = true};
+                                ((Excel.Worksheet)
+                                    newApp.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + groupName +
+                                                          ".xls").Worksheets[subjectName]).Select();
+
+                                Control.ButtonClick = 0;
+                                control.SetButtonReseachEnabled(false);
+                                control.ShowDialog();
+                            }
+                            if (Control.ButtonClick == 2)
+                            {
+                                Control.ButtonClick = 0;
+                                return;
+                            }
+
+                            sheetOfOblic = bookOfOblic.Worksheets[nameOfOblic];
+                            sheetOfOblic.Cells.Delete();
+                            Control.ButtonClick = 0;
+                        }
+                        else
+                        {
+                            if (Control.ButtonClick == 2)
+                                return;
+                            sheetOfOblic = bookOfOblic.Worksheets[nameOfOblic];
+                            sheetOfOblic.Cells.Delete();
+                        }
+                    }
+                    else
+                    {
+                        sheetOfOblic = bookOfOblic.Worksheets.Add(Type.Missing);
+                        sheetOfOblic.Name = nameOfOblic;
+                    }
+                }
+
+                foreach (Group @group in Manager.Groups.Where(@group => @group.Name.Equals(groupName)))
+                {
+                    bool find = false;
+                    foreach (Practice practice in @group.Practice.Where(practice => practice.Name.Equals(subjectName)))
+                    {
+
+                        find = true;
+                        break;
+                    }
+
+                    if (find)
+                        break;
+
+                    foreach (Subject subject in @group.Subjects.Where(subject => subject.Name.Equals(subjectName)))
+                    {
+
+                        break;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                MassageError("", "", "Щось не гаразд із підключенням до обліків успішності:\n" + e);
+            }
+        }
+
+        private static void CreateKpOrPractice()
+        {
+            
+        }
+
+        private static string CreateSheetName(string s)
+        {
+            return s.Length <= 32 ? s.Replace("*", "&") : s.Substring(0, 31).Replace("*", "&");
         }
     }
 }

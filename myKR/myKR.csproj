@@ -79,6 +79,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Coding\Control.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Coding\Control.Designer.cs">
+      <DependentUpon>Control.cs</DependentUpon>
+    </Compile>
     <Compile Include="Coding\deleteStudents.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -103,6 +109,9 @@
     <Compile Include="Coding\StartForm.Designer.cs">
       <DependentUpon>StartForm.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Coding\Control.resx">
+      <DependentUpon>Control.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Coding\deleteStudents.resx">
       <DependentUpon>deleteStudents.cs</DependentUpon>
     </EmbeddedResource>
