@@ -11,6 +11,7 @@ namespace myKR.Coding
         public string Curator;
         public string Course;
         public string Year;
+        public string FirstRomeSemestr;
         public List<Subject> Subjects;
         public List<Practice> Practice;
         public List<StateExamination> StateExamination;
@@ -34,17 +35,22 @@ namespace myKR.Coding
     public class Semestr
     {
         public double CountOfHours = 0;
+
         public double CursovaRobota = 0;
         public double Isput = 0;
         public double Zalic = 0;
         public double DyfZalik = 0;
+        public double StateExamination = 0;
+
+        public string PracticeFormOfControl = "";
+
     }
 
     public class Practice
     {
         public string Name;
         public string Semestr;
-        public string FormOfControll;
+        public string FormOfControl;
         public double CountOfHours;
         public string NumberOfOlic;
         public List<string> Teacher;

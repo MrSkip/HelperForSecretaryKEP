@@ -11,6 +11,8 @@ namespace myKR.Coding
     {
         public static Excel.Application App = new Excel.Application();
         public static string CurrentFolder = Environment.CurrentDirectory + "\\";
+        private static int CountofUse = 0;
+
         public static void ReadRobPlan(string pathToRobPlan)
         {
             Excel.Workbook book = App.Workbooks.Open(pathToRobPlan);
@@ -229,9 +231,9 @@ namespace myKR.Coding
                     s = s.Substring(s.IndexOf("\"", StringComparison.Ordinal) + 1,
                         s.LastIndexOf("\"", StringComparison.Ordinal) - s.IndexOf("\"", StringComparison.Ordinal) - 1);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    MassageError(sheet.Name, "R6", "Напряму підготовки 6.050103   \"Програмна інженерія\""); 
+                    MassageError(sheet.Name, "R6", "Напряму підготовки 6.050103   \"Програмна інженерія\"\n" + e); 
                 }
             }
 
@@ -251,9 +253,9 @@ namespace myKR.Coding
                     group.Speciality = s.Substring(s.IndexOf("\"", StringComparison.Ordinal) + 1,
                         s.LastIndexOf("\"", StringComparison.Ordinal) - s.IndexOf("\"", StringComparison.Ordinal) - 1);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"");
+                    MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"\n" + e);
                 }
 
             //Код спеціальності
@@ -269,9 +271,9 @@ namespace myKR.Coding
                     s = s.Trim().Substring(0, s.Trim().IndexOf(" \"", StringComparison.Ordinal));
                     s = s.Substring(s.IndexOf(" ", StringComparison.Ordinal)).Trim();
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"");
+                    MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"\n" + e);
                 }
             }
 
@@ -292,9 +294,9 @@ namespace myKR.Coding
                     s = s.Trim().Substring(GetPositionForCellCource(s.Trim()));
                     s = s.Remove(s.IndexOf("_", StringComparison.Ordinal));
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    MassageError(sheet.Name, "R9", "Курс __II____          Група __ПІ-_14-01___");
+                    MassageError(sheet.Name, "R9", "Курс __II____          Група __ПІ-_14-01___\n" + e);
                 }
             }
 
@@ -305,7 +307,7 @@ namespace myKR.Coding
 
             if (string.IsNullOrEmpty(s))
             {
-                s = "ВВЕДІТЬ РIK";
+                s = "Введіть рік";
                 MassageError(sheet.Name, "B6", "\"  28  \"       серпня            2015 року");
             }
             else
@@ -314,14 +316,37 @@ namespace myKR.Coding
                 {
                     s = s.Substring(s.Length - 9, 4);
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    MassageError(sheet.Name, "B6", "\"  28  \"       серпня            2015 року");
+                    MassageError(sheet.Name, "B6", "\"  28  \"       серпня            2015 року\n" + e);
                     throw;
                 }
             }
 
             group.Year = s;
+
+            //Read "Семестр для першого півріччя"
+            s = sheet.Cells[15, "Y"].Value;
+
+            if (string.IsNullOrEmpty(s))
+            {
+                s = "ВВЕДІТЬ СЕМЕСТР";
+                MassageError(sheet.Name, "Y15", "VII семестр        12  навчальних тижнів");
+            }
+            else
+            {
+                try
+                {
+                    s = s.Trim().Substring(0, s.Trim().IndexOf(' '));
+                }
+                catch (Exception e)
+                {
+                    MassageError(sheet.Name, "Y15", "VII семестр        12  навчальних тижнів\n" + e);
+                    throw;
+                }
+            }
+
+            group.FirstRomeSemestr = s;
 
             group.Subjects = ReadSubject(sheet);
             group.Practice = ReadPractice(sheet);
@@ -484,7 +509,7 @@ namespace myKR.Coding
                                 else practice.CountOfHours = double.Parse(value.ToString());
 
                                 value = sheet.Cells[n, strings[4]].Value;
-                                practice.FormOfControll = value == null ? "" : value.ToString();
+                                practice.FormOfControl = value == null ? "" : value.ToString();
 
                                 value = sheet.Cells[n, strings[5]].Value;
                                 if (value != null && !string.IsNullOrEmpty(value.ToString()))
@@ -580,62 +605,121 @@ namespace myKR.Coding
          *      else if `groupName` is not null and not empty and `subjectName` is null or empty than create for one group
          *      else if `groupName` is not null and not empty and `subjectName` is not null and not empty than create for one subject
         */
-        public static void CreateOblicUspishnosti(string groupName, string subjectName)
+        public static void CreateOblicUspishnosti(string groupName, string subjectName, int pivricha)
         {
             if (!File.Exists(CurrentFolder + "Data\\DataToProgram.xls"))
             {
                 MessageBox.Show("В папці [" + CurrentFolder + "Data] повинен знайходитися файл [DataToProgram.xls]");
                 return;
             }
+
+            if (CountofUse == 0)
+            {
+                MovePracticeAndStateExam();
+                CountofUse++;
+            }
+
             Excel.Workbook bookCore = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
             if (string.IsNullOrEmpty(groupName) && string.IsNullOrEmpty(subjectName))
                 foreach (Group group in Manager.Groups)
                 {
                     foreach (Subject subject in @group.Subjects)
                     {
-                        CreateOblicForOneSubject(bookCore, subject.Name, @group.Name);
-                    }
-                    foreach (Practice practice in @group.Practice)
-                    {
-                        CreateOblicForOneSubject(bookCore, practice.Name, @group.Name);
+                        Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
+                        if (semestr != null)
+                            CreateOblicForOneSubject(bookCore, group, @group.Name, pivricha);
                     }
                 }
             else if (string.IsNullOrEmpty(subjectName) && !string.IsNullOrEmpty(groupName))
             {
                 Group gropu = Manager.Groups.Find(group => group.Name.Equals(groupName));
                 if (gropu != null)
-                {
                     foreach (Subject subject in gropu.Subjects)
                     {
-                        CreateOblicForOneSubject(bookCore, subject.Name, gropu.Name);
+                        Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
+                        if (semestr != null)
+                            CreateOblicForOneSubject(bookCore, gropu, subjectName, pivricha);
                     }
-                    foreach (Practice practice in gropu.Practice)
-                    {
-                        CreateOblicForOneSubject(bookCore, practice.Name, gropu.Name);
-                    }
-                }
             }
             else if (!string.IsNullOrEmpty(subjectName) && !string.IsNullOrEmpty(groupName))
-                CreateOblicForOneSubject(bookCore, groupName, subjectName);
+            {
+                Group gropu = Manager.Groups.Find(group => group.Name.Equals(groupName));
+                if (gropu != null)
+                    CreateOblicForOneSubject(bookCore, gropu, subjectName, pivricha);
+            }
 
             Control.IfShow = false;
             bookCore.Close();
         }
 
-        private static void CreateOblicForOneSubject(Excel.Workbook book, string groupName, string subjectName)
+        private static void MovePracticeAndStateExam()
+        {
+            foreach (Group group in Manager.Groups)
+            {
+                group.FirstRomeSemestr = ArabNormalize(group.FirstRomeSemestr);
+                if (group.Practice != null)
+                    foreach (Practice practice in @group.Practice)
+                    {
+                        practice.Semestr = ArabNormalize(practice.Semestr);
+
+                        Subject subject = new Subject()
+                        {
+                            Name = practice.Name,
+                            NumberOfOlic = practice.NumberOfOlic,
+                            Teacher = practice.Teacher.Aggregate("", (current, s) => current + s)
+                        };
+                        Semestr semestr = new Semestr
+                        {
+                            CountOfHours = practice.CountOfHours,
+                            PracticeFormOfControl = practice.FormOfControl
+                        };
+
+                        if (practice.Semestr.Equals(group.FirstRomeSemestr))
+                            subject.FirstSemestr = semestr;
+                        else subject.SecondSemestr = semestr;
+
+                        group.Subjects.Add(subject);
+                    }
+
+                if (group.StateExamination != null)
+                    foreach (StateExamination stateExamination in @group.StateExamination)
+                    {
+                        stateExamination.Semestr = ArabNormalize(stateExamination.Semestr);
+                        foreach (Subject subject in @group.Subjects)
+                        {
+                            if (CustomEquals(subject.Name, stateExamination.Name))
+                            {
+                                if (group.FirstRomeSemestr.Equals(stateExamination.Semestr) &&
+                                    subject.FirstSemestr != null)
+                                {
+                                    subject.FirstSemestr.StateExamination = subject.FirstSemestr.Isput;
+                                    subject.FirstSemestr.Isput = 0;
+                                }
+                                else if (subject.SecondSemestr != null)
+                                {
+                                    subject.SecondSemestr.StateExamination = subject.SecondSemestr.Isput;
+                                    subject.SecondSemestr.Isput = 0;
+                                }
+                            }
+                        }
+                    }
+            }
+        }
+
+        private static void CreateOblicForOneSubject(Excel.Workbook book, Group group, string subjectName, int pivricha)
         {
             try
             {
                 Excel.Workbook bookOfOblic = null;
                 Excel.Worksheet sheetOfOblic;
-
+                MessageBox.Show(CurrentFolder);
                 string nameOfOblic = CreateSheetName(subjectName);
                 bool exist = false;
 
-                if (File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + groupName + ".xls"))
+                if (File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
                 {
                     bookOfOblic =
-                        App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + groupName + ".xls");
+                        App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
                     exist = true;
                 }
 
@@ -644,7 +728,7 @@ namespace myKR.Coding
                     bookOfOblic = App.Workbooks.Add(Type.Missing);
                     sheetOfOblic = bookOfOblic.Worksheets[1];
                     sheetOfOblic.Name = nameOfOblic;
-                    bookOfOblic.SaveAs(CurrentFolder + "User Data\\Облік успішності\\" + groupName,
+                    bookOfOblic.SaveAs(CurrentFolder + "User Data\\Облік успішності\\" + group.Name,
                         Excel.XlFileFormat.xlAddIn8);
                 }
                 else
@@ -657,14 +741,14 @@ namespace myKR.Coding
                         if (!Control.IfShow)
                         {
                             Control control =
-                                new Control("Група [" + groupName + "]. Уже існує облік успішності для предмету:\n" +
+                                new Control("Група [" + group.Name + "]. Уже існує облік успішності для предмету:\n" +
                                             subjectName);
                             control.ShowDialog();
                             if (Control.ButtonClick == 1)
                             {
                                 Excel.Application newApp = new Excel.Application() {Visible = true};
                                 ((Excel.Worksheet)
-                                    newApp.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + groupName +
+                                    newApp.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name +
                                                           ".xls").Worksheets[subjectName]).Select();
 
                                 Control.ButtonClick = 0;
@@ -696,25 +780,14 @@ namespace myKR.Coding
                     }
                 }
 
-                foreach (Group @group in Manager.Groups.Where(@group => @group.Name.Equals(groupName)))
-                {
-                    bool find = false;
-                    foreach (Practice practice in @group.Practice.Where(practice => practice.Name.Equals(subjectName)))
-                    {
-
-                        find = true;
-                        break;
-                    }
-
-                    if (find)
-                        break;
-
-                    foreach (Subject subject in @group.Subjects.Where(subject => subject.Name.Equals(subjectName)))
-                    {
-
-                        break;
-                    }
-                }
+               foreach (Subject subject in @group.Subjects)
+               {
+                   Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
+                   if (semestr != null)
+                   {
+                       
+                   }
+               }
             }
             catch (Exception e)
             {
@@ -722,14 +795,87 @@ namespace myKR.Coding
             }
         }
 
-        private static void CreateKpOrPractice()
+        private static void CreateKpOrPractice(Group @group, string subjectName, int pivricha)
         {
-            
+            MessageBox.Show("Practica or KP");
+        }
+
+        private static void CreateStateExamen()
+        {
+            MessageBox.Show("Statement examen");
+        }
+
+        private static void CreateZalicExamenAndDufZalic()
+        {
+            MessageBox.Show("Zalic examen duf");
         }
 
         private static string CreateSheetName(string s)
         {
             return s.Length <= 32 ? s.Replace("*", "&") : s.Substring(0, 31).Replace("*", "&");
         }
+
+        private static int FromRomeToArab(string rome)
+        {
+            int arab = 0;
+            rome = ArabNormalize(rome);
+
+            if (rome.Equals("I")) arab = 1;
+            else if (rome.Equals("II")) arab = 2;
+            else if (rome.Equals("III")) arab = 3;
+            else if (rome.Equals("IV")) arab = 4;
+            else if (rome.Equals("V")) arab = 5;
+            else if (rome.Equals("VI")) arab = 6;
+            else if (rome.Equals("VII")) arab = 7;
+            else if (rome.Equals("VIII")) arab = 8;
+
+            return arab;
+        }
+
+        public static string ArabToRome(int arab)
+        {
+            var rome = "";
+            switch (arab)
+            {
+                case 1:
+                    rome = "I";
+                    break;
+                case 2:
+                    rome = "II";
+                    break;
+                case 3:
+                    rome = "III";
+                    break;
+                case 4:
+                    rome = "IV";
+                    break;
+                case 5:
+                    rome = "V";
+                    break;
+                case 6:
+                    rome = "VI";
+                    break;
+                case 7:
+                    rome = "VII";
+                    break;
+                case 8:
+                    rome = "VIII";
+                    break;
+            }
+            return rome;
+        }
+
+        private static string ArabNormalize(string str)
+        {
+            char[] ch = str.ToCharArray();
+            for (int i = 0; i < str.Length; i++)
+            {
+                var arg = (int)ch[i];
+                if (arg == 1030) arg = 73;
+                ch[i] = (char)arg;
+            }
+            return new string(ch);
+        }
+
     }
 }

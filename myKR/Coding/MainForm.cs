@@ -62,39 +62,42 @@ namespace myKR.Coding
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            create();
+//            create();
 
-//            string path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
-//                                            + @"Data\start.txt";
-//            StreamReader readFile = new StreamReader(path);
-//
-//            Visible = false;
-//            var readLine = readFile.ReadLine();
-//            if (readLine != null)
-//            {
-//                StartForm startForm = new StartForm(readLine.Substring(6), readLine.Substring(6));
-//                readFile.Close();
-//
-//                startForm.ShowDialog();
-//                if (startForm.Cancel) Environment.Exit(-1);
-//
-//                StreamWriter writeFile = new StreamWriter(path);
-//                writeFile.WriteLine("[rp] |" + startForm.GetTextBox()[0] + "\n"
-//                                    + "[bd] |" + startForm.GetTextBox()[1]);
-//                writeFile.Close();
-//
-//                StudDbPath = startForm.GetTextBox()[1];
-//
-//                ExWork = startForm.ExcelWork;
-//            }
-//
-//            foreach (string t in ExWork.SheetNamesRobPlan.TakeWhile(t => t != null))
-//            {
-//                comboBox1.Items.Add(t);
-//            }
-//
-//            comboBox1.Items.Add("Усі групи");
-//            comboBox1.Text = comboBox1.Items[0].ToString();
+            string path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
+                                            + @"Data\start.txt";
+            StreamReader readFile = new StreamReader(path);
+
+            Visible = false;
+            var readLine = readFile.ReadLine();
+            if (readLine != null)
+            {
+                StartForm startForm = new StartForm(readLine.Substring(6), readLine.Substring(6));
+                readFile.Close();
+
+                startForm.ShowDialog();
+                MessageBox.Show("Load");
+                Manager.CreateOblicUspishnosti("ПІ-12-01", "", "1");
+
+                if (startForm.Cancel) Environment.Exit(-1);
+
+                StreamWriter writeFile = new StreamWriter(path);
+                writeFile.WriteLine("[rp] |" + startForm.GetTextBox()[0] + "\n"
+                                    + "[bd] |" + startForm.GetTextBox()[1]);
+                writeFile.Close();
+
+                StudDbPath = startForm.GetTextBox()[1];
+
+                ExWork = startForm.ExcelWork;
+            }
+
+            foreach (string t in ExWork.SheetNamesRobPlan.TakeWhile(t => t != null))
+            {
+                comboBox1.Items.Add(t);
+            }
+
+            comboBox1.Items.Add("Усі групи");
+            comboBox1.Text = comboBox1.Items[0].ToString();
             Visible = true;
         }
 
