@@ -628,7 +628,7 @@ namespace myKR.Coding
                     {
                         Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
                         if (semestr != null)
-                            CreateOblicForOneSubject(bookCore, group, @group.Name, pivricha);
+                            CreateOblicForOneSubject(bookCore, group, subject.Name, pivricha);
                     }
                 }
             else if (string.IsNullOrEmpty(subjectName) && !string.IsNullOrEmpty(groupName))
@@ -690,8 +690,7 @@ namespace myKR.Coding
                         {
                             if (CustomEquals(subject.Name, stateExamination.Name))
                             {
-                                if (group.FirstRomeSemestr.Equals(stateExamination.Semestr) &&
-                                    subject.FirstSemestr != null)
+                                if (subject.FirstSemestr != null && group.FirstRomeSemestr.Equals(stateExamination.Semestr))
                                 {
                                     subject.FirstSemestr.StateExamination = subject.FirstSemestr.Isput;
                                     subject.FirstSemestr.Isput = 0;
@@ -713,7 +712,26 @@ namespace myKR.Coding
             {
                 Excel.Workbook bookOfOblic = null;
                 Excel.Worksheet sheetOfOblic;
-                string nameOfOblic = CreateSheetName(subjectName);
+                MessageBox.Show(subjectName);
+                Subject subjectFind = group.Subjects.Find(subject => subject.Name.Equals(subjectName));
+                string nameOfOblic;
+                if (subjectFind != null)
+                {
+                    Semestr semestrFindSemestr = pivricha == 1 ? subjectFind.FirstSemestr : subjectFind.SecondSemestr;
+                    if (semestrFindSemestr != null)
+                    {
+                        if (semestrFindSemestr.CursovaRobota > 0)
+                            subjectName = "КП " + subjectName;
+                        MessageBox.Show(FormaZdachi(semestrFindSemestr) + "\ncursova - " + semestrFindSemestr.CursovaRobota + "\n");
+                    }
+                    nameOfOblic = CreateSheetName(subjectName);
+                }
+                else
+                {
+                    MessageBox.Show("У групі [" + group.Name + "] не знайдено предмет - [" + subjectName + "]");
+                    return;
+                }
+//                MessageBox.Show(nameOfOblic);
                 bool exist = false;
 
                 if (File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
@@ -746,14 +764,17 @@ namespace myKR.Coding
                             control.ShowDialog();
                             if (Control.ButtonClick == 1)
                             {
+
                                 Excel.Application newApp = new Excel.Application() {Visible = true};
                                 ((Excel.Worksheet)
                                     newApp.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name +
-                                                          ".xls").Worksheets[subjectName]).Select();
+                                                          ".xls").Worksheets[nameOfOblic]).Select();
 
                                 Control.ButtonClick = 0;
                                 control.SetButtonReseachEnabled(false);
                                 control.ShowDialog();
+
+                                newApp.Quit();
                             }
                             if (Control.ButtonClick == 2)
                             {
@@ -811,11 +832,52 @@ namespace myKR.Coding
         private static void CreateKpOrPractice(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
         {
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
+
+            sheet.Cells[13, "E"].Value = group.TrainingDirection.Equals("Програмна інженерія") ? "Програмної інженерії"
+                : "Метрології та інформаційно-вимірювальної технології";
+            sheet.Cells[15, "F"].Value = group.Speciality;
+            sheet.Cells[17, "D"].Value = group.Course;
+            sheet.Cells[17, "G"].Value = group.Name;
+            sheet.Cells[19, "I"].Value = group.Year + "-" + (int.Parse(group.Year.Trim()) + 1);
+            sheet.Cells[26, "F"].Value = subject.Name;
+            sheet.Cells[28, "D"].Value = pivricha == 1 ? group.FirstRomeSemestr : ArabToRome(FromRomeToArab(group.FirstRomeSemestr) + 1);
+            sheet.Cells[22, "M"].Value = CreateNumberOfOblic(subject.NumberOfOlic, pivricha == 1 ? group.Year : (int.Parse(group.Year.Trim()) + 1) + "");
+            sheet.Cells[30, "Q"].Value = semestr.CountOfHours;
+            sheet.Cells[30, "F"].Value = FormaZdachi(semestr);
+//            sheet.Cells[32, "K"].Value = subject.Teacher + "_____";
+//            sheet.Cells[100, "N"].Value = subject.Teacher;
+
+            int n = 45;
+            foreach (Student student in @group.Students)
+            {
+                sheet.Cells[n, "C"].Value = student.Pib;
+                sheet.Cells[n, "H"].Value = student.NumberOfBook;
+                n++;
+            }
+            if (n != 75)
+                sheet.Range["B" + n, "Q" + 74].Delete();
         }
 
         private static void CreateStateExamen(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
         {
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
+            sheet.Cells[4, "H"].Value = subject.Name;
+            sheet.Cells[9, "C"].Value = group.Name;
+            sheet.Cells[20, "G"].Value = subject.Teacher + "_________________________________";
+            sheet.Cells[84, "H"].Value = subject.Teacher + "__";
+
+            int n = 46;
+            foreach (Student student in @group.Students)
+            {
+                sheet.Cells[n, "C"].Value = student.Pib;
+                n++;
+            }
+
+            if (n != 76)
+                sheet.Range["B" + n, "Q" + 75].Delete();
+
+            // Count of students in group
+            sheet.Cells[12, "G"] = "__" + (n - 46) + "__";
         }
 
         private static void CreateZalicExamenAndDufZalic(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
@@ -830,10 +892,11 @@ namespace myKR.Coding
             sheet.Cells[19, "I"].Value = group.Year + "-" + (int.Parse(group.Year.Trim()) + 1);
             sheet.Cells[26, "F"].Value = subject.Name;
             sheet.Cells[28, "D"].Value = pivricha == 1 ? group.FirstRomeSemestr : ArabToRome(FromRomeToArab(group.FirstRomeSemestr) + 1);
-            sheet.Cells[22, "M"].Value = subject.NumberOfOlic;
+            sheet.Cells[22, "M"].Value = CreateNumberOfOblic(subject.NumberOfOlic, pivricha == 1 ? group.Year : (int.Parse(group.Year.Trim()) + 1) + "");
             sheet.Cells[30, "Q"].Value = semestr.CountOfHours;
             sheet.Cells[30, "F"].Value = FormaZdachi(semestr);
             sheet.Cells[32, "E"].Value = subject.Teacher;
+            sheet.Cells[94, "N"].Value = subject.Teacher;
 
             int n = 39;
             foreach (Student student in @group.Students)
@@ -844,6 +907,21 @@ namespace myKR.Coding
             }
             if (n != 69)
                 sheet.Range["B" + n, "Q" + 68].Delete();
+        }
+
+        private static string CreateNumberOfOblic(string number, string currentYear)
+        {
+            int x = 0;
+            if (!string.IsNullOrEmpty(number))
+            x = int.Parse(number.Trim());
+
+            if (x < 10) number = "00" + number;
+            else if (x < 100) number = "0" + number;
+
+            int n = int.Parse(currentYear.Trim()) - 2000;
+
+            number = "" + n + "." + number;
+            return number;
         }
 
         private static string FormaZdachi(Semestr semestr)
@@ -862,7 +940,16 @@ namespace myKR.Coding
 
         private static string CreateSheetName(string s)
         {
-            return s.Length <= 32 ? s.Replace("*", "&") : s.Substring(0, 29).Replace("*", "&");
+            string s2 = "";
+            foreach (char c in s)
+            {
+                if (c.Equals('[') || c.Equals(']') || c.Equals('[') || c.Equals('/') || c.Equals('\\') || c.Equals('?') ||
+                    c.Equals('*'))
+                    continue;
+                s2 += c;
+            }
+
+            return s2.Length <= 31 ? s2 : s2.Substring(0, 31);
         }
 
         private static int FromRomeToArab(string rome)

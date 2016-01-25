@@ -76,7 +76,7 @@ namespace myKR.Coding
                 readFile.Close();
 
                 startForm.ShowDialog();
-                Manager.CreateOblicUspishnosti("ПІ-12-01", "", 1);
+                Manager.CreateOblicUspishnosti("МТ-13-01", "", 2);
 
                 if (startForm.Cancel) Environment.Exit(-1);
 
