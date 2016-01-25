@@ -787,15 +787,15 @@ namespace myKR.Coding
                    {
                        if (semestr.DyfZalik > 0 || semestr.Zalic > 0 || semestr.Isput > 0)
                        {
-                           CreateZalicExamenAndDufZalic(book.Worksheets["Залік - ДифЗалік - Екзамен"], sheetOfOblic, group, subject, semestr);
+                           CreateZalicExamenAndDufZalic(book.Worksheets["Залік - ДифЗалік - Екзамен"], sheetOfOblic, group, subject, semestr, pivricha);
                        }
                        else if (semestr.StateExamination > 0)
                        {
-                           CreateStateExamen(book.Worksheets["Державний екзамен"], sheetOfOblic, group, subject, semestr);
+                           CreateStateExamen(book.Worksheets["Державний екзамен"], sheetOfOblic, group, subject, semestr, pivricha);
                        }
                        else if (semestr.CursovaRobota > 0 || !string.IsNullOrEmpty(semestr.PracticeFormOfControl))
                        {
-                           CreateKpOrPractice(book.Worksheets["КП - Технологічна практика"], sheetOfOblic, group, subject, semestr);
+                           CreateKpOrPractice(book.Worksheets["КП - Технологічна практика"], sheetOfOblic, group, subject, semestr, pivricha);
                        }
                        break;
                    }
@@ -808,20 +808,56 @@ namespace myKR.Coding
             }
         }
 
-        private static void CreateKpOrPractice(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr)
+        private static void CreateKpOrPractice(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
         {
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
         }
 
-        private static void CreateStateExamen(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr)
+        private static void CreateStateExamen(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
         {
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
         }
 
-        private static void CreateZalicExamenAndDufZalic(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr)
+        private static void CreateZalicExamenAndDufZalic(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
         {
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
 
+            sheet.Cells[13, "E"].Value = group.TrainingDirection.Equals("Програмна інженерія") ? "Програмної інженерії" 
+                : "Метрології та інформаційно-вимірювальної технології";
+            sheet.Cells[15, "F"].Value = group.Speciality;
+            sheet.Cells[17, "D"].Value = group.Course;
+            sheet.Cells[17, "G"].Value = group.Name;
+            sheet.Cells[19, "I"].Value = group.Year + "-" + (int.Parse(group.Year.Trim()) + 1);
+            sheet.Cells[26, "F"].Value = subject.Name;
+            sheet.Cells[28, "D"].Value = pivricha == 1 ? group.FirstRomeSemestr : ArabToRome(FromRomeToArab(group.FirstRomeSemestr) + 1);
+            sheet.Cells[22, "M"].Value = subject.NumberOfOlic;
+            sheet.Cells[30, "Q"].Value = semestr.CountOfHours;
+            sheet.Cells[30, "F"].Value = FormaZdachi(semestr);
+            sheet.Cells[32, "E"].Value = subject.Teacher;
+
+            int n = 39;
+            foreach (Student student in @group.Students)
+            {
+                sheet.Cells[n, "C"].Value = student.Pib;
+                sheet.Cells[n, "H"].Value = student.NumberOfBook;
+                n++;
+            }
+            if (n != 69)
+                sheet.Range["B" + n, "Q" + 68].Delete();
+        }
+
+        private static string FormaZdachi(Semestr semestr)
+        {
+            string s = "";
+
+            if (semestr.CursovaRobota > 0) s = "курсовий проект";
+            else if (semestr.DyfZalik > 0) s = "диф залік";
+            else if (semestr.Isput > 0) s = "екзамен";
+            else if (!string.IsNullOrEmpty(semestr.PracticeFormOfControl)) s = semestr.PracticeFormOfControl;
+            else if (semestr.Zalic > 0) s = "залік";
+            else if (semestr.StateExamination > 0) s = "протокол";
+
+            return s;
         }
 
         private static string CreateSheetName(string s)
