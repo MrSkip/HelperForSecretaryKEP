@@ -362,8 +362,9 @@ namespace myKR.Coding
             string[]
                 firstSemestr = { "Y", "AK", "AO", "AQ", "AR" },
                 secondSemestr = { "AS", "BE", "BI", "BK", "BL" };
-            bool existingDyfZalik = false;
-            bool ifDufZalic = true;
+
+            bool dyfZalikOrNot = false;
+            bool ifDufZalicIsExist = true;
 
             // check the cells
             var s = sheet.Cells[15, "C"].Value;
@@ -376,36 +377,41 @@ namespace myKR.Coding
             // check the cells
             s = sheet.Cells[18, "AR"].Value;
             if (!string.IsNullOrEmpty(s) && s.Trim().ToLower().Equals("диф  залік"))
-                ifDufZalic = false;
+                ifDufZalicIsExist = false;
 
             // check the cells
             s = sheet.Cells[18, "AQ"].Value;
             if (!string.IsNullOrEmpty(s) && s.Trim().ToLower().Equals("диф  залік"))
-                existingDyfZalik = true;
+                dyfZalikOrNot = true;
 
             int n = 14;
 
             while (true)
             {
-                n++;
-                
-                var subjectName = sheet.Cells[n, "C"].Value;
-                if (subjectName == null || string.IsNullOrEmpty(subjectName.ToString()) || n == 15)
-                    continue;
-                if (subjectName.ToString().Trim().ToLower().Equals("разом"))
-                    break;
-
-                string teacher = sheet.Cells[n, "BN"].Value;
-                if (string.IsNullOrEmpty(teacher))
-                    teacher = "";
-
-                
                 try
                 {
-                    Subject subject = null;
+                    n++;
+
+                    var subjectName = sheet.Cells[n, "C"].Value;
+                    if (subjectName == null || string.IsNullOrEmpty(subjectName.ToString()) || n == 15)
+                        continue;
+                    if (subjectName.ToString().Trim().ToLower().Equals("разом"))
+                        break;
+
+                    string teacher = sheet.Cells[n, "BN"].Value;
+                    if (string.IsNullOrEmpty(teacher))
+                        teacher = "";
+
+                    Subject subject = new Subject
+                    {
+                        Name = subjectName.ToString().Trim(),
+                        Teacher = teacher
+                    };
+                    bool addToList = false;
+
                     for (int i = 0; i < 2; i++)
                     {
-                        string[] list = i == 0 ? firstSemestr :  secondSemestr;
+                        string[] list = i == 0 ? firstSemestr : secondSemestr;
                         var ss = sheet.Cells[n, list[0]].Value;
 
                         // if cursova robota have same of the pas the not continue
@@ -416,12 +422,8 @@ namespace myKR.Coding
 
                         if ((ss == null || string.IsNullOrEmpty(ss.ToString())) && bl)
                             continue;
-                        subject = new Subject
-                        {
-                            Name = subjectName.ToString().Trim(),
-                            Teacher = teacher
-                        };
 
+                        addToList = true;
                         Semestr semestr = new Semestr();
 
                         if (ss == null || string.IsNullOrEmpty(ss.ToString()))
@@ -439,11 +441,11 @@ namespace myKR.Coding
                         ss = sheet.Cells[n, list[3]].Value;
                         if (ss != null && (!string.IsNullOrEmpty(ss.ToString()) || !ss.ToString().Equals("0")))
                         {
-                            if (ifDufZalic) semestr.DyfZalik = ss;
+                            if (ifDufZalicIsExist) semestr.DyfZalik = ss;
                             else semestr.Zalic = ss;
                         }
 
-                        if (!existingDyfZalik)
+                        if (!dyfZalikOrNot)
                         {
                             ss = sheet.Cells[n, list[4]].Value;
                             if (ss != null && (!string.IsNullOrEmpty(ss.ToString()) || !ss.ToString().Equals("0")))
@@ -453,8 +455,7 @@ namespace myKR.Coding
                         if (i == 0) subject.FirstSemestr = semestr;
                         else subject.SecondSemestr = semestr;
                     }
-
-                    if (subject != null) subjects.Add(subject);
+                    if (addToList) subjects.Add(subject);
                 }
                 catch (Exception exception)
                 {
@@ -638,7 +639,7 @@ namespace myKR.Coding
                     {
                         Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
                         if (semestr != null)
-                            CreateOblicForOneSubject(bookCore, gropu, subjectName, pivricha);
+                            CreateOblicForOneSubject(bookCore, gropu, subject.Name, pivricha);
                     }
             }
             else if (!string.IsNullOrEmpty(subjectName) && !string.IsNullOrEmpty(groupName))
@@ -712,7 +713,6 @@ namespace myKR.Coding
             {
                 Excel.Workbook bookOfOblic = null;
                 Excel.Worksheet sheetOfOblic;
-                MessageBox.Show(CurrentFolder);
                 string nameOfOblic = CreateSheetName(subjectName);
                 bool exist = false;
 
@@ -785,7 +785,21 @@ namespace myKR.Coding
                    Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
                    if (semestr != null)
                    {
-                       
+                       if (semestr.DyfZalik > 0 || semestr.Zalic > 0 || semestr.Isput > 0)
+                       {
+                           CreateZalicExamenAndDufZalic();
+                           bookOfOblic.Close();
+                       }
+                       else if (semestr.StateExamination > 0)
+                       {
+                           CreateStateExamen();
+                           bookOfOblic.Close();
+                       }
+                       else if (semestr.CursovaRobota > 0 || !string.IsNullOrEmpty(semestr.PracticeFormOfControl))
+                       {
+                           CreateKpOrPractice();
+                           bookOfOblic.Close();
+                       }
                    }
                }
             }
@@ -795,19 +809,19 @@ namespace myKR.Coding
             }
         }
 
-        private static void CreateKpOrPractice(Group @group, string subjectName, int pivricha)
+        private static void CreateKpOrPractice()
         {
-            MessageBox.Show("Practica or KP");
+//            MessageBox.Show("Practica or KP");
         }
 
         private static void CreateStateExamen()
         {
-            MessageBox.Show("Statement examen");
+//            MessageBox.Show("Statement examen");
         }
 
         private static void CreateZalicExamenAndDufZalic()
         {
-            MessageBox.Show("Zalic examen duf");
+//            MessageBox.Show("Zalic examen duf");
         }
 
         private static string CreateSheetName(string s)

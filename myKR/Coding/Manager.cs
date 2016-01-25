@@ -27,9 +27,9 @@ namespace myKR.Coding
          *      else if `groupName` is not null and not empty and `subjectName` is null or empty than create for one group
          *      else if `groupName` is not null and not empty and `subjectName` is not null and not empty than create for one subject
         */
-        public static void CreateOblicUspishnosti(string groupName, string subjectName, string semestr)
+        public static void CreateOblicUspishnosti(string groupName, string subjectName, int pivricha)
         {
-            ExcelFile.CreateOblicUspishnosti(groupName, subjectName, semestr);
+            ExcelFile.CreateOblicUspishnosti(groupName, subjectName, pivricha);
         }
     }
 
