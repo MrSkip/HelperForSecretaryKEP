@@ -779,29 +779,28 @@ namespace myKR.Coding
                         sheetOfOblic.Name = nameOfOblic;
                     }
                 }
-
-               foreach (Subject subject in @group.Subjects)
+               
+                foreach (Subject subject in @group.Subjects)
                {
                    Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
-                   if (semestr != null)
+                   if (semestr != null && subject.Name.Equals(subjectName))
                    {
                        if (semestr.DyfZalik > 0 || semestr.Zalic > 0 || semestr.Isput > 0)
                        {
-                           CreateZalicExamenAndDufZalic();
-                           bookOfOblic.Close();
+                           CreateZalicExamenAndDufZalic(book.Worksheets["Залік - ДифЗалік - Екзамен"], sheetOfOblic, group, subject, semestr);
                        }
                        else if (semestr.StateExamination > 0)
                        {
-                           CreateStateExamen();
-                           bookOfOblic.Close();
+                           CreateStateExamen(book.Worksheets["Державний екзамен"], sheetOfOblic, group, subject, semestr);
                        }
                        else if (semestr.CursovaRobota > 0 || !string.IsNullOrEmpty(semestr.PracticeFormOfControl))
                        {
-                           CreateKpOrPractice();
-                           bookOfOblic.Close();
+                           CreateKpOrPractice(book.Worksheets["КП - Технологічна практика"], sheetOfOblic, group, subject, semestr);
                        }
+                       break;
                    }
                }
+                bookOfOblic.Save();
             }
             catch (Exception e)
             {
@@ -809,24 +808,25 @@ namespace myKR.Coding
             }
         }
 
-        private static void CreateKpOrPractice()
+        private static void CreateKpOrPractice(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr)
         {
-//            MessageBox.Show("Practica or KP");
+            sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
         }
 
-        private static void CreateStateExamen()
+        private static void CreateStateExamen(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr)
         {
-//            MessageBox.Show("Statement examen");
+            sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
         }
 
-        private static void CreateZalicExamenAndDufZalic()
+        private static void CreateZalicExamenAndDufZalic(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr)
         {
-//            MessageBox.Show("Zalic examen duf");
+            sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
+
         }
 
         private static string CreateSheetName(string s)
         {
-            return s.Length <= 32 ? s.Replace("*", "&") : s.Substring(0, 31).Replace("*", "&");
+            return s.Length <= 32 ? s.Replace("*", "&") : s.Substring(0, 29).Replace("*", "&");
         }
 
         private static int FromRomeToArab(string rome)
