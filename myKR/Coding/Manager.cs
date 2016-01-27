@@ -31,6 +31,18 @@ namespace myKR.Coding
         {
             ExcelFile.CreateOblicUspishnosti(groupName, subjectName, pivricha);
         }
+
+        public static void CreateVidomistUspishnosti(string groupName, int pivricha)
+        {
+            foreach (Group @group in Groups)
+            {
+                if (group.Name.Equals(groupName))
+                {
+                    ExcelFile.CreateVidomist(group, pivricha);
+                    break;
+                }
+            }
+        }
     }
 
 }

@@ -1164,9 +1164,9 @@ namespace myKR.Coding
         private static double ColumnWidth(string s)
         {
             if (s.Length <= 21) return 5.57;
-            else if (s.Length <= 40) return 9.70;
-            else if (s.Length <= 55) return 11;
-            else return 13.43;
+            if (s.Length <= 40) return 9.70;
+            if (s.Length <= 55) return 11;
+            return 13.43;
         }
 
         public void ArhiveZvedVid(string path)

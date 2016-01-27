@@ -30,6 +30,8 @@ namespace myKR.Coding
         public Semestr
             FirstSemestr,
             SecondSemestr;
+
+        public List<Ocinka> Ocinka;
     }
 
     public class Semestr
@@ -76,5 +78,11 @@ namespace myKR.Coding
         public string Number;
         public string Subject;
         public string Group;
+    }
+
+    public class Ocinka
+    {
+        public string StudentName;
+        public string Number;
     }
 }

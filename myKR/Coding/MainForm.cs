@@ -24,15 +24,19 @@ namespace myKR.Coding
             {
                 ExcelFile.App.Visible = true;
                 Excel.Workbook workbook = ExcelFile.App.Workbooks.Open("D:\\s.xls");
-                Excel.Workbook newWorkbook = ExcelFile.App.Workbooks.Open("D:\\d.xls");
 
-                Excel.Worksheet newWorksheet = newWorkbook.Worksheets[1];
-                Excel.Worksheet worksheet = workbook.Worksheets[1];
+                Excel.Worksheet sheet = workbook.Worksheets[1];
+                sheet.Cells[1, 1].Value = "fs";
+
+//                Excel.Workbook newWorkbook = ExcelFile.App.Workbooks.Open("D:\\d.xls");
+
+//                Excel.Worksheet newWorksheet = newWorkbook.Worksheets[1];
+//                Excel.Worksheet worksheet = workbook.Worksheets[1];
 
 //                worksheet.Cells.Copy();
-                worksheet.Cells.PasteSpecial(newWorksheet.Cells.Copy());
-
-                workbook.Save();
+//                worksheet.Cells.PasteSpecial(newWorksheet.Cells.Copy());
+//
+//                workbook.Save();
 //                Excel.Worksheet worksheet = workbook.Worksheets.Add(Type.Missing);
 //                workbook.Worksheets.Add(Type.Missing);
 //                Excel.Worksheet worksheet = workbook.Worksheets[1];
@@ -76,7 +80,8 @@ namespace myKR.Coding
                 readFile.Close();
 
                 startForm.ShowDialog();
-                Manager.CreateOblicUspishnosti("МТ-13-01", "", 2);
+//                Manager.CreateOblicUspishnosti("", "", 1);
+                Manager.CreateVidomistUspishnosti("ПІ-12-01", 1);
 
                 if (startForm.Cancel) Environment.Exit(-1);
 
