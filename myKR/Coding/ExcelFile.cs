@@ -9,9 +9,13 @@ namespace myKR.Coding
 {
     public static class ExcelFile
     {
-        public static Excel.Application App = new Excel.Application();
+        public static Excel.Application App = new Excel.Application
+        {
+            Visible = false,
+            DisplayAlerts = false
+        };
+
         public static string CurrentFolder = Environment.CurrentDirectory + "\\";
-        private static int _countofUse;
 
         public static void ReadRobPlan(string pathToRobPlan)
         {
@@ -25,6 +29,7 @@ namespace myKR.Coding
                     Manager.Groups.Add(ReadSheetFromRobPlan(sheet));
                 }
             }
+            MovePracticeAndStateExam();
             book.Close();
         }
 
@@ -614,12 +619,6 @@ namespace myKR.Coding
                 return;
             }
 
-            if (_countofUse == 0)
-            {
-                MovePracticeAndStateExam();
-                _countofUse = 1;
-            }
-
             Excel.Workbook bookCore = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
             if (string.IsNullOrEmpty(groupName) && string.IsNullOrEmpty(subjectName))
                 foreach (Group group in Manager.Groups)
@@ -742,11 +741,17 @@ namespace myKR.Coding
 
                 if (!exist)
                 {
-                    bookOfOblic = App.Workbooks.Add(Type.Missing);
-                    sheetOfOblic = bookOfOblic.Worksheets[1];
+                    if (!File.Exists(CurrentFolder + "Data\\WithMacros.xls"))
+                    {
+                        MessageBox.Show("Файл не існує - [" + CurrentFolder + "Data\\WithMacros.xls" + "]");
+                        return;
+                    }
+
+                    File.Copy(CurrentFolder + "Data\\WithMacros.xls", CurrentFolder +  "User Data\\Облік успішності\\" + group.Name + ".xls");
+
+                    bookOfOblic = App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
+                    sheetOfOblic = (Excel.Worksheet)bookOfOblic.Worksheets[1];
                     sheetOfOblic.Name = nameOfOblic;
-                    bookOfOblic.SaveAs(CurrentFolder + "User Data\\Облік успішності\\" + group.Name,
-                        Excel.XlFileFormat.xlAddIn8);
                 }
                 else
                 {
@@ -776,10 +781,7 @@ namespace myKR.Coding
                                 newApp.Quit();
                             }
                             if (Control.ButtonClick == 2)
-                            {
-                                Control.ButtonClick = 0;
                                 return;
-                            }
 
                             sheetOfOblic = bookOfOblic.Worksheets[nameOfOblic];
                             sheetOfOblic.Cells.Delete();
@@ -1021,38 +1023,45 @@ namespace myKR.Coding
         // Read Oblics Uspisnosti
         public static void CreateVidomist(Group group, int pivricha)
         {
-            if (!File.Exists(CurrentFolder + "User Data\\" + group.Name + ".xls"))
+            if (!File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
             {
                 MessageBox.Show("У вас немає обліків успішності для групи - " + group.Name + " за " + pivricha +
                                 " півріччя");
             }
             else
             {
-                Excel.Workbook book = App.Workbooks.Open(CurrentFolder + "User Data\\" + group.Name + ".xls");
-                foreach (object sheetO in book.Worksheets)
+                try
                 {
-                    Excel.Worksheet sheet = (Excel.Worksheet) sheetO;
-
-                    var protocol = sheet.Cells[3, "H"].Value;
-                    if (protocol == null || string.IsNullOrEmpty(protocol))
+                    Excel.Workbook book = App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
+                    foreach (object sheetO in book.Worksheets)
                     {
-                        var formaZdachi = sheet.Cells[30, "F"].Value;
-                        if (formaZdachi == null || string.IsNullOrEmpty(formaZdachi.ToString())) continue;
+                        Excel.Worksheet sheet = (Excel.Worksheet) sheetO;
 
-                        if (formaZdachi.ToString().Equals("диф залік") || formaZdachi.ToString().Equals("екзамен") ||
-                            formaZdachi.ToString().Equals("залік"))
-                            ReadOcinkaFromOblics(group, sheet, pivricha, 1);
-                        else ReadOcinkaFromOblics(group, sheet, pivricha, 2);
+                        var protocol = sheet.Cells[3, "H"].Value;
+                        if (protocol == null || string.IsNullOrEmpty(protocol))
+                        {
+                            var formaZdachi = sheet.Cells[30, "F"].Value;
+                            if (formaZdachi == null || string.IsNullOrEmpty(formaZdachi.ToString())) continue;
+
+                            if (formaZdachi.ToString().Equals("диф залік") || formaZdachi.ToString().Equals("екзамен") ||
+                                formaZdachi.ToString().Equals("залік"))
+                                ReadOcinkaFromOblics(group, sheet, pivricha, 1);
+                            else
+                            {
+                                ReadOcinkaFromOblics(group, sheet, pivricha, 2);
+                            }
+                        }
+                        else
+                        {
+                            ReadOcinkaFromOblics(group, sheet, pivricha, 3);
+                        }
                     }
-                    else ReadOcinkaFromOblics(group, sheet, pivricha, 3);
+                    book.Close();
                 }
-                book.Close();
-            }
-
-            if (_countofUse == 0 || _countofUse == 1)
-            {
-                MovePracticeAndStateExam();
-                _countofUse = 2;
+                catch (Exception e)
+                {
+                    MessageBox.Show("Щось не так із методом CreateVidomist()\n" + e);
+                }
             }
 
             CreateZvedeniaVidomist(group, pivricha);
@@ -1061,76 +1070,87 @@ namespace myKR.Coding
         // if type == 1 than DufZalicZalic else if == 2 than PracticeOrKP else StateExamen
         private static void ReadOcinkaFromOblics(Group @group, Excel.Worksheet sheet, int pivricha, int type)
         {
-            List<Ocinka> list = new List<Ocinka>();
-            string subjectName;
+            try
+            {
+                List<Ocinka> list = new List<Ocinka>();
+                string subjectName;
 
-            string currentSemestr = pivricha == 1
+                string currentSemestr = pivricha == 1
                     ? group.FirstRomeSemestr
                     : ArabToRome(FromRomeToArab(ArabNormalize(group.FirstRomeSemestr.Trim())) + 1);
 
-            if (type <= 2)
-            {
-                var subjectNameV = sheet.Cells[26, "F"].Value;
-                if (subjectNameV == null || string.IsNullOrEmpty(subjectNameV)) return;
-                subjectName = subjectNameV.ToString();
-
-                var semestr = sheet.Cells[28, "D"].Value;
-                if (semestr == null || string.IsNullOrEmpty(semestr.ToString())) return;
-
-                if (!currentSemestr.Equals(semestr.ToString())) return;
-            }
-            else
-            {
-                var protocol = sheet.Cells[3, "H"].Value;
-                if (protocol == null || string.IsNullOrEmpty(protocol)) return;
-                var subjectNameV = sheet.Cells[4, "H"].Value;
-
-                if (subjectNameV == null || string.IsNullOrEmpty(subjectNameV)) return;
-                subjectName = subjectNameV.ToString();
-
-                Subject subjectT = group.Subjects.Find(subject1 => subject1.Name.Equals(subjectName));
-
-                if (subjectT == null) return;
-                Semestr semestr = pivricha == 1 ? subjectT.FirstSemestr :
-                subjectT.SecondSemestr;
-
-                if (semestr == null) return;
-                if (semestr.StateExamination <= 0) return;
-            }
-
-
-            int n;
-            switch (type)
-            {
-                case 1:
-                    n = 38;
-                    break;
-                case 2:
-                    n = 44;
-                    break;
-                default:
-                    n = 45;
-                    break;
-            }
-
-            string ocinkaPositio = type <= 2 ? "L" : "J";
-
-            while (true)
-            {
-                n++;
-                var studentName = sheet.Cells[n, "C"].Value;
-                if (studentName == null || string.IsNullOrEmpty(studentName.ToString())) break;
-
-                var pas = sheet.Cells[n, ocinkaPositio].Value ?? "";
-                list.Add(new Ocinka
+                if (type <= 2)
                 {
-                    StudentName = studentName,
-                    Number = pas
-                });
+                    var subjectNameV = sheet.Cells[26, "F"].Value;
+                    if (subjectNameV == null || string.IsNullOrEmpty(subjectNameV)) return;
+                    subjectName = subjectNameV.ToString();
+
+                    var semestr = sheet.Cells[28, "D"].Value;
+                    if (semestr == null || string.IsNullOrEmpty(semestr.ToString())) return;
+
+                    if (!currentSemestr.Equals(semestr.ToString()))
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    var protocol = sheet.Cells[3, "H"].Value;
+                    if (protocol == null || string.IsNullOrEmpty(protocol)) return;
+                    var subjectNameV = sheet.Cells[4, "H"].Value;
+
+                    if (subjectNameV == null || string.IsNullOrEmpty(subjectNameV)) return;
+                    subjectName = subjectNameV.ToString();
+
+                    Subject subjectT = group.Subjects.Find(subject1 => subject1.Name.Equals(subjectName));
+
+                    if (subjectT == null) return;
+                    Semestr semestr = pivricha == 1
+                        ? subjectT.FirstSemestr
+                        : subjectT.SecondSemestr;
+
+                    if (semestr == null) return;
+                    if (semestr.StateExamination <= 0) return;
+                }
+
+
+                int n;
+                switch (type)
+                {
+                    case 1:
+                        n = 38;
+                        break;
+                    case 2:
+                        n = 44;
+                        break;
+                    default:
+                        n = 45;
+                        break;
+                }
+
+                string ocinkaPositio = type <= 2 ? "L" : "J";
+                while (true)
+                {
+                    n++;
+                    var studentName = sheet.Cells[n, "C"].Value;
+                    if (studentName == null || string.IsNullOrEmpty(studentName.ToString())) break;
+                    var pas = sheet.Cells[n, ocinkaPositio].Value ?? "";
+                    list.Add(new Ocinka
+                    {
+                        Name = studentName,
+                        Number = pas + ""
+                    });
+                }
+                Subject subject = group.Subjects.Find(subject1 => subject1.Name.Trim().Equals(subjectName.Trim()));
+                if (subject != null)
+                {
+                    subject.Ocinka = list;
+                }
             }
-            Subject subject = group.Subjects.Find(subject1 => subject1.Name.Equals(subjectName));
-            if (subject != null)
-                subject.Ocinka = list;
+            catch (Exception e)
+            {
+                MessageBox.Show("Щось не гаразд із зчитуванням оцінок із Обліків Успішності\n" + e);
+            }
         }
 
         private static void CreateZvedeniaVidomist(Group group, int pivricha)
@@ -1155,9 +1175,14 @@ namespace myKR.Coding
 
                 if (!File.Exists(pathToVidomist))
                 {
-                    book = App.Workbooks.Add(Type.Missing);
-                    book.SaveAs(pathToVidomist, Excel.XlFileFormat.xlAddIn8);
-                    sheet = (Excel.Worksheet) book.Worksheets[1];
+                    if (!File.Exists(CurrentFolder + "Data\\WithMacros.xls"))
+                    {
+                        MessageBox.Show("Файл не існує - [" + CurrentFolder + "Data\\WithMacros.xls" + "]");
+                        return;
+                    }
+                    File.Copy(CurrentFolder + "Data\\WithMacros.xls", pathToVidomist);
+                    book = App.Workbooks.Open(pathToVidomist);
+                    sheet = (Excel.Worksheet)book.Worksheets[1];
                     sheet.Name = group.Name;
                 }
                 else
@@ -1187,14 +1212,10 @@ namespace myKR.Coding
                                 newApp.Quit();
                             }
                             if (Control.ButtonClick == 2)
-                            {
-                                Control.ButtonClick = 0;
                                 return;
-                            }
 
                             sheet = book.Worksheets[group.Name];
                             sheet.Cells.Delete();
-                            Control.ButtonClick = 0;
                         }
                         else
                         {
@@ -1211,9 +1232,6 @@ namespace myKR.Coding
                     }
                 }
 
-//                string s = @group.Subjects.Aggregate("", (current, subject) => current + (subject.Name + "\n"));
-//                MessageBox.Show(s);
-
                 string semestrCurrent = pivricha == 1
                     ? group.FirstRomeSemestr
                     : ArabToRome(FromRomeToArab(group.FirstRomeSemestr) + 1);
@@ -1221,23 +1239,21 @@ namespace myKR.Coding
 
                 sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
 
-                //bookTamplate.Close();
-
                 sheet.Cells[4, "C"].Value = "спеціальності \"" + group.Speciality + "\"";
 
                 sheet.Cells[5, "D"].Value = "групи " + group.Name + " за " + semestrCurrent + " семестр " + group.Year + "-" +
                                             yearCurrent + " навчального року";
 
-                sheet.Cells[45, "K"].Value = "/ " + group.Curator + " \\";
+                sheet.Cells[45, "K"].Value = "/ " + group.Curator + " /";
 
                 List<Subject> subjects = pivricha == 1
                     ? @group.Subjects.FindAll(subject => subject.FirstSemestr != null)
                     : @group.Subjects.FindAll(subject => subject.SecondSemestr != null);
 
-                App.Visible = true;
-                int count = 0;
+                int count = -1;
                 char[] c = {'F', 'F'};
                 bool practiceExist = false;
+
                 for (int i = 1; i < 6; i++)
                 {
                     List<Subject> list = null;
@@ -1285,49 +1301,68 @@ namespace myKR.Coding
                                         ? !string.IsNullOrEmpty(subject.FirstSemestr.PracticeFormOfControl)
                                         : !string.IsNullOrEmpty(subject.SecondSemestr.PracticeFormOfControl));
                     }
-
                     if (list != null && list.Count > 0)
                     {
                         foreach (Subject subject in list)
                         {
+                            count++;
                             sheet.Cells[9, c[1].ToString()] = subject.Name;
                             sheet.Cells[9, c[1].ToString()].ColumnWidth = ColumnWidth(subject.Name);
                             sheet.Cells[43, c[1].ToString()] = subject.Teacher;
+                            if (group.Students != null)
+                            {
+                                sheet.Cells[41, c[1].ToString()].Value = "=Uspishnist(" + count + "," + group.Students.Count + ")";
+                                sheet.Cells[42, c[1].ToString()].Value = "=Quality(" + count + "," +
+                                                                           group.Students.Count + ")";
+                            }
+
                             int n = 10;
                             if (subject.Ocinka != null)
                             foreach (Ocinka ocinka in subject.Ocinka)
                             {
                                 n++;
                                 sheet.Cells[n, c[1].ToString()].Value = ocinka.Number;
+
+                                group.Students[n - 11].Ocinkas.Add(new Ocinka
+                                {
+                                    Name = subject.Name,
+                                    Number = ocinka.Number
+                                });
                             }
                             c[1]++;
                         }
                     }
                     else continue;
 
-                    if (i == 1)
+                    switch (i)
                     {
-                        sheet.Cells[8, c[0].ToString()].Value = "Іспит";
-                        char ch = c[1];
-                        ch--;
-                        sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
-                        sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-                    }
-                    else if (i == 2)
-                    {
-                        sheet.Cells[8, c[0].ToString()].Value = "Д/З";
-                        char ch = c[1];
-                        ch--;
-                        sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
-                        sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
-                    }
-                    else if (i == 4)
-                    {
-                        sheet.Cells[8, c[0].ToString()].Value = "Залік";
-                        char ch = c[1];
-                        ch--;
-                        sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
-                        sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                        case 1:
+                        {
+                            sheet.Cells[8, c[0].ToString()].Value = "Іспит";
+                            char ch = c[1];
+                            ch--;
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                        }
+                            break;
+                        case 2:
+                        {
+                            sheet.Cells[8, c[0].ToString()].Value = "Д/З";
+                            char ch = c[1];
+                            ch--;
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                        }
+                            break;
+                        case 4:
+                        {
+                            sheet.Cells[8, c[0].ToString()].Value = "Залік";
+                            char ch = c[1];
+                            ch--;
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                        }
+                            break;
                     }
 
                     if (!practiceExist)
@@ -1342,7 +1377,56 @@ namespace myKR.Coding
                     c[0] = c[1];
                 }
 
+                int row = 10;
+                sheet.Cells[9, c[1].ToString()].Value = "Середній бал";
+                char cBenefics = c[1];
+                c[0] = c[1];
+                c[0]--;
+                cBenefics++;
+                foreach (Student student in @group.Students)
+                {
+                    row++;
+                    sheet.Cells[row, "D"].Value = student.Pib;
+                    sheet.Cells[row, "E"].Value = student.FormaTeaching;
+                    sheet.Cells[row, cBenefics.ToString()].Value = student.Benefits;
+                    sheet.Cells[row, c[1].ToString()].Formula = "=AVERAGE(" + "F" + row + ":" + c[0] + row + ") - 0.5";
+                    sheet.Cells[row, c[1].ToString()].NumberFormatLocal = "##";
+
+                    bool hight = true;
+                    int sum = 0;
+                    int countOf = 0;
+
+                    if (student.Ocinkas.Count >= 1)
+                    {
+                        foreach (Ocinka ocinka in student.Ocinkas)
+                        {
+                            if (string.IsNullOrEmpty(ocinka.Number)) countOf++;
+                            int number;
+                            if (!int.TryParse(ocinka.Number, out number)) continue;
+                            if (number < 10) hight = false;
+                            sum += number;
+                        }
+                        if (student.FormaTeaching.Equals("п")) hight = false;
+
+                        if (sum/(group.Students[0].Ocinkas.Count - countOf) >= 7 && !student.FormaTeaching.Equals("п"))
+                            sheet.Cells[row, c[1].ToString()].Interior.Color =
+                                System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Yellow);
+
+                        if (hight)
+                            sheet.Cells[row, c[1].ToString()].Interior.Color =
+                                System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Blue);
+                    }
+
+                    sheet.Cells[row, cBenefics].Value = student.Benefits;
+                }
+
+                sheet.Range["C7", c[1].ToString() + 44].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+
+                if (group.Students.Count < 30)
+                    sheet.Range["A" + (group.Students.Count + 11), "IV" + 40].Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
+
                 book.Save();
+                book.Close();
             }
             catch (Exception e)
             {

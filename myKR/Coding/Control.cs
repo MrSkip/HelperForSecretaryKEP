@@ -12,6 +12,8 @@ namespace myKR.Coding
         {
             InitializeComponent();
             label1.Text = text;
+            IfShow = false;
+            ButtonClick = 0;
         }
 
         public void SetButtonReseachEnabled(bool b)

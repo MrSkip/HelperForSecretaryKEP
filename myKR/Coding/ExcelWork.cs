@@ -1034,7 +1034,8 @@ namespace myKR.Coding
                 
                 for (int i = 11; i < studCount + 11; i++)
                 {
-                    _xlWorkSheet.Range[averageBal.ToString() + i].Formula = "=AVERAGE(" + "F" + i + ":" + begin.ToString() + i + ") - 0.5";
+                    _xlWorkSheet.Range[averageBal.ToString() + i].Formula = "=AVERAGE(" + "F" + i + ":" + begin + i + ") - 0.5";
+
                     _xlWorkSheet.Range[averageBal.ToString() + i].NumberFormatLocal = "##";
                     string s1 = _xlWorkSheet.Range["E" + i].Value;
                     double s2;

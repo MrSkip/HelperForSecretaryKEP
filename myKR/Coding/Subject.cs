@@ -70,7 +70,8 @@ namespace myKR.Coding
         public string NumberOfBook;
         public string Group;
         public string FormaTeaching;
-        public string Benefits;
+        public string Benefits = "";
+        public List<Ocinka> Ocinkas = new List<Ocinka>();
     }
 
     public class NumberOfOblic
@@ -82,7 +83,7 @@ namespace myKR.Coding
 
     public class Ocinka
     {
-        public string StudentName;
+        public string Name;
         public string Number;
     }
 }

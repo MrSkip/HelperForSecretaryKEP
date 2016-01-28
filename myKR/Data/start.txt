@@ -1,2 +1,2 @@
-[rp] |D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\LastReadFromHere\Rp15.xls
+[rp] |D:\Project\C#\HelperForSecretary\2015\Робочий план ЕЛ  на 2015-2016 нов.xls
 [bd] |D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\LastReadFromHere\База.xls

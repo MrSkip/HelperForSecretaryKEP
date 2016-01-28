@@ -22,43 +22,20 @@ namespace myKR.Coding
         {
             try
             {
-                ExcelFile.App.Visible = true;
-                Excel.Workbook workbook = ExcelFile.App.Workbooks.Open("D:\\s.xls");
+//                ExcelFile.App.Visible = true;
+//                ExcelFile.App.VBE.
+
+                Excel.Workbook workbook = ExcelFile.App.Workbooks.Open("D:\\Macros.xls");
+                Excel.Workbook book = ExcelFile.App.Workbooks.Open("D:\\Empty.xls");
 
                 Excel.Worksheet sheet = workbook.Worksheets[1];
-                sheet.Cells[1, 1].Value = "fs";
 
-//                Excel.Workbook newWorkbook = ExcelFile.App.Workbooks.Open("D:\\d.xls");
-
-//                Excel.Worksheet newWorksheet = newWorkbook.Worksheets[1];
-//                Excel.Worksheet worksheet = workbook.Worksheets[1];
-
-//                worksheet.Cells.Copy();
-//                worksheet.Cells.PasteSpecial(newWorksheet.Cells.Copy());
-//
-//                workbook.Save();
-//                Excel.Worksheet worksheet = workbook.Worksheets.Add(Type.Missing);
-//                workbook.Worksheets.Add(Type.Missing);
-//                Excel.Worksheet worksheet = workbook.Worksheets[1];
-//                worksheet.Select();
-
-
-//                worksheet.Name = "sd";
-
-//                Excel.Workbook newWorkbook = ExcelFile.App.Workbooks.Open("D:\\lold.xls");
-//                Excel.Worksheet worksheetd = newWorkbook.Sheets[1];
-//                worksheetd.Cells[1, "A"].Value = "Mula";
-//
-//                worksheetd.Copy(workbook.Sheets[1]);
-
-//                workbook.Save();
-//                workbook.SaveAs("lol", Excel.XlFileFormat.xlAddIn8);
-//                newWorkbook.Save();
-
+                sheet.Cells[1, 1].Value = "=Uspishnist(0,4)";
+                book.Save();
             }
             catch (Exception e)
             {
-                MessageBox.Show("Errorc- " + e);
+                MessageBox.Show("Error- " + e);
                 throw;
             }
             
@@ -67,7 +44,8 @@ namespace myKR.Coding
         private void Form1_Load(object sender, EventArgs e)
         {
 //            create();
-
+//
+//            return;
             string path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
                                             + @"Data\start.txt";
             StreamReader readFile = new StreamReader(path);
@@ -80,8 +58,8 @@ namespace myKR.Coding
                 readFile.Close();
 
                 startForm.ShowDialog();
-//                Manager.CreateOblicUspishnosti("", "", 1);
-                Manager.CreateVidomistUspishnosti("ПІ-12-01", 1);
+                Manager.CreateOblicUspishnosti("", "", 1);
+//                Manager.CreateVidomistUspishnosti("ПІ-14-01", 1);
 
                 if (startForm.Cancel) Environment.Exit(-1);
 
