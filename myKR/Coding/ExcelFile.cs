@@ -12,7 +12,7 @@ namespace myKR.Coding
         public static Excel.Application App = new Excel.Application
         {
             Visible = false,
-            DisplayAlerts = false
+            DisplayAlerts = false 
         };
 
         public static string CurrentFolder = Environment.CurrentDirectory + "\\";
@@ -662,7 +662,7 @@ namespace myKR.Coding
                     {
                         practice.Semestr = ArabNormalize(practice.Semestr);
 
-                        Subject subject = new Subject()
+                        Subject subject = new Subject
                         {
                             Name = practice.Name,
                             NumberOfOlic = practice.NumberOfOlic,
@@ -882,7 +882,8 @@ namespace myKR.Coding
             sheet.Cells[12, "G"] = "__" + (n - 46) + "__";
         }
 
-        private static void CreateZalicExamenAndDufZalic(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
+        private static void CreateZalicExamenAndDufZalic(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, 
+            Group group, Subject subject, Semestr semestr, int pivricha)
         {
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
 
@@ -971,7 +972,7 @@ namespace myKR.Coding
             return arab;
         }
 
-        public static string ArabToRome(int arab)
+        private static string ArabToRome(int arab)
         {
             var rome = "";
             switch (arab)
@@ -1019,7 +1020,6 @@ namespace myKR.Coding
 
         // Creating ZvedVidomist
 
-
         // Read Oblics Uspisnosti
         public static void CreateVidomist(Group group, int pivricha)
         {
@@ -1056,6 +1056,7 @@ namespace myKR.Coding
                             ReadOcinkaFromOblics(group, sheet, pivricha, 3);
                         }
                     }
+                    book.Save();
                     book.Close();
                 }
                 catch (Exception e)
@@ -1155,6 +1156,9 @@ namespace myKR.Coding
 
         private static void CreateZvedeniaVidomist(Group group, int pivricha)
         {
+            Excel.Workbook bookTamplate = null;
+            Excel.Workbook book = null;
+
             try
             {
                 string pathToVidomist = CurrentFolder +
@@ -1167,10 +1171,9 @@ namespace myKR.Coding
                     return;
                 }
 
-                Excel.Workbook bookTamplate = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
+                bookTamplate = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
                 Excel.Worksheet sheetTamplate = (Excel.Worksheet) bookTamplate.Worksheets["Зведена відомість"];
 
-                Excel.Workbook book;
                 Excel.Worksheet sheet;
 
                 if (!File.Exists(pathToVidomist))
@@ -1182,7 +1185,7 @@ namespace myKR.Coding
                     }
                     File.Copy(CurrentFolder + "Data\\WithMacros.xls", pathToVidomist);
                     book = App.Workbooks.Open(pathToVidomist);
-                    sheet = (Excel.Worksheet)book.Worksheets[1];
+                    sheet = (Excel.Worksheet) book.Worksheets[1];
                     sheet.Name = group.Name;
                 }
                 else
@@ -1201,7 +1204,7 @@ namespace myKR.Coding
                             if (Control.ButtonClick == 1)
                             {
 
-                                Excel.Application newApp = new Excel.Application() {Visible = true};
+                                Excel.Application newApp = new Excel.Application {Visible = true};
                                 ((Excel.Worksheet)
                                     newApp.Workbooks.Open(pathToVidomist).Worksheets[group.Name]).Select();
 
@@ -1235,13 +1238,17 @@ namespace myKR.Coding
                 string semestrCurrent = pivricha == 1
                     ? group.FirstRomeSemestr
                     : ArabToRome(FromRomeToArab(group.FirstRomeSemestr) + 1);
-                int yearCurrent = string.IsNullOrEmpty(group.Year) ? 0 : int.Parse(group.Year.Trim()) + 1;
+
+                int yearCurrent = string.IsNullOrEmpty(group.Year)
+                    ? 0
+                    : int.Parse(group.Year.Trim()) + 1;
 
                 sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
 
                 sheet.Cells[4, "C"].Value = "спеціальності \"" + group.Speciality + "\"";
 
-                sheet.Cells[5, "D"].Value = "групи " + group.Name + " за " + semestrCurrent + " семестр " + group.Year + "-" +
+                sheet.Cells[5, "D"].Value = "групи " + group.Name + " за " + semestrCurrent + " семестр " + group.Year +
+                                            "-" +
                                             yearCurrent + " навчального року";
 
                 sheet.Cells[45, "K"].Value = "/ " + group.Curator + " /";
@@ -1311,24 +1318,25 @@ namespace myKR.Coding
                             sheet.Cells[43, c[1].ToString()] = subject.Teacher;
                             if (group.Students != null)
                             {
-                                sheet.Cells[41, c[1].ToString()].Value = "=Uspishnist(" + count + "," + group.Students.Count + ")";
+                                sheet.Cells[41, c[1].ToString()].Value = "=Uspishnist(" + count + "," +
+                                                                         group.Students.Count + ")";
                                 sheet.Cells[42, c[1].ToString()].Value = "=Quality(" + count + "," +
-                                                                           group.Students.Count + ")";
+                                                                         group.Students.Count + ")";
                             }
 
                             int n = 10;
                             if (subject.Ocinka != null)
-                            foreach (Ocinka ocinka in subject.Ocinka)
-                            {
-                                n++;
-                                sheet.Cells[n, c[1].ToString()].Value = ocinka.Number;
-
-                                group.Students[n - 11].Ocinkas.Add(new Ocinka
+                                foreach (Ocinka ocinka in subject.Ocinka)
                                 {
-                                    Name = subject.Name,
-                                    Number = ocinka.Number
-                                });
-                            }
+                                    n++;
+                                    sheet.Cells[n, c[1].ToString()].Value = ocinka.Number;
+
+                                    group.Students[n - 11].Ocinkas.Add(new Ocinka
+                                    {
+                                        Name = subject.Name,
+                                        Number = ocinka.Number
+                                    });
+                                }
                             c[1]++;
                         }
                     }
@@ -1342,7 +1350,8 @@ namespace myKR.Coding
                             char ch = c[1];
                             ch--;
                             sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
-                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment =
+                                Excel.XlHAlign.xlHAlignCenter;
                         }
                             break;
                         case 2:
@@ -1351,7 +1360,8 @@ namespace myKR.Coding
                             char ch = c[1];
                             ch--;
                             sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
-                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment =
+                                Excel.XlHAlign.xlHAlignCenter;
                         }
                             break;
                         case 4:
@@ -1360,7 +1370,8 @@ namespace myKR.Coding
                             char ch = c[1];
                             ch--;
                             sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
-                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment = Excel.XlHAlign.xlHAlignCenter;
+                            sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].HorizontalAlignment =
+                                Excel.XlHAlign.xlHAlignCenter;
                         }
                             break;
                     }
@@ -1382,7 +1393,10 @@ namespace myKR.Coding
                 char cBenefics = c[1];
                 c[0] = c[1];
                 c[0]--;
+
                 cBenefics++;
+                cBenefics++;
+
                 foreach (Student student in @group.Students)
                 {
                     row++;
@@ -1408,13 +1422,17 @@ namespace myKR.Coding
                         }
                         if (student.FormaTeaching.Equals("п")) hight = false;
 
-                        if (sum/(group.Students[0].Ocinkas.Count - countOf) >= 7 && !student.FormaTeaching.Equals("п"))
-                            sheet.Cells[row, c[1].ToString()].Interior.Color =
-                                System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Yellow);
+                        char stupendiaColumnPosution = c[1];
+                        stupendiaColumnPosution++;
+
+                        if (group.Students[0].Ocinkas.Count - countOf == 0)
+                            hight = false;
+                        else if (sum / (group.Students[0].Ocinkas.Count - countOf) >= 7  && !student.FormaTeaching.Equals("п"))
+                        sheet.Cells[row, stupendiaColumnPosution.ToString()].Value = 1;
 
                         if (hight)
-                            sheet.Cells[row, c[1].ToString()].Interior.Color =
-                                System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Blue);
+                            sheet.Cells[row, stupendiaColumnPosution.ToString()].Interior.Color =
+                                System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Yellow);
                     }
 
                     sheet.Cells[row, cBenefics].Value = student.Benefits;
@@ -1423,14 +1441,22 @@ namespace myKR.Coding
                 sheet.Range["C7", c[1].ToString() + 44].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
 
                 if (group.Students.Count < 30)
-                    sheet.Range["A" + (group.Students.Count + 11), "IV" + 40].Delete(Excel.XlDeleteShiftDirection.xlShiftUp);
-
-                book.Save();
-                book.Close();
+                    sheet.Range["A" + (group.Students.Count + 11), "IV" + 40].Delete(
+                        Excel.XlDeleteShiftDirection.xlShiftUp);
             }
             catch (Exception e)
             {
-                MessageBox.Show(e + "");
+                MessageBox.Show(e + "" + "\n" + group.Name);
+            }
+            finally
+            {
+                if (book != null)
+                {
+                    book.Save();
+                    book.Close();
+                }
+                if (bookTamplate != null)
+                    bookTamplate.Close();
             }
             Control.IfShow = false;
         }
@@ -1442,5 +1468,7 @@ namespace myKR.Coding
             if (s.Length <= 55) return 11;
             return 13.43;
         }
+
+
     }
 }

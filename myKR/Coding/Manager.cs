@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace myKR.Coding
 {
@@ -21,12 +20,23 @@ namespace myKR.Coding
             return Groups.Select(@group => @group.Name).ToList();
         }
 
+        public static Group GetGroupByName(String name)
+        {
+            foreach (Group @group in Groups)
+            {
+                if (group.Name.Equals(name))
+                    return group;
+            }
+            return new Group();
+        }
+
         /*
          *      Create Oblic Uspishosti
          *      if `groupName` is null or empty and `subjectName` is null or empty than create for all groups
          *      else if `groupName` is not null and not empty and `subjectName` is null or empty than create for one group
          *      else if `groupName` is not null and not empty and `subjectName` is not null and not empty than create for one subject
         */
+
         public static void CreateOblicUspishnosti(string groupName, string subjectName, int pivricha)
         {
             ExcelFile.CreateOblicUspishnosti(groupName, subjectName, pivricha);
@@ -34,12 +44,13 @@ namespace myKR.Coding
 
         public static void CreateVidomistUspishnosti(string groupName, int pivricha)
         {
-            foreach (Group @group in Groups)
+            if (!groupName.Equals("Усі групи"))
+                ExcelFile.CreateVidomist(GetGroupByName(groupName), pivricha);
+            else
             {
-                if (group.Name.Equals(groupName))
+                foreach (Group @group in Groups)
                 {
                     ExcelFile.CreateVidomist(group, pivricha);
-                    break;
                 }
             }
         }
