@@ -409,7 +409,7 @@ namespace myKR.Coding
 
                     Subject subject = new Subject
                     {
-                        Name = subjectName.ToString().Trim(),
+                        Name = RemoveSymbolFromSubjectName(subjectName.ToString().Trim()),
                         Teacher = teacher
                     };
                     bool addToList = false;
@@ -468,6 +468,18 @@ namespace myKR.Coding
                 }
             }
             return subjects;
+        }
+
+        private static string RemoveSymbolFromSubjectName(string subjectName)
+        {
+            if (string.IsNullOrEmpty(subjectName)) return "";
+            string withoutSymbol = "";
+            foreach (char c in subjectName)
+            {
+                if (c != '*')
+                    withoutSymbol += c;
+            }
+            return withoutSymbol;
         }
 
         private static List<Practice> ReadPractice(Excel.Worksheet sheet)
@@ -1443,6 +1455,9 @@ namespace myKR.Coding
                 if (group.Students.Count < 30)
                     sheet.Range["A" + (group.Students.Count + 11), "IV" + 40].Delete(
                         Excel.XlDeleteShiftDirection.xlShiftUp);
+
+                // Add vidomist to arhive
+                ArhiveZvedVidomist(sheet, semestrCurrent);
             }
             catch (Exception e)
             {
@@ -1467,6 +1482,64 @@ namespace myKR.Coding
             if (s.Length <= 40) return 9.70;
             if (s.Length <= 55) return 11;
             return 13.43;
+        }
+
+        private static void ArhiveZvedVidomist(Excel.Worksheet sheet, string semesterRome)
+        {
+            Excel.Workbook book = null;
+            try
+            {
+                if (string.IsNullOrEmpty(semesterRome)) return;
+
+                string pathToArhiveFile = CurrentFolder + "User Data\\Зведена відомість успішності\\Архів\\" +
+                                          sheet.Name +
+                                          ".xls";
+
+                if (!File.Exists(pathToArhiveFile))
+                    File.Copy(CurrentFolder + "Data\\WithMacros.xls", pathToArhiveFile);
+
+                book = App.Workbooks.Open(pathToArhiveFile);
+                Excel.Worksheet sheetArhive;
+
+                string sheetNameOfArhive = semesterRome + " семестр";
+
+                bool bl = true;
+                foreach (Excel.Worksheet worksheet in book.Worksheets)
+                {
+                    if (worksheet.Name.Equals(sheetNameOfArhive))
+                    {
+                        bl = false;
+                        break;
+                    }
+                }
+
+                if (bl)
+                {
+                    sheetArhive = book.Sheets.Count == 1
+                        ? book.Worksheets.Item[1]
+                        : book.Worksheets.Add(Type.Missing);
+                    sheetArhive.Name = sheetNameOfArhive;
+                }
+                else
+                {
+                    sheetArhive = book.Sheets[sheetNameOfArhive];
+                    sheetArhive.Cells.Delete();
+                }
+
+                sheetArhive.Cells.PasteSpecial(sheet.Cells.Copy());
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Помилка!\n Архівування зведеної відомості: " + sheet.Name + "\nКод помилки:\n" + e);
+            }
+            finally
+            {
+                if (book != null)
+                {
+                    book.Save();
+                    book.Close();
+                }
+            }
         }
 
 

@@ -409,8 +409,7 @@ namespace myKR.Coding
         public void CreateOblicUspishnosti(string numberOfOblic, int semestr, string subject)
         {
             if (numberOfOblic == null) throw new ArgumentNullException("numberOfOblic");
-            _xlApp = new Excel.Application();
-            _xlApp.DisplayAlerts = false;
+            _xlApp = new Excel.Application {DisplayAlerts = false};
 
             _numberOfOblic = numberOfOblic;
             Semestr = semestr;

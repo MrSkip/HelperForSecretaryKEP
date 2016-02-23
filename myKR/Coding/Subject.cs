@@ -16,11 +16,6 @@ namespace myKR.Coding
         public List<Practice> Practice;
         public List<StateExamination> StateExamination;
         public List<Student> Students;
-
-        public int GetYearInIneget()
-        {
-            return int.Parse(Year);
-        }
     }
     public class Subject
     {
