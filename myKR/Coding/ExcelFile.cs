@@ -1033,12 +1033,12 @@ namespace myKR.Coding
         // Creating ZvedVidomist
 
         // Read Oblics Uspisnosti
-        public static void CreateVidomist(Group group, int pivricha)
+        public static void CreateVidomist(Group group, int pivricha, string mount)
         {
             if (!File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
             {
                 MessageBox.Show("У вас немає обліків успішності для групи - " + group.Name + " за " + pivricha +
-                                " півріччя");
+                    " півріччя" + (string.IsNullOrEmpty(mount) ? "" : ". За місяць - " + mount));
             }
             else
             {
@@ -1058,7 +1058,7 @@ namespace myKR.Coding
                             if (formaZdachi.ToString().Equals("диф залік") || formaZdachi.ToString().Equals("екзамен") ||
                                 formaZdachi.ToString().Equals("залік"))
                                 ReadOcinkaFromOblics(group, sheet, pivricha, 1);
-                            else
+                            else if (string.IsNullOrEmpty(mount))
                             {
                                 ReadOcinkaFromOblics(group, sheet, pivricha, 2);
                             }
@@ -1076,8 +1076,7 @@ namespace myKR.Coding
                     MessageBox.Show("Щось не так із методом CreateVidomist()\n" + e);
                 }
             }
-
-            CreateZvedeniaVidomist(group, pivricha);
+            CreateZvedeniaVidomist(group, pivricha, mount);
         }
 
         // if type == 1 than DufZalicZalic else if == 2 than PracticeOrKP else StateExamen
@@ -1166,16 +1165,17 @@ namespace myKR.Coding
             }
         }
 
-        private static void CreateZvedeniaVidomist(Group group, int pivricha)
+        private static void CreateZvedeniaVidomist(Group @group, int pivricha, string mount)
         {
             Excel.Workbook bookTamplate = null;
             Excel.Workbook book = null;
 
             try
             {
+                string stringPivricha = pivricha == 1 ? "1-ше півріччя.xls" : "2-ге півріччя.xls";
                 string pathToVidomist = CurrentFolder +
                                         "User Data\\Зведена відомість успішності\\Зведена відомість успішності за " +
-                                        (pivricha == 1 ? "1-ше півріччя.xls" : "2-ге півріччя.xls");
+                                        (string.IsNullOrEmpty(mount) ? stringPivricha : mount + ".xls");
 
                 if (!File.Exists(CurrentFolder + "Data\\DataToProgram.xls"))
                 {
@@ -1276,7 +1276,7 @@ namespace myKR.Coding
                 for (int i = 1; i < 6; i++)
                 {
                     List<Subject> list = null;
-                    if (i == 1)
+                    if (i == 1 && string.IsNullOrEmpty(mount))
                     {
                         list =
                             subjects.FindAll(
@@ -1294,7 +1294,7 @@ namespace myKR.Coding
                                         ? subject.FirstSemestr.DyfZalik > 0
                                         : subject.SecondSemestr.DyfZalik > 0);
                     }
-                    else if (i == 3)
+                    else if (i == 3 && string.IsNullOrEmpty(mount))
                     {
                         list =
                             subjects.FindAll(
@@ -1310,7 +1310,7 @@ namespace myKR.Coding
                                 subject =>
                                     pivricha == 1 ? subject.FirstSemestr.Zalic > 0 : subject.SecondSemestr.Zalic > 0);
                     }
-                    else if (i == 5)
+                    else if (i == 5 && string.IsNullOrEmpty(mount))
                     {
                         practiceExist = true;
                         list =
@@ -1422,7 +1422,7 @@ namespace myKR.Coding
                     int sum = 0;
                     int countOf = 0;
 
-                    if (student.Ocinkas.Count >= 1)
+                    if (student.Ocinkas.Count >= 1 && string.IsNullOrEmpty(mount))
                     {
                         foreach (Ocinka ocinka in student.Ocinkas)
                         {
@@ -1447,7 +1447,8 @@ namespace myKR.Coding
                                 System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Yellow);
                     }
 
-                    sheet.Cells[row, cBenefics].Value = student.Benefits;
+                    if (string.IsNullOrEmpty(mount))
+                        sheet.Cells[row, cBenefics].Value = student.Benefits;
                 }
 
                 sheet.Range["C7", c[1].ToString() + 44].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
@@ -1457,7 +1458,10 @@ namespace myKR.Coding
                         Excel.XlDeleteShiftDirection.xlShiftUp);
 
                 // Add vidomist to arhive
-                ArhiveZvedVidomist(sheet, semestrCurrent);
+                if (string.IsNullOrEmpty(mount))
+                    ArhiveZvedVidomist(sheet, semestrCurrent);
+                else
+                    sheet.Cells[6, "D"].Value = "Зведена відомість успішності за " + mount;
             }
             catch (Exception e)
             {
@@ -1467,8 +1471,15 @@ namespace myKR.Coding
             {
                 if (book != null)
                 {
-                    book.Save();
-                    book.Close();
+                    try
+                    {
+                        book.Save();
+                        book.Close();
+                    }
+                    catch (Exception)
+                    {
+                        //ignored
+                    }
                 }
                 if (bookTamplate != null)
                     bookTamplate.Close();

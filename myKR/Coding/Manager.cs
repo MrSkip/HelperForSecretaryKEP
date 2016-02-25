@@ -42,16 +42,17 @@ namespace myKR.Coding
             ExcelFile.CreateOblicUspishnosti(groupName, subjectName, pivricha);
         }
 
-        public static void CreateVidomistUspishnosti(string groupName, int pivricha)
+        public static void CreateVidomistUspishnosti(string groupName, int pivricha, string mount)
         {
             if (!groupName.Equals("Усі групи"))
-                ExcelFile.CreateVidomist(GetGroupByName(groupName), pivricha);
+                ExcelFile.CreateVidomist(GetGroupByName(groupName), pivricha, mount);
             else
             {
                 foreach (Group @group in Groups)
                 {
-                    ExcelFile.CreateVidomist(group, pivricha);
+                    ExcelFile.CreateVidomist(group, pivricha, mount);
                 }
+                Control.IfShow = false;
             }
         }
     }

@@ -103,7 +103,7 @@ namespace myKR.Coding
             label4.Text = comboBox1.Text.Equals("Усі групи")
                 ? "Працюю, створення зведених відомостей ..." : "Працюю, створення зведеної відомості ...";
 
-            Manager.CreateVidomistUspishnosti(comboBox1.Text, Int32.Parse(comboBox2.Text));
+            Manager.CreateVidomistUspishnosti(comboBox1.Text, Int32.Parse(comboBox2.Text), null);
 
             label4.Visible = false;
         }
@@ -126,27 +126,19 @@ namespace myKR.Coding
 
         private void button4_Click(object sender, EventArgs e)
         {
-//            if (comboBox1.Text.Equals("") || comboBox2.Text.Equals("") || comboBox4.Text.Equals(""))
-//            {
-//                MessageBox.Show("Заповніть поля 1, 2 і 4");
-//                return;
-//            }
-//            int groupCount = 1;
-//            if (comboBox1.Text.Equals("Усі групи")) groupCount = comboBox1.Items.Count - 1;
-//
-//            label4.Visible = true;
-//            label4.Text = "";
-//
-//            for (int i = 0; i < groupCount; i++)
-//            {
-//                if (groupCount > 1)
-//                {
-//                    comboBox1.Text = ExWork.SheetNamesRobPlan[i];
-//                    ExWork.CurrentGroupName = ExWork.SheetNamesRobPlan[i];
-//                }
-//                label4.Text = "Cтворення зведеної відомості за " + comboBox2.Text + " півріччя для групи - " + comboBox1.Text;
-//                ExWork.ZvedVidomist(Convert.ToInt32(comboBox2.Text), comboBox1.Text, comboBox4.Text);
-//            }
+            if (string.IsNullOrEmpty(comboBox1.Text) || string.IsNullOrEmpty(comboBox2.Text)
+                || string.IsNullOrEmpty(comboBox4.Text))
+            {
+                MessageBox.Show("Заповніть поля 1, 2 і 4");
+                return;
+            }
+
+            label4.Visible = true;
+            label4.Text = comboBox1.Text.Equals("Усі групи")
+                ? "Працюю, створення зведених відомостей за місяць" : "Працюю, створення зведеної відомості за місяць";
+
+            Manager.CreateVidomistUspishnosti(comboBox1.Text, Int32.Parse(comboBox2.Text), comboBox4.Text);
+
             label4.Visible = false;
         }
 
