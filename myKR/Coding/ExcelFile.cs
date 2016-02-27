@@ -1033,12 +1033,12 @@ namespace myKR.Coding
         // Creating ZvedVidomist
 
         // Read Oblics Uspisnosti
-        public static void CreateVidomist(Group group, int pivricha, string mount)
+        public static void CreateVidomist(Group group, int pivricha, string month)
         {
             if (!File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
             {
                 MessageBox.Show("У вас немає обліків успішності для групи - " + group.Name + " за " + pivricha +
-                    " півріччя" + (string.IsNullOrEmpty(mount) ? "" : ". За місяць - " + mount));
+                    " півріччя" + (string.IsNullOrEmpty(month) ? "" : ". За місяць - " + month));
             }
             else
             {
@@ -1058,7 +1058,7 @@ namespace myKR.Coding
                             if (formaZdachi.ToString().Equals("диф залік") || formaZdachi.ToString().Equals("екзамен") ||
                                 formaZdachi.ToString().Equals("залік"))
                                 ReadOcinkaFromOblics(group, sheet, pivricha, 1);
-                            else if (string.IsNullOrEmpty(mount))
+                            else if (string.IsNullOrEmpty(month))
                             {
                                 ReadOcinkaFromOblics(group, sheet, pivricha, 2);
                             }
@@ -1076,7 +1076,7 @@ namespace myKR.Coding
                     MessageBox.Show("Щось не так із методом CreateVidomist()\n" + e);
                 }
             }
-            CreateZvedeniaVidomist(group, pivricha, mount);
+            CreateZvedeniaVidomist(group, pivricha, month);
         }
 
         // if type == 1 than DufZalicZalic else if == 2 than PracticeOrKP else StateExamen
@@ -1276,7 +1276,7 @@ namespace myKR.Coding
                 for (int i = 1; i < 6; i++)
                 {
                     List<Subject> list = null;
-                    if (i == 1 && string.IsNullOrEmpty(mount))
+                    if (i == 1)
                     {
                         list =
                             subjects.FindAll(
@@ -1553,6 +1553,157 @@ namespace myKR.Coding
             }
         }
 
+//      Creating atestat
 
+        private static List<NewSubject> GetSubjectsForAtestat()
+        {
+            Excel.Workbook bookTemplate = null;
+            List<NewSubject> subjects = new List<NewSubject>();
+            try
+            {
+                if (!File.Exists(CurrentFolder + "Data\\DataToProgram.xls"))
+                {
+                    MessageBox.Show("У вас немає обов'язкових шаблонів (" + CurrentFolder + "Data\\DataToProgram.xls" +
+                                    ")");
+                    return new List<NewSubject>();
+                }
+
+                bookTemplate = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
+                Excel.Worksheet sheet = (Excel.Worksheet)bookTemplate.Worksheets.Item["Формування атестату - предмети"];
+
+                int startRow = 2;
+
+                while (true)
+                {
+                    string cellValue = sheet.Cells[startRow, "B"].Value + "";
+                    if (string.IsNullOrEmpty(cellValue))
+                        break;
+                    subjects.Add(new NewSubject
+                    {
+                        Name = cellValue.Trim()
+                    });
+                    startRow++;
+                }
+
+                if (subjects.Count == 0)
+                {
+                    MessageBox.Show("У книзі (" + CurrentFolder + "Data\\DataToProgram.xls" +
+                                    ")\n Лист (Формування атестату - предмети) не " +
+                                    "\nзаписано жодного предмету для винесення в атестат");
+                    return subjects;
+                }
+
+                char startColumn = 'D';
+                startRow = 2;
+
+                while (true)
+                {
+                    string cellsGroupInizial = sheet.Cells[startRow, startColumn.ToString()].Value + "";
+                    if (string.IsNullOrEmpty(cellsGroupInizial))
+                        break;
+
+                    int startRowForState = 3;
+
+                    while (true)
+                    {
+                        string cellStateSubject = sheet.Cells[startRowForState, startColumn.ToString()].Value;
+                        if (string.IsNullOrEmpty(cellStateSubject))
+                            break;
+                        foreach (NewSubject newSubject in subjects)
+                        {
+                            if (newSubject.Name.Equals(cellStateSubject.Trim()))
+                            {
+                                if (newSubject.GroupPrefixStatemets == null)
+                                    newSubject.GroupPrefixStatemets = new List<string>();
+                                newSubject.GroupPrefixStatemets.Add(cellStateSubject.Trim());
+                            }
+                        }
+                        startRowForState++;
+                    }
+                    startColumn++;
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Щось не гаразд із методом (GetSubjectsForAtestat)\n" + e);
+                return subjects;
+            }
+            finally
+            {
+                try
+                {
+                    if (bookTemplate != null)
+                    {
+                        bookTemplate.Close();
+                    }
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
+            return subjects;
+        }
+
+        private static List<NewSubject> ReadDataFromArhiveZvedVidForAtestat(string groupName)
+        {
+            Excel.Workbook book = null;
+            List<NewSubject> subjects = new List<NewSubject>();
+
+            try
+            {
+                string pathToArhive = CurrentFolder + "User Data\\" + "Зведена відомість успішності\\" + "Архів\\" +
+                                      groupName + ".xls";
+                if (!File.Exists(pathToArhive))
+                {
+                    MessageBox.Show("У вас немає зведених відомостей успішності для групи + [" + groupName +
+                                    "] у папці 'Архів'");
+                    return subjects;
+                }
+                book = App.Workbooks.Open(pathToArhive);
+                foreach (Excel.Worksheet sheet in book.Sheets)
+                {
+                    int semestr = sheet.Name.Trim().IndexOf(" ") > 0
+                        ? FromRomeToArab(sheet.Name.Trim().Substring(0, sheet.Name.Trim().IndexOf(" ")) + "")
+                        : 0;
+                    if (semestr != 0)
+                        ReadOneSheetFromArhiveZVtoAtestat(subjects, sheet, semestr);
+                }
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Метод - (ReadDataFromArhiveZvedVidForAtestat) \n" + e);
+                return subjects;
+            }
+            finally
+            {
+                try
+                {
+                    if (book != null)
+                    {
+                        book.Close(false, Type.Missing, Type.Missing);
+                    }
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
+            }
+
+            return subjects;
+        }
+
+        private static void ReadOneSheetFromArhiveZVtoAtestat(List<NewSubject> subjects, Excel.Worksheet sheet, int semestr)
+        {
+            try
+            {
+
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("У методі (ReadOneSheetFromArhiveZVtoAtestat)\n" + e);
+                return;
+            }
+        }
     }
 }

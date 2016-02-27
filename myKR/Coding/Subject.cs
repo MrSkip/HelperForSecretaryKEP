@@ -29,8 +29,19 @@ namespace myKR.Coding
         public List<Ocinka> Ocinka;
     }
 
+    public class NewSubject
+    {
+        public string Name;
+        public string Teacher;
+        public List<Semestr> Semestrs;
+        public List<string> GroupPrefixStatemets;
+        public List<Ocinka> Ocinkas;
+    }
+
     public class Semestr
     {
+        public int NumberOfSemestr;
+
         public double CountOfHours = 0;
 
         public double CursovaRobota = 0;
