@@ -1645,7 +1645,7 @@ namespace myKR.Coding
             return subjects;
         }
 
-        private static List<NewSubject> ReadDataFromArhiveZvedVidForAtestat(string groupName)
+        public static List<NewSubject> ReadDataFromArhiveZVtoAtestat(string groupName)
         {
             Excel.Workbook book = null;
             List<NewSubject> subjects = new List<NewSubject>();
@@ -1664,10 +1664,10 @@ namespace myKR.Coding
                 foreach (Excel.Worksheet sheet in book.Sheets)
                 {
                     int semestr = sheet.Name.Trim().IndexOf(" ") > 0
-                        ? FromRomeToArab(sheet.Name.Trim().Substring(0, sheet.Name.Trim().IndexOf(" ")) + "")
+                        ? FromRomeToArab(sheet.Name.Trim().Substring(0, sheet.Name.Trim().IndexOf(" ") + 1) + "")
                         : 0;
                     if (semestr != 0)
-                        ReadOneSheetFromArhiveZVtoAtestat(subjects, sheet, semestr);
+                        ReadOneSheetFromArhiveZVtoAtestat(subjects, sheet, semestr, groupName);
                 }
             }
             catch (Exception e)
@@ -1693,16 +1693,132 @@ namespace myKR.Coding
             return subjects;
         }
 
-        private static void ReadOneSheetFromArhiveZVtoAtestat(List<NewSubject> subjects, Excel.Worksheet sheet, int semestr)
+        private static void ReadOneSheetFromArhiveZVtoAtestat(List<NewSubject> subjects, Excel.Worksheet sheet, int semestr, string groupName)
         {
             try
             {
+                char startColumn = 'F';
+                byte startRowForStudent = 11;
+                byte bt = 0;
+                byte countOfStudent = 0;
 
+                while (true)
+                {
+                    string cellStudentNumber = sheet.Cells[startRowForStudent, "C"].Value + "";
+                    if (string.IsNullOrEmpty(cellStudentNumber))
+                        break;
+                    countOfStudent++;
+                }
+
+
+                while (true)
+                {
+                    Excel.Range mergeCells = sheet.Cells[8, startColumn.ToString()];
+                    string pas = mergeCells.Value + "";
+                    if (string.IsNullOrEmpty(pas))
+                    {
+                        bt++;
+                        if (bt <= 6) continue;
+                        break;
+                    }
+
+                    for (int i = 1; i <= mergeCells.Rows.Count; i++)
+                    {
+                        string subjectName = sheet.Cells[9, startColumn].Value + "";
+                        if (string.IsNullOrEmpty(subjectName))
+                            break;
+                        NewSubject newSubjectRef = null;
+
+                        if (pas.Equals("Іспит"))
+                        {
+                            foreach (NewSubject newSubject in subjects)
+                            {
+                                if (newSubject.Name.Equals(subjectName) && newSubject.GroupExist(groupName))
+                                {
+                                    newSubject.Semestrs.Add(new Semestr
+                                    {
+                                        NumberOfSemestr = semestr,
+                                        StateExamination = 1
+                                    });
+                                    newSubjectRef = newSubject;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            foreach (NewSubject newSubject in subjects)
+                            {
+                                if (newSubject.Name.Equals(subjectName))
+                                {
+                                    newSubject.Semestrs.Add(new Semestr
+                                    {
+                                        NumberOfSemestr = semestr,
+                                        Zalic = 1
+                                    });
+                                    newSubjectRef = newSubject;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (newSubjectRef == null) continue;
+
+                        for (int j = 11; j < 11 + countOfStudent; j++)
+                        {
+                            newSubjectRef.Ocinkas.Add(new Ocinka
+                            {
+                                Name = sheet.Cells[j, startColumn.ToString()].Value + ""
+                            });
+                        }
+                        newSubjectRef.Teacher = sheet.Cells[13 + countOfStudent, startColumn].Value + "";
+                        startColumn++;
+                    }
+                }
             }
             catch (Exception e)
             {
                 MessageBox.Show("У методі (ReadOneSheetFromArhiveZVtoAtestat)\n" + e);
                 return;
+            }
+        }
+
+        private static void CreateAtestatForOneGroup(List<NewSubject> subjects, string groupName)
+        {
+            Excel.Workbook book = null;
+            try
+            {
+                string pathToAtestat = CurrentFolder + "User Data\\Атестат\\" + groupName + ".xls";
+                string pathToTemplateWithMacros = CurrentFolder + "Data\\WithMacros.xls";
+                string pathToTemplateWithSheet = CurrentFolder + "Data\\DataToProgram.xls";
+
+                if (!File.Exists(pathToTemplateWithSheet) || !File.Exists(pathToTemplateWithMacros))
+                {
+                    MessageBox.Show("Немає потрібних книг\n" + pathToTemplateWithSheet + "\n" + pathToTemplateWithMacros);
+                    return;
+                }
+                if (!File.Exists(pathToAtestat))
+                    File.Copy(pathToTemplateWithMacros, pathToAtestat);
+
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("У методі (CreateAtestatForOneGroup)\n" + e);
+            }
+            finally
+            {
+                try
+                {
+                    if (book == null)
+                    {
+                        book.Save();
+                        book.Close();
+                    }
+                }
+                catch (Exception)
+                {
+                    // ignored
+                }
             }
         }
     }

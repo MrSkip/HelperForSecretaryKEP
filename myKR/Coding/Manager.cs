@@ -55,6 +55,14 @@ namespace myKR.Coding
                 Control.IfShow = false;
             }
         }
+
+        public static void CreateAtestat(List<string> groupList)
+        {
+//            foreach (string s in groupList)
+//            {
+//                ExcelFile.ReadDataFromArhiveZVtoAtestat(s);
+//            }
+        }
     }
 
 }

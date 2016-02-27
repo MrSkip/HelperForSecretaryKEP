@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace myKR.Coding
 {
@@ -33,9 +34,19 @@ namespace myKR.Coding
     {
         public string Name;
         public string Teacher;
-        public List<Semestr> Semestrs;
+        public List<Semestr> Semestrs = new List<Semestr>();
         public List<string> GroupPrefixStatemets;
-        public List<Ocinka> Ocinkas;
+        public List<Ocinka> Ocinkas = new List<Ocinka>();
+
+        public bool GroupExist(string groupName)
+        {
+            foreach (string groupPrefixStatemet in GroupPrefixStatemets)
+            {
+                if (groupPrefixStatemet.Equals(groupName.Substring(0, groupName.IndexOf("-", StringComparison.Ordinal) + 1)))
+                    return true;
+            }
+            return false;
+        }
     }
 
     public class Semestr
