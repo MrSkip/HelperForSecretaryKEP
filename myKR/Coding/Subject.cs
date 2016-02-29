@@ -34,10 +34,29 @@ namespace myKR.Coding
     {
         public string Name;
         public string Teacher;
-        public List<Semestr> Semestrs = new List<Semestr>();
+        public List<NewSemestr> Semestrs = new List<NewSemestr>();
         public List<string> GroupPrefixStatemets;
-        public List<Ocinka> Ocinkas = new List<Ocinka>();
+        private List<string> _pidsumkovaOcinka;
 
+        public List<string> GetPidsumkovaOcinka()
+        {
+            double countOfHour = 0;
+
+            foreach (NewSemestr newSemestr in Semestrs)
+            {
+                countOfHour += newSemestr.CountOfHours;
+            }
+            if (!(countOfHour > 0) || Semestrs[0].Ocinkas.Count == 0) return new List<string>();
+
+            _pidsumkovaOcinka = new List<string>();
+
+//            foreach (string ocinka in Semestrs[0].Ocinkas)
+//            {
+//                _pidsumkovaOcinka.Add();
+//            }
+
+            return _pidsumkovaOcinka;
+        }
         public bool GroupExist(string groupName)
         {
             foreach (string groupPrefixStatemet in GroupPrefixStatemets)
@@ -49,10 +68,16 @@ namespace myKR.Coding
         }
     }
 
-    public class Semestr
+    public class NewSemestr
     {
         public int NumberOfSemestr;
+        public double CountOfHours = 0;
+        public bool StateExamenExist = false;
+        public List<string> Ocinkas = new List<string>();
+    }
 
+    public class Semestr
+    {
         public double CountOfHours = 0;
 
         public double CursovaRobota = 0;
