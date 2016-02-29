@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -164,6 +165,11 @@ namespace myKR.Coding
 //
 //            Excel.Application xlApp = new Excel.Application {Visible = true};
 //            xlApp.Workbooks.Open(path);
+        }
+
+        private void button3_Click_1(object sender, EventArgs e)
+        {
+            Manager.CreateAtestat(new List<string>{"ПІ-12-01"});
         }
         
     }

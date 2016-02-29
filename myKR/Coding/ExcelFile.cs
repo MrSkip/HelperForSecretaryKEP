@@ -1263,7 +1263,7 @@ namespace myKR.Coding
                                             "-" +
                                             yearCurrent + " навчального року";
 
-                sheet.Cells[45, "K"].Value = "/ " + group.Curator + " /";
+                sheet.Cells[46, "K"].Value = "/ " + group.Curator + " /";
 
                 List<Subject> subjects = pivricha == 1
                     ? @group.Subjects.FindAll(subject => subject.FirstSemestr != null)
@@ -1454,7 +1454,7 @@ namespace myKR.Coding
                         sheet.Cells[row, cBenefics].Value = student.Benefits;
                 }
 
-                sheet.Range["C7", c[1].ToString() + 44].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
+                sheet.Range["C7", c[1].ToString() + 45].Borders.LineStyle = Excel.XlLineStyle.xlContinuous;
 
                 if (group.Students.Count < 30)
                     sheet.Range["A" + (group.Students.Count + 11), "IV" + 40].Delete(
@@ -1587,7 +1587,6 @@ namespace myKR.Coding
                     });
                     startRow++;
                 }
-
                 if (subjects.Count == 0)
                 {
                     MessageBox.Show("У книзі (" + CurrentFolder + "Data\\DataToProgram.xls" +
@@ -1616,9 +1615,7 @@ namespace myKR.Coding
                         {
                             if (newSubject.Name.Equals(cellStateSubject.Trim()))
                             {
-                                if (newSubject.GroupPrefixStatemets == null)
-                                    newSubject.GroupPrefixStatemets = new List<string>();
-                                newSubject.GroupPrefixStatemets.Add(cellStateSubject.Trim());
+                                newSubject.GroupPrefixStatemets.Add(cellsGroupInizial.Trim());
                             }
                         }
                         startRowForState++;
@@ -1648,7 +1645,7 @@ namespace myKR.Coding
             return subjects;
         }
 
-        public static List<NewSubject> ReadAllSheetsFromArhiveZVtoAtestat(string groupName)
+        public static List<NewSubject> ReadAllNeedSheetsFromArhiveZVtoAtestat(string groupName)
         {
             Excel.Workbook book = null;
             List<NewSubject> subjects = GetSubjectsForAtestat();
@@ -1664,12 +1661,12 @@ namespace myKR.Coding
                     return subjects;
                 }
                 book = App.Workbooks.Open(pathToArhive);
-                foreach (Excel.Worksheet sheet in book.Sheets)
+                foreach (Excel.Worksheet sheet in book.Worksheets)
                 {
                     int semestr = sheet.Name.Trim().IndexOf(" ") > 0
-                        ? FromRomeToArab(sheet.Name.Trim().Substring(0, sheet.Name.Trim().IndexOf(" ") + 1) + "")
+                        ? FromRomeToArab(sheet.Name.Trim().Substring(0, sheet.Name.Trim().IndexOf(" ")) + "")
                         : 0;
-                    if (semestr != 0)
+                    if (semestr != 0 && semestr <= 4)
                         ReadOneSheetFromArhiveZVtoAtestat(subjects, sheet, semestr, groupName);
                 }
             }
@@ -1684,7 +1681,7 @@ namespace myKR.Coding
                 {
                     if (book != null)
                     {
-                        book.Close(false, Type.Missing, Type.Missing);
+                        book.Close(false);
                     }
                 }
                 catch (Exception)
@@ -1712,7 +1709,7 @@ namespace myKR.Coding
                         break;
                     countOfStudent++;
                 }
-
+                Console.WriteLine("step 1");
 
                 while (true)
                 {
@@ -1720,33 +1717,47 @@ namespace myKR.Coding
                     string pas = mergeCells.Value + "";
                     if (string.IsNullOrEmpty(pas))
                     {
+                        Console.WriteLine("bt: " + bt);
                         bt++;
+                        startColumn++;
                         if (bt <= 6) continue;
                         break;
                     }
 
                     for (int i = 1; i <= mergeCells.Columns.Count; i++)
                     {
-                        string subjectName = sheet.Cells[9, startColumn].Value + "";
+                        string subjectName = sheet.Cells[9, startColumn.ToString()].Value + "";
                         if (string.IsNullOrEmpty(subjectName))
+                        {
+                            startColumn++;
                             break;
+                        }
+
+                        string countOfHour = sheet.Cells[countOfStudent + 14, startColumn.ToString()].Value + "";
+
                         NewSubject newSubjectRef = null;
 
                         foreach (NewSubject newSubject in subjects)
                         {
                             if (newSubject.Name.Equals(subjectName))
                             {
+                                double hour;
                                 newSubject.Semestrs.Add(new NewSemestr
                                 {
                                     NumberOfSemestr = semestr,
-                                    StateExamenExist = pas.Equals("Іспит") && newSubject.GroupExist(groupName)
+                                    StateExamenExist = pas.Equals("Іспит") && newSubject.GroupExist(groupName),
+                                    CountOfHours = double.TryParse(countOfHour, out hour) ? hour : 0
                                 });
                                 newSubjectRef = newSubject;
                                 break;
                             }
                         }
 
-                        if (newSubjectRef == null) continue;
+                        if (newSubjectRef == null)
+                        {
+                            startColumn++;
+                            continue;
+                        }
 
                         for (int j = 11; j < 11 + countOfStudent; j++)
                         {
@@ -1875,16 +1886,58 @@ namespace myKR.Coding
             newSubject.Semestrs = newSubject.Semestrs.OrderBy(semestr => semestr.NumberOfSemestr).ToList();
 
             char pasPosition = 'D';
-            char pos = '0';
+            byte countOfSemestr = 0;
+            byte columnOfStateExame = 0;
 
-            foreach (NewSemestr semestr in newSubject.Semestrs)
+            for (byte i = 0; i < newSubject.Semestrs.Count; i++)
             {
-                if (semestr.StateExamenExist)
+                if (newSubject.Semestrs[i].StateExamenExist)
                 {
-                    pos = pasPosition;
-                    pasPosition = 'I';
+                    columnOfStateExame = i;
+                    continue;
                 }
+                countOfSemestr++;
+                sheet.Cells[10, pasPosition.ToString()].Value = newSubject.Semestrs[i].CountOfHours;
+                sheet.Cells[11, pasPosition.ToString()].Value = newSubject.Semestrs[i].NumberOfSemestr + "семестр Оцінка в балах";
 
+                byte rowForOcinkaStart = 12;
+
+                foreach (string ocinka in newSubject.Semestrs[i].Ocinkas)
+                {
+                    sheet.Cells[rowForOcinkaStart, pasPosition].Value = ocinka;
+                    rowForOcinkaStart++;
+                }
+            }
+
+            char average = pasPosition;
+            average--;
+
+            sheet.Cells[11, pasPosition.ToString()].Formula = "=AVERAGE(D10:" + average + countOfSemestr + ")";
+            sheet.Cells[11, pasPosition.ToString()].Value = "Підсумкова оцінка";
+
+            for (int i = 0; i < countOfStudent; i++)
+            {
+                string formula = "0";
+                if (countOfStudent == 1)
+                    formula = "(D10*D" + (i + 12) + ")/" + pasPosition + "10";
+                else if (countOfStudent == 2)
+                    formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + ")/" + pasPosition + "10";
+                else if (countOfStudent == 3)
+                    formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12)  + "+F10*F" + (i + 12) + ")/" + pasPosition + "10";
+                else if (countOfStudent == 4)
+                    formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + "+F10*F" + (i + 12) + "+G10*G" + (i + 12) + ")/" + pasPosition + "10";
+
+                sheet.Cells[12 + i, pasPosition.ToString()].Formula = "=ROUND(" + formula + ", 0)";
+            }
+
+            if (columnOfStateExame == 0) return;
+            pasPosition++;
+
+            List<string> list = newSubject.GetPidsumkovaOcinka();
+
+            for (var i = 0; i < list.Count; i++)
+            {
+                sheet.Cells[12 + i, pasPosition.ToString()].Value = list[i];
             }
         }
     }

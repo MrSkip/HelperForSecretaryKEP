@@ -35,25 +35,43 @@ namespace myKR.Coding
         public string Name;
         public string Teacher;
         public List<NewSemestr> Semestrs = new List<NewSemestr>();
-        public List<string> GroupPrefixStatemets;
+        public List<string> GroupPrefixStatemets = new List<string>();
         private List<string> _pidsumkovaOcinka;
 
         public List<string> GetPidsumkovaOcinka()
         {
             double countOfHour = 0;
+            int indexOfLastExistSubject = 0;
 
             foreach (NewSemestr newSemestr in Semestrs)
             {
                 countOfHour += newSemestr.CountOfHours;
+                if (newSemestr.Ocinkas.Count > 0)
+                    indexOfLastExistSubject = Semestrs.IndexOf(newSemestr);
             }
-            if (!(countOfHour > 0) || Semestrs[0].Ocinkas.Count == 0) return new List<string>();
+
+            if (!(countOfHour > 0)) return new List<string>();
+            if (indexOfLastExistSubject <= 0) return new List<string>();
 
             _pidsumkovaOcinka = new List<string>();
 
-//            foreach (string ocinka in Semestrs[0].Ocinkas)
-//            {
-//                _pidsumkovaOcinka.Add();
-//            }
+            for (int i = 0; i < Semestrs[indexOfLastExistSubject].Ocinkas.Count; i++)
+            {
+                double lastExpression = 0;
+                string someString = "";
+
+                foreach (NewSemestr newSemestr in Semestrs)
+                {
+                    if (newSemestr.Ocinkas.Count > 0)
+                    {
+                        double ocinka;
+                        lastExpression += newSemestr.CountOfHours 
+                            * (double.TryParse(newSemestr.Ocinkas[i], out ocinka) ? ocinka : 0);
+                        someString += double.TryParse(newSemestr.Ocinkas[i], out ocinka) ? "" : newSemestr.Ocinkas[i];
+                    }
+                }
+                _pidsumkovaOcinka.Add(string.IsNullOrEmpty(someString.Trim()) ? Math.Round(lastExpression, 0) + "": someString);
+            }
 
             return _pidsumkovaOcinka;
         }

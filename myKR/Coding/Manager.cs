@@ -62,6 +62,12 @@ namespace myKR.Coding
 //            {
 //                ExcelFile.ReadDataFromArhiveZVtoAtestat(s);
 //            }
+//            foreach (NewSubject newSubject in ExcelFile.GetSubjectsForAtestat())
+//            {
+//                Console.WriteLine("nameOfSubject - " + newSubject.Name);
+//                Console.WriteLine("groupPrefix - " + newSubject.GroupPrefixStatemets.Count + "\n");
+//            }
+            ExcelFile.ReadAllNeedSheetsFromArhiveZVtoAtestat(groupList[0]);
         }
     }
 
