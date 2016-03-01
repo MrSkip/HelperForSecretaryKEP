@@ -67,7 +67,7 @@ namespace myKR.Coding
 //                Console.WriteLine("nameOfSubject - " + newSubject.Name);
 //                Console.WriteLine("groupPrefix - " + newSubject.GroupPrefixStatemets.Count + "\n");
 //            }
-            ExcelFile.ReadAllNeedSheetsFromArhiveZVtoAtestat(groupList[0]);
+            ExcelFile.CreateAtestatForOneGroup(groupList[0]);
         }
     }
 

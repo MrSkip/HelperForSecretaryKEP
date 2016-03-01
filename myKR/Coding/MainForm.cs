@@ -169,7 +169,7 @@ namespace myKR.Coding
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            Manager.CreateAtestat(new List<string>{"ПІ-12-01"});
+            Manager.CreateAtestat(new List<string>{"ПІ-15-01"});
         }
         
     }

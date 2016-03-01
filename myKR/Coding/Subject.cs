@@ -41,17 +41,17 @@ namespace myKR.Coding
         public List<string> GetPidsumkovaOcinka()
         {
             double countOfHour = 0;
-            int indexOfLastExistSubject = 0;
+            int indexOfLastExistSubject = -1;
 
             foreach (NewSemestr newSemestr in Semestrs)
             {
                 countOfHour += newSemestr.CountOfHours;
-                if (newSemestr.Ocinkas.Count > 0)
+                if (newSemestr.Ocinkas.Count > 0 && !newSemestr.StateExamenExist)
                     indexOfLastExistSubject = Semestrs.IndexOf(newSemestr);
             }
 
             if (!(countOfHour > 0)) return new List<string>();
-            if (indexOfLastExistSubject <= 0) return new List<string>();
+            if (indexOfLastExistSubject < 0) return new List<string>();
 
             _pidsumkovaOcinka = new List<string>();
 
@@ -62,7 +62,7 @@ namespace myKR.Coding
 
                 foreach (NewSemestr newSemestr in Semestrs)
                 {
-                    if (newSemestr.Ocinkas.Count > 0)
+                    if (newSemestr.Ocinkas.Count > 0 && !newSemestr.StateExamenExist)
                     {
                         double ocinka;
                         lastExpression += newSemestr.CountOfHours 
@@ -79,7 +79,7 @@ namespace myKR.Coding
         {
             foreach (string groupPrefixStatemet in GroupPrefixStatemets)
             {
-                if (groupPrefixStatemet.Equals(groupName.Substring(0, groupName.IndexOf("-", StringComparison.Ordinal) + 1)))
+                if (groupPrefixStatemet.Equals(groupName.Substring(0, groupName.IndexOf("-", StringComparison.Ordinal))))
                     return true;
             }
             return false;

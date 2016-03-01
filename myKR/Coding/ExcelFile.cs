@@ -661,7 +661,7 @@ namespace myKR.Coding
             }
 
             Control.IfShow = false;
-            bookCore.Close();
+            bookCore.Close(false);
         }
 
         private static void MovePracticeAndStateExam()
@@ -719,11 +719,9 @@ namespace myKR.Coding
 
         private static void CreateOblicForOneSubject(Excel.Workbook book, Group group, string subjectName, int pivricha)
         {
+            Excel.Workbook bookOfOblic = null;
             try
             {
-                Excel.Workbook bookOfOblic = null;
-                Excel.Worksheet sheetOfOblic;
-                
                 Subject subjectFind = group.Subjects.Find(subject => subject.Name.Equals(subjectName));
                 string nameOfOblic = "";
                 if (subjectFind != null)
@@ -751,6 +749,7 @@ namespace myKR.Coding
                     exist = true;
                 }
 
+                Excel.Worksheet sheetOfOblic;
                 if (!exist)
                 {
                     if (!File.Exists(CurrentFolder + "Data\\WithMacros.xls"))
@@ -759,10 +758,12 @@ namespace myKR.Coding
                         return;
                     }
 
-                    File.Copy(CurrentFolder + "Data\\WithMacros.xls", CurrentFolder +  "User Data\\Облік успішності\\" + group.Name + ".xls");
+                    File.Copy(CurrentFolder + "Data\\WithMacros.xls",
+                        CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
 
-                    bookOfOblic = App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
-                    sheetOfOblic = (Excel.Worksheet)bookOfOblic.Worksheets[1];
+                    bookOfOblic =
+                        App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
+                    sheetOfOblic = (Excel.Worksheet) bookOfOblic.Worksheets[1];
                     sheetOfOblic.Name = nameOfOblic;
                 }
                 else
@@ -816,30 +817,47 @@ namespace myKR.Coding
 
 
                 foreach (Subject subject in @group.Subjects)
-               {
-                   Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
-                   if (semestr != null && subject.Name.Equals(subjectName))
-                   {
-                       if (semestr.DyfZalik > 0 || semestr.Zalic > 0 || semestr.Isput > 0)
-                       {
-                           CreateZalicExamenAndDufZalic(book.Worksheets["Залік - ДифЗалік - Екзамен"], sheetOfOblic, group, subject, semestr, pivricha);
-                       }
-                       else if (semestr.StateExamination > 0)
-                       {
-                           CreateStateExamen(book.Worksheets["Державний екзамен"], sheetOfOblic, group, subject, semestr, pivricha);
-                       }
-                       else if (semestr.CursovaRobota > 0 || !string.IsNullOrEmpty(semestr.PracticeFormOfControl))
-                       {
-                           CreateKpOrPractice(book.Worksheets["КП - Технологічна практика"], sheetOfOblic, group, subject, semestr, pivricha);
-                       }
-                       break;
-                   }
-               }
-                bookOfOblic.Save();
+                {
+                    Semestr semestr = pivricha == 1 ? subject.FirstSemestr : subject.SecondSemestr;
+                    if (semestr != null && subject.Name.Equals(subjectName))
+                    {
+                        if (semestr.DyfZalik > 0 || semestr.Zalic > 0 || semestr.Isput > 0)
+                        {
+                            CreateZalicExamenAndDufZalic(book.Worksheets["Залік - ДифЗалік - Екзамен"], sheetOfOblic,
+                                group, subject, semestr, pivricha);
+                        }
+                        else if (semestr.StateExamination > 0)
+                        {
+                            CreateStateExamen(book.Worksheets["Державний екзамен"], sheetOfOblic, group, subject,
+                                semestr, pivricha);
+                        }
+                        else if (semestr.CursovaRobota > 0 || !string.IsNullOrEmpty(semestr.PracticeFormOfControl))
+                        {
+                            CreateKpOrPractice(book.Worksheets["КП - Технологічна практика"], sheetOfOblic, group,
+                                subject, semestr, pivricha);
+                        }
+                        break;
+                    }
+                }
             }
             catch (Exception e)
             {
                 MassageError("", "", "Щось не гаразд із підключенням до обліків успішності:\n" + e);
+            }
+            finally
+            {
+                try
+                {
+                    if (bookOfOblic != null)
+                    {
+                        bookOfOblic.Save();
+                        bookOfOblic.Close();
+                    }
+                }
+                catch (Exception)
+                {
+                   // ignored
+                }
             }
         }
 
@@ -1509,35 +1527,43 @@ namespace myKR.Coding
                                           sheet.Name +
                                           ".xls";
 
+                bool existSheet = false;
+
                 if (!File.Exists(pathToArhiveFile))
+                {
                     File.Copy(CurrentFolder + "Data\\WithMacros.xls", pathToArhiveFile);
+                    existSheet = true;
+                }
 
                 book = App.Workbooks.Open(pathToArhiveFile);
                 Excel.Worksheet sheetArhive;
 
                 string sheetNameOfArhive = semesterRome + " семестр";
 
-                bool bl = true;
+                bool bl = false;
                 foreach (Excel.Worksheet worksheet in book.Worksheets)
                 {
                     if (worksheet.Name.Equals(sheetNameOfArhive))
                     {
-                        bl = false;
+                        bl = true;
                         break;
                     }
                 }
 
                 if (bl)
                 {
-                    sheetArhive = book.Sheets.Count == 1
-                        ? book.Worksheets.Item[1]
-                        : book.Worksheets.Add(Type.Missing);
-                    sheetArhive.Name = sheetNameOfArhive;
+                    sheetArhive = book.Sheets[sheetNameOfArhive];
+                    sheetArhive.Cells.Delete();
                 }
                 else
                 {
-                    sheetArhive = book.Sheets[sheetNameOfArhive];
-                    sheetArhive.Cells.Delete();
+                    if (existSheet)
+                        sheetArhive = book.Sheets[1];
+                    else
+                    {
+                        sheetArhive = book.Worksheets.Add(Type.Missing);
+                        sheetArhive.Name = sheetNameOfArhive;
+                    }
                 }
 
                 sheetArhive.Cells.PasteSpecial(sheet.Cells.Copy());
@@ -1709,22 +1735,16 @@ namespace myKR.Coding
                         break;
                     countOfStudent++;
                 }
-                Console.WriteLine("step 1");
-
                 while (true)
                 {
                     Excel.Range mergeCells = sheet.Cells[8, startColumn.ToString()];
                     string pas = mergeCells.Value + "";
-                    if (string.IsNullOrEmpty(pas))
+
+                    if (string.IsNullOrEmpty(sheet.Cells[9, startColumn.ToString()].Value))
                     {
-                        Console.WriteLine("bt: " + bt);
-                        bt++;
-                        startColumn++;
-                        if (bt <= 6) continue;
                         break;
                     }
-
-                    for (int i = 1; i <= mergeCells.Columns.Count; i++)
+                    for (int i = 1; i <= mergeCells.MergeArea.Columns.Count; i++)
                     {
                         string subjectName = sheet.Cells[9, startColumn.ToString()].Value + "";
                         if (string.IsNullOrEmpty(subjectName))
@@ -1763,7 +1783,7 @@ namespace myKR.Coding
                         {
                             newSubjectRef.Semestrs[newSubjectRef.Semestrs.Count - 1].Ocinkas.Add(sheet.Cells[j, startColumn.ToString()].Value + "");
                         }
-                        newSubjectRef.Teacher = sheet.Cells[13 + countOfStudent, startColumn].Value + "";
+                        newSubjectRef.Teacher = sheet.Cells[13 + countOfStudent, startColumn.ToString()].Value + "";
                         startColumn++;
                     }
                 }
@@ -1774,11 +1794,15 @@ namespace myKR.Coding
             }
         }
 
-        private static void CreateAtestatForOneGroup(List<NewSubject> subjects, string groupName)
+        public static void CreateAtestatForOneGroup(string groupName)
         {
-            Excel.Workbook 
+            Excel.Workbook
                 book = null,
                 bookTemplate = null;
+            List<NewSubject> subjects = ReadAllNeedSheetsFromArhiveZVtoAtestat(groupName);
+
+            if (subjects.Count == 0) return;
+
             try
             {
                 string pathToAtestat = CurrentFolder + "User Data\\Атестат\\" + groupName + ".xls";
@@ -1808,6 +1832,7 @@ namespace myKR.Coding
                 {
                     string sheetName = CreateSheetName(newSubject.Name);
                     bool sheetEquals = false;
+
                     foreach (Excel.Worksheet sh in book.Worksheets)
                     {
                         if (CustomEquals(sh.Name, sheetName))
@@ -1821,8 +1846,11 @@ namespace myKR.Coding
                         sheet.Cells.Delete();
                     else
                     {
-                        if (sheet != null)
+                        if (!exist)
+                        {
                             sheet.Name = sheetName;
+                            exist = true;
+                        }
                         else
                         {
                             sheet = book.Worksheets.Add(Type.Missing);
@@ -1833,6 +1861,8 @@ namespace myKR.Coding
                     sheet.Cells.PasteSpecial(sheetTempPVY.Cells.Copy());
                     InsertValuesIntoPVY(sheet, groupName, newSubject);
                 }
+
+                InsertValuesIntoPZVY(sheet, groupName, subjects);
             }
             catch (Exception e)
             {
@@ -1861,7 +1891,12 @@ namespace myKR.Coding
 
         private static Group GetGroupByName(string groupName)
         {
-            return Manager.Groups.FirstOrDefault(@group => @group.Name.Equals(groupName));
+            foreach (Group @group in Manager.Groups)
+            {
+                if (group.Name.Equals(groupName))
+                    return group;
+            }
+            return null;
         }
 
         private static void InsertValuesIntoPVY(Excel.Worksheet sheet, string groupName, NewSubject newSubject)
@@ -1871,24 +1906,24 @@ namespace myKR.Coding
                 return;
 
             byte countOfStudent = 0;
-
+            
             sheet.Cells[6, "B"].Value = "з дисципліни " + newSubject.Name;
             sheet.Cells[7, "B"].Value = "Група " + groupName + " (" + groupName
-                .Substring(groupName.IndexOf("-", StringComparison.Ordinal), groupName.LastIndexOf("-", StringComparison.Ordinal) + 1) + ")";
+                .Substring(groupName.IndexOf("-", StringComparison.Ordinal) + 1, groupName.LastIndexOf("-")) + ")";
             sheet.Cells[8, "B"].Value = "Спеціальність: \"" + group.Speciality + "\"";
-            sheet.Cells[8, "B"].Value = "Викладач " + newSubject.Teacher;
-
+            sheet.Cells[9, "B"].Value = "Викладач " + newSubject.Teacher;
+            
             foreach (Student student in @group.Students)
             {
                 sheet.Cells[12 + countOfStudent, "C"].Value = student.Pib;
                 countOfStudent++;
             }
+            
             newSubject.Semestrs = newSubject.Semestrs.OrderBy(semestr => semestr.NumberOfSemestr).ToList();
 
             char pasPosition = 'D';
-            byte countOfSemestr = 0;
-            byte columnOfStateExame = 0;
-
+            byte countOfSemestrWithoutStateExame = 0;
+            int columnOfStateExame = -1;
             for (byte i = 0; i < newSubject.Semestrs.Count; i++)
             {
                 if (newSubject.Semestrs[i].StateExamenExist)
@@ -1896,49 +1931,67 @@ namespace myKR.Coding
                     columnOfStateExame = i;
                     continue;
                 }
-                countOfSemestr++;
+                countOfSemestrWithoutStateExame++;
+
                 sheet.Cells[10, pasPosition.ToString()].Value = newSubject.Semestrs[i].CountOfHours;
-                sheet.Cells[11, pasPosition.ToString()].Value = newSubject.Semestrs[i].NumberOfSemestr + "семестр Оцінка в балах";
+                sheet.Cells[11, pasPosition.ToString()].Value = ArabToRome(newSubject.Semestrs[i].NumberOfSemestr) + " семестр Оцінка в балах";
 
                 byte rowForOcinkaStart = 12;
 
                 foreach (string ocinka in newSubject.Semestrs[i].Ocinkas)
                 {
-                    sheet.Cells[rowForOcinkaStart, pasPosition].Value = ocinka;
+                    sheet.Cells[rowForOcinkaStart, pasPosition.ToString()].Value = ocinka;
                     rowForOcinkaStart++;
                 }
+                pasPosition++;
             }
 
+            if (countOfSemestrWithoutStateExame == 0) return;
             char average = pasPosition;
             average--;
 
-            sheet.Cells[11, pasPosition.ToString()].Formula = "=AVERAGE(D10:" + average + countOfSemestr + ")";
+            sheet.Cells[10, pasPosition.ToString()].Formula = "=AVERAGE(D10:" + average + 10 + ")";
             sheet.Cells[11, pasPosition.ToString()].Value = "Підсумкова оцінка";
-
             for (int i = 0; i < countOfStudent; i++)
             {
                 string formula = "0";
-                if (countOfStudent == 1)
+                if (countOfSemestrWithoutStateExame == 1)
                     formula = "(D10*D" + (i + 12) + ")/" + pasPosition + "10";
-                else if (countOfStudent == 2)
+                else if (countOfSemestrWithoutStateExame == 2)
                     formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + ")/" + pasPosition + "10";
-                else if (countOfStudent == 3)
+                else if (countOfSemestrWithoutStateExame == 3)
                     formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12)  + "+F10*F" + (i + 12) + ")/" + pasPosition + "10";
-                else if (countOfStudent == 4)
+                else if (countOfSemestrWithoutStateExame == 4)
                     formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + "+F10*F" + (i + 12) + "+G10*G" + (i + 12) + ")/" + pasPosition + "10";
 
                 sheet.Cells[12 + i, pasPosition.ToString()].Formula = "=ROUND(" + formula + ", 0)";
             }
 
-            if (columnOfStateExame == 0) return;
-            pasPosition++;
-
-            List<string> list = newSubject.GetPidsumkovaOcinka();
-
-            for (var i = 0; i < list.Count; i++)
+            // on the last insert stateExamen
+            if (columnOfStateExame >= 0)
             {
-                sheet.Cells[12 + i, pasPosition.ToString()].Value = list[i];
+                pasPosition++;
+                sheet.Cells[11, pasPosition.ToString()].Value = "Державна підсумкова атестація";
+
+                for (byte i = 0; i < newSubject.Semestrs[columnOfStateExame].Ocinkas.Count; i++)
+                {
+                    sheet.Cells[12 + i, pasPosition.ToString()].Value =
+                        newSubject.Semestrs[columnOfStateExame].Ocinkas[i];
+                }
             }
+
+            // delete range of cells
+            if (countOfStudent < 30)
+                sheet.Range["A" + (12 + countOfStudent), "IV41"].Delete();
+
+            pasPosition++;
+            if (pasPosition < 'J')
+                sheet.Range[pasPosition.ToString() + 1, "I65536"].Delete();
+        }
+
+        private static void InsertValuesIntoPZVY(Excel.Worksheet sheet, string groupName, List<NewSubject> newSubject)
+        {
+            
         }
     }
 }
