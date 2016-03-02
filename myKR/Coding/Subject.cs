@@ -45,9 +45,11 @@ namespace myKR.Coding
 
             foreach (NewSemestr newSemestr in Semestrs)
             {
-                countOfHour += newSemestr.CountOfHours;
                 if (newSemestr.Ocinkas.Count > 0 && !newSemestr.StateExamenExist)
+                {
                     indexOfLastExistSubject = Semestrs.IndexOf(newSemestr);
+                    countOfHour += newSemestr.CountOfHours;
+                }
             }
 
             if (!(countOfHour > 0)) return new List<string>();
@@ -65,12 +67,13 @@ namespace myKR.Coding
                     if (newSemestr.Ocinkas.Count > 0 && !newSemestr.StateExamenExist)
                     {
                         double ocinka;
-                        lastExpression += newSemestr.CountOfHours 
+                        lastExpression += newSemestr.CountOfHours
                             * (double.TryParse(newSemestr.Ocinkas[i], out ocinka) ? ocinka : 0);
                         someString += double.TryParse(newSemestr.Ocinkas[i], out ocinka) ? "" : newSemestr.Ocinkas[i];
                     }
                 }
-                _pidsumkovaOcinka.Add(string.IsNullOrEmpty(someString.Trim()) ? Math.Round(lastExpression, 0) + "": someString);
+
+                _pidsumkovaOcinka.Add(string.IsNullOrEmpty(someString.Trim()) ? Math.Round(lastExpression/countOfHour, 0) + "": someString);
             }
 
             return _pidsumkovaOcinka;

@@ -1862,6 +1862,24 @@ namespace myKR.Coding
                     InsertValuesIntoPVY(sheet, groupName, newSubject);
                 }
 
+                // create Pidsumkova Zvedena Vidomist Uspishnosti
+                sheet = null;
+                foreach (Excel.Worksheet worksheet in book.Worksheets)
+                {
+                    if (worksheet.Name.Equals("Загальна"))
+                    {
+                        sheet = worksheet;
+                        sheet.Cells.Delete();
+                    }
+                }
+
+                if (sheet == null)
+                {
+                    sheet = book.Worksheets.Add(Type.Missing);
+                    sheet.Name = "Загальна";
+                }
+                sheet.Cells.PasteSpecial(sheetTempPZVY.Cells.Copy());
+
                 InsertValuesIntoPZVY(sheet, groupName, subjects);
             }
             catch (Exception e)
@@ -1874,7 +1892,7 @@ namespace myKR.Coding
                 {
                     if (bookTemplate != null)
                     {
-                        bookTemplate.Close(false, Type.Missing, Type.Missing);
+                        bookTemplate.Close(false);
                     }
                     if (book != null)
                     {
@@ -1909,7 +1927,7 @@ namespace myKR.Coding
             
             sheet.Cells[6, "B"].Value = "з дисципліни " + newSubject.Name;
             sheet.Cells[7, "B"].Value = "Група " + groupName + " (" + groupName
-                .Substring(groupName.IndexOf("-", StringComparison.Ordinal) + 1, groupName.LastIndexOf("-")) + ")";
+                .Substring(groupName.IndexOf("-", StringComparison.Ordinal) + 1, groupName.IndexOf("-", StringComparison.Ordinal)) + ")";
             sheet.Cells[8, "B"].Value = "Спеціальність: \"" + group.Speciality + "\"";
             sheet.Cells[9, "B"].Value = "Викладач " + newSubject.Teacher;
             
@@ -1950,7 +1968,7 @@ namespace myKR.Coding
             char average = pasPosition;
             average--;
 
-            sheet.Cells[10, pasPosition.ToString()].Formula = "=AVERAGE(D10:" + average + 10 + ")";
+            sheet.Cells[10, pasPosition.ToString()].Formula = "=SUM(D10:" + average + 10 + ")";
             sheet.Cells[11, pasPosition.ToString()].Value = "Підсумкова оцінка";
             for (int i = 0; i < countOfStudent; i++)
             {
@@ -1967,7 +1985,7 @@ namespace myKR.Coding
                 sheet.Cells[12 + i, pasPosition.ToString()].Formula = "=ROUND(" + formula + ", 0)";
             }
 
-            // on the last insert stateExamen
+            // insert stateExamen
             if (columnOfStateExame >= 0)
             {
                 pasPosition++;
@@ -1991,7 +2009,58 @@ namespace myKR.Coding
 
         private static void InsertValuesIntoPZVY(Excel.Worksheet sheet, string groupName, List<NewSubject> newSubject)
         {
-            
+            Group group = GetGroupByName(groupName);
+            if (group == null) return;
+
+            sheet.Cells[7, "B"].Value = "Група " + groupName + " (" + groupName
+                .Substring(groupName.IndexOf("-", StringComparison.Ordinal) + 1, groupName.IndexOf("-", StringComparison.Ordinal)) + ")";
+            sheet.Cells[8, "B"].Value = "Спеціальність: \"" + group.Speciality + "\"";
+
+            byte startRow = 12;
+            byte startColumn = 4;
+
+            foreach (Student student in @group.Students)
+            {
+                sheet.Cells[startRow, "C"].Value = student.Pib;
+                startRow++;
+            }
+
+            if (startRow < 41)
+                sheet.Range[sheet.Cells[startRow, "A"], "IV41"].Delete();
+
+            foreach (NewSubject subject in newSubject)
+            {
+                if (subject.GroupExist(groupName))
+                    sheet.Cells[11, startColumn++].Value = subject.Name + "\n" + "ДА";
+
+                foreach (NewSemestr newSemestr in subject.Semestrs)
+                {
+                    if (newSemestr.StateExamenExist)
+                    {
+                        byte startRowForOcinka = 12;
+                        foreach (string ocinka in newSemestr.Ocinkas)
+                        {
+                            sheet.Cells[startRowForOcinka, startColumn - 1].Value = ocinka;
+                            startRowForOcinka++;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            foreach (NewSubject subject in newSubject)
+            {
+                sheet.Cells[11, startColumn].Value = subject.Name;
+
+                byte startRowForOcinka = 12;
+                foreach (string s in subject.GetPidsumkovaOcinka())
+                {
+                    sheet.Cells[startRowForOcinka, startColumn].Value = s;
+                    startRowForOcinka++;
+                }
+                startColumn++;
+            }
         }
+
     }
 }
