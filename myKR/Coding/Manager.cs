@@ -58,16 +58,10 @@ namespace myKR.Coding
 
         public static void CreateAtestat(List<string> groupList)
         {
-//            foreach (string s in groupList)
-//            {
-//                ExcelFile.ReadDataFromArhiveZVtoAtestat(s);
-//            }
-//            foreach (NewSubject newSubject in ExcelFile.GetSubjectsForAtestat())
-//            {
-//                Console.WriteLine("nameOfSubject - " + newSubject.Name);
-//                Console.WriteLine("groupPrefix - " + newSubject.GroupPrefixStatemets.Count + "\n");
-//            }
-            ExcelFile.CreateAtestatForOneGroup(groupList[0]);
+            foreach (string s in groupList)
+            {
+                ExcelFile.CreateAtestatForOneGroup(s);
+            }
         }
     }
 

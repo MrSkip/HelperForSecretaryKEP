@@ -169,7 +169,29 @@ namespace myKR.Coding
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            Manager.CreateAtestat(new List<string>{"ПІ-15-01"});
+            if (string.IsNullOrEmpty(comboBox1.Text))
+                return;
+
+            label4.Visible = true;
+            label4.Text = comboBox1.Text.Equals("Усі групи")
+                ? "Працюю, створення атесатів" : "Працюю, створення атесату";
+
+            List<string> list = new List<string>();
+            if (comboBox1.Text.Equals("Усі групи"))
+            {
+                for (byte i = 0; i < comboBox1.Items.Count - 1; i++)
+                {
+                    list.Add(comboBox1.Items[i].ToString());
+                }
+            }
+            else
+            {
+                list.Add(comboBox1.Text);
+            }
+
+            Manager.CreateAtestat(list);
+
+            label4.Visible = false;
         }
         
     }

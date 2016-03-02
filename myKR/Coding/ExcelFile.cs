@@ -1684,7 +1684,6 @@ namespace myKR.Coding
                 {
                     MessageBox.Show("У вас немає зведених відомостей успішності для групи + [" + groupName +
                                     "] у папці 'Архів'");
-                    return subjects;
                 }
                 book = App.Workbooks.Open(pathToArhive);
                 foreach (Excel.Worksheet sheet in book.Worksheets)
@@ -1870,6 +1869,7 @@ namespace myKR.Coding
                     {
                         sheet = worksheet;
                         sheet.Cells.Delete();
+                        break;
                     }
                 }
 
