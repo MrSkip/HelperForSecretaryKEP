@@ -61,6 +61,17 @@ namespace myKR.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Усі поля у файлі з встановленою програмою &apos;paths.json&apos; порожні
+        ///або ж не вдалося іх зчитати
+        ///Програма буде закритою.
+        /// </summary>
+        internal static string badParseJsonFile {
+            get {
+                return ResourceManager.GetString("badParseJsonFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Помилка!
         ///Назви excel-файлів повинні співпадати із назвами заданими у програмі.
         /// </summary>
@@ -116,6 +127,16 @@ namespace myKR.Properties {
         internal static string incorrectConnectToExcel {
             get {
                 return ResourceManager.GetString("incorrectConnectToExcel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to У папці з інстальованою програмою повинен міститися файл &apos;paths.json&apos;.
+        ///Програма буде закритою!.
+        /// </summary>
+        internal static string notFindJsonFileWithPaths {
+            get {
+                return ResourceManager.GetString("notFindJsonFileWithPaths", resourceCulture);
             }
         }
         

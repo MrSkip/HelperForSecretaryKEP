@@ -103,6 +103,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Coding\ApplicatinsExcel\App.cs" />
+    <Compile Include="Coding\ApplicatinsExcel\ApplicationExcel.cs" />
+    <Compile Include="Coding\AppException.cs" />
+    <Compile Include="Coding\ApplicatinsExcel\WorkBook.cs" />
     <Compile Include="Coding\Control.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -162,6 +166,7 @@
     <None Include="Data\Відомість обліку успішності %28КП - Технологічна практика%29.xls" />
     <None Include="Data\Зведена відомість.xls" />
     <None Include="Data\Куратори.xls" />
+    <None Include="paths.json" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

@@ -12,7 +12,7 @@ namespace myKR.Coding
         public static Excel.Application App = new Excel.Application
         {
             Visible = false,
-            DisplayAlerts = false 
+            DisplayAlerts = false
         };
 
         public static string CurrentFolder = Environment.CurrentDirectory + "\\";

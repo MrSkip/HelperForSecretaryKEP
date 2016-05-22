@@ -14,7 +14,7 @@ namespace myKR.Coding.ApplicatinsExcel
        
         private static ApplicationExcel CreateAppImpl()
         {
-            return _excelApp ?? new ApplicationExcel();
+            return _excelApp ?? (_excelApp = new ApplicationExcel());
         }
 
         private static Excel.Application _app;

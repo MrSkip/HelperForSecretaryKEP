@@ -136,8 +136,8 @@
   <data name="notFoundExcelApp" xml:space="preserve">
     <value>Для роботи програми потрібно інсталювати Microsoft Excel. Програма буде закритою</value>
   </data>
-  <data name="uncorrectConnectToExcel" xml:space="preserve">
+  <data name="incorrectConnectToExcel" xml:space="preserve">
     <value>Невдале підключення до Microsoft Excel.
-Налаштуєте спочатку Excel, абож зверніться до розробника</value>
+Налаштуєте спочатку Excel, або ж зверніться до розробника</value>
   </data>
 </root>
