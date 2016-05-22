@@ -108,5 +108,24 @@ namespace myKR.Properties {
                 return ResourceManager.GetString("ExcelWork_ZvedVidomist_Для_поточної_групи__", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Невдале підключення до Microsoft Excel.
+        ///Налаштуєте спочатку Excel, або ж зверніться до розробника.
+        /// </summary>
+        internal static string incorrectConnectToExcel {
+            get {
+                return ResourceManager.GetString("incorrectConnectToExcel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Для роботи програми потрібно інсталювати Microsoft Excel. Програма буде закритою.
+        /// </summary>
+        internal static string notFoundExcelApp {
+            get {
+                return ResourceManager.GetString("notFoundExcelApp", resourceCulture);
+            }
+        }
     }
 }

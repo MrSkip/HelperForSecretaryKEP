@@ -2061,6 +2061,5 @@ namespace myKR.Coding
                 startColumn++;
             }
         }
-
     }
 }
