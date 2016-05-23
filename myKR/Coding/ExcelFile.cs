@@ -9,31 +9,49 @@ namespace myKR.Coding
 {
     public static class ExcelFile
     {
+        private static readonly log4net.ILog Log =
+            log4net.LogManager.GetLogger("ExcelFile.cs");
+
         public static ExcelApplication.ExcelApplication App = ExcelApplication.ExcelApplication.CreateExcelApplication();
 
         public static void ReadRobPlan(string pathToRobPlan)
         {
+            Log.Info(LoggetConstats.ENTER);
+
             Excel.Workbook book = App.OpenBook(pathToRobPlan);
             if (book == null)
+            {
+                Log.Error("Can`t opet book from path: " + pathToRobPlan);
+                Log.Info(LoggetConstats.EXIT);
                 return;
+            }
 
             foreach (Excel.Worksheet sheet in book.Worksheets)
             {
                 if (sheet.Name.Trim().Length == 8 && sheet.Name.Trim().IndexOf('-') == 2 &&
                     sheet.Name.Trim().LastIndexOf('-') == 5)
                 {
+                    Log.Info("Add group to program with name `" + sheet.Name);
                     Manager.Groups.Add(ReadSheetFromRobPlan(sheet));
                 }
             }
             MovePracticeAndStateExam();
             book.Close();
+            Log.Info(LoggetConstats.EXIT);
         }
 
         public static void ReadStudentsAndOlicAndCurators(string pathToDb)
         {
+            Log.Info(LoggetConstats.ENTER);
+
             Excel.Workbook book = App.OpenBook(pathToDb);
+
             if (book == null)
+            {
+                Log.Error("Path to DB with students, obliks and curators not correct: " + pathToDb);
+                Log.Info(LoggetConstats.EXIT);
                 return;
+            }
 
             // Read [База студентів]
             App.OpenWorksheet(book, "База студентів");
@@ -46,6 +64,8 @@ namespace myKR.Coding
                     group.Students = students.FindAll(student => student.Group.Equals(group.Name));
                 }
             }
+            else
+                Log.Error("Can`t open sheet `База студентів`");
 
             // Read [Реєстраційна відомість (журнал)]
             App.OpenWorksheet(book, "Реєстраційна відомість (журнал)");
@@ -71,33 +91,34 @@ namespace myKR.Coding
                     }
                 }
             }
+            else
+                Log.Error("Can`t open sheet `Реєстраційна відомість (журнал)`");
 
             // Read [Куратори]
-            try
+            App.OpenWorksheet(book, "Куратори");
+            if (App.LastUsedObject == null)
             {
-                App.OpenWorksheet(book, "Куратори");
-                if (App.LastUsedObject == null)
-                    return;
-
-                List<string[]> list =
-                    ReadCurator((Excel.Worksheet) book.Worksheets.Item["Куратори"]);
-                foreach (Group group in Manager.Groups)
-                {
-                    string[] s = list.Find(strings => CustomEquals(strings[1], group.Name));
-                    if (s != null)
-                        group.Curator = s[0];
-                }
+                Log.Info("Can`t open sheet `Куратори`");
+                App.CloseBook(book, false);
+                Log.Info(LoggetConstats.EXIT);
+                return;
             }
-            catch (Exception e)
+            List<string[]> list =
+                ReadCurator((Excel.Worksheet) App.LastUsedObject);
+            foreach (Group group in Manager.Groups)
             {
-                MassageError("[Куратори]", "", "Щось не гараз із зчитування кураторів груп\n" + e);
+                string[] s = list.Find(strings => CustomEquals(strings[1], @group.Name));
+                if (s != null)
+                    @group.Curator = s[0];
             }
 
-            book.Close();
+            App.CloseBook(book, false);
+            Log.Info(LoggetConstats.EXIT);
         }
 
         public static List<string[]> ReadCurator(Excel.Worksheet sheet)
         {
+            Log.Info(LoggetConstats.ENTER);
             List<string[]> curators = new List<string[]>();
             try
             {
@@ -108,11 +129,14 @@ namespace myKR.Coding
                     var value = sheet.Cells[n, "A"].Value;
                     if (value == null || string.IsNullOrEmpty(value.ToString()))
                         break;
+
                     string curatorName = value.ToString();
 
                     value = sheet.Cells[n, "B"].Value;
+
                     if (value == null || string.IsNullOrEmpty(value.ToString()))
                         continue;
+
                     string groupName = value.ToString();
 
                     curators.Add(new[] {curatorName.Trim(), groupName.Trim()});
@@ -120,20 +144,24 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MassageError(sheet.Name, "", "Щось не гараз із зчитування кураторів груп\n" + e);
+                Log.Warn("Something wrong with reading curators", e);
             }
+            Log.Info(LoggetConstats.EXIT);
             return curators;
         }
 
         private static bool CustomEquals(string first, string second)
         {
+            Log.Info(LoggetConstats.ENTER);
             first = first.ToLower().Trim().Replace("*", "");
             second = second.ToLower().Trim().Replace("*", "");
+            Log.Info(LoggetConstats.EXIT);
             return first.Equals(second);
         }
 
         public static List<NumberOfOblic> ReadNumbersOfOblic(Excel.Worksheet sheet)
         {
+            Log.Info(LoggetConstats.ENTER);
             List<NumberOfOblic> oblics = new List<NumberOfOblic>();
 
             int n = 2;
@@ -167,13 +195,15 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MassageError(sheet.Name, "", "Щось не гараз із зчитуванням реєстрації відомостей (журнал)\n" + e);
+                Log.Warn("Something wrang", e);
             }
+            Log.Info(LoggetConstats.EXIT);
             return oblics;
         }
 
         public static List<Student> ReadStudents(Excel.Worksheet sheet)
         {
+            Log.Info(LoggetConstats.ENTER);
             List<Student> students = new List<Student>();
 
             int n = 1;
@@ -210,41 +240,49 @@ namespace myKR.Coding
                 }
                 catch (Exception e)
                 {
+                    Log.Warn("Something wrong", e);
                     MassageError(sheet.Name, "", "Щось не гаразд із зчитуванням студентів\n" + e);
                 }
             }
+
+            Log.Info(LoggetConstats.EXIT);
             return students;
         }
 
         private static Group ReadSheetFromRobPlan(Excel.Worksheet sheet)
         {
-            if (sheet == null)
-                return null;
+            Log.Info(LoggetConstats.ENTER);
 
             Group group = new Group();
-
             group.Name = sheet.Name;
 
             //Read "Напряму підготовки"
             string s = sheet.Cells[6, "R"].Value;
 
+            bool exist = true;
+
             if (string.IsNullOrEmpty(s) || s.Count(c => c.Equals('"')) != 2)
-            {
-                s = "ВВЕДІТЬ НАПРЯМ ПІДГОТОВКИ";
-                MassageError(sheet.Name, "R6", "Напряму підготовки 6.050103   \"Програмна інженерія\"");
-            }
+                exist = false;
             else
             {
-                try
-                {
-                    s = s.Substring(s.IndexOf("\"", StringComparison.Ordinal) + 1,
-                        s.LastIndexOf("\"", StringComparison.Ordinal) - s.IndexOf("\"", StringComparison.Ordinal) - 1);
-                }
-                catch (Exception e)
-                {
-                    MassageError(sheet.Name, "R6", "Напряму підготовки 6.050103   \"Програмна інженерія\"\n" + e); 
-                }
+                int beginSlash = s.IndexOf("\"", StringComparison.Ordinal);
+                int lastSlash = s.LastIndexOf("\"", StringComparison.Ordinal);
+
+                s = s.Substring(beginSlash + 1, beginSlash - lastSlash - 1);
+
+                if (string.IsNullOrEmpty(s))
+                    exist = false;
             }
+
+            if (!exist)
+            {
+                sheet.Cells[6, "R"].Interior.Color =
+                            System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                s = "ВВЕДІТЬ НАПРЯМ ПІДГОТОВКИ";
+                Log.Error("Expected direction of training in sheet '" + sheet.Name + "'");
+            }
+
+            exist = true;
 
             group.TrainingDirection = s;
 
@@ -252,107 +290,138 @@ namespace myKR.Coding
             s = sheet.Cells[7, "R"].Value;
 
             if (string.IsNullOrEmpty(s) || s.Count(c => c.Equals('"')) != 2)
-            {
-                s = "ВВЕДІТЬ НАЗВУ СПЕЦІАЛЬНОСТІ";
-                MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"");
-            }
+                exist = false;
             else
-                try
-                {
-                    group.Speciality = s.Substring(s.IndexOf("\"", StringComparison.Ordinal) + 1,
-                        s.LastIndexOf("\"", StringComparison.Ordinal) - s.IndexOf("\"", StringComparison.Ordinal) - 1);
-                }
-                catch (Exception e)
-                {
-                    MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"\n" + e);
-                }
+            {
+                int beginSlash = s.IndexOf("\"", StringComparison.Ordinal);
+                int lastSlash = s.LastIndexOf("\"", StringComparison.Ordinal);
+
+                s = s.Substring(beginSlash + 1, beginSlash - lastSlash - 1);
+
+                if (string.IsNullOrEmpty(s))
+                    exist = false;
+            }
+
+            if (!exist)
+            {
+                sheet.Cells[7, "R"].Interior.Color =
+                    System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                s = "ВВЕДІТЬ НАЗВУ СПЕЦІАЛЬНОСТІ";
+                Log.Error("Expected spesiality in sheet '" + sheet.Name + "'");
+            }
+
+            group.Speciality = s;
+
+            s = sheet.Cells[7, "R"].Value;
 
             //Код спеціальності
-            if (s.Equals("ВВЕДІТЬ НАЗВУ СПЕЦІАЛЬНОСТІ"))
+            if (exist)
             {
-                MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"");
-                s = "КОД";
-            }
-            else
-            {
-                try
+                s = s.Trim().Substring(0, s.Trim().IndexOf(" \"", StringComparison.Ordinal));
+
+                if (!s.Contains(" "))
                 {
-                    s = s.Trim().Substring(0, s.Trim().IndexOf(" \"", StringComparison.Ordinal));
+                    sheet.Cells[7, "R"].Interior.Color =
+                        System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                    s = "КОД";
+                    Log.Error("Code of spesiality is incorrect in sheet '" + sheet.Name + "'");
+                }
+                else
                     s = s.Substring(s.IndexOf(" ", StringComparison.Ordinal)).Trim();
-                }
-                catch (Exception e)
-                {
-                    MassageError(sheet.Name, "R7", "Спеціальності  5.05010301 \"Розробка програмного забезпечення\"\n" + e);
-                }
             }
 
+            exist = true;
             group.CodeOfSpeciality = s;
 
             //read "Курс"
             s = sheet.Cells[9, "R"].Value;
 
             if (string.IsNullOrEmpty(s) || !s.Trim().StartsWith("Курс"))
-            {
-                s = "ВВЕДІТЬ КУРС";
-                MassageError(sheet.Name, "R9", "Курс __II____          Група __ПІ-_14-01___");
-            }
+                exist = false;
             else
             {
-                try
+                int coursePosition = GetPositionForCellCource(s.Trim());
+
+                if (coursePosition == -1)
+                    exist = false;
+                else
                 {
-                    s = s.Trim().Substring(GetPositionForCellCource(s.Trim()));
-                    s = s.Remove(s.IndexOf("_", StringComparison.Ordinal));
-                }
-                catch (Exception e)
-                {
-                    MassageError(sheet.Name, "R9", "Курс __II____          Група __ПІ-_14-01___\n" + e);
+                    s = s.Trim().Substring(coursePosition);
+                    if (!s.Contains("_"))
+                        exist = false;
+                    else
+                    {
+                        s = s.Remove(s.IndexOf("_", StringComparison.Ordinal));
+                    }
                 }
             }
 
+            if (!exist)
+            {
+                s = "ВВЕДІТЬ КУРС";
+                sheet.Cells[9, "R"].Interior.Color 
+                    = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                Log.Error("Course is incorrect in sheet '" + sheet.Name + "'");
+            }
+
+            exist = true;
             group.Course = s;
 
             //Read "Рік"
             s = sheet.Cells[6, "B"].Value;
 
             if (string.IsNullOrEmpty(s))
-            {
-                s = "Введіть рік";
-                MassageError(sheet.Name, "B6", "\"  28  \"       серпня            2015 року");
-            }
+                exist = false;
             else
             {
                 try
                 {
                     s = s.Substring(s.Length - 9, 4);
                 }
-                catch (Exception e)
+                catch (IndexOutOfRangeException e)
                 {
-                    MassageError(sheet.Name, "B6", "\"  28  \"       серпня            2015 року\n" + e);
-                    throw;
+                    exist = false;
+                    Log.Warn("IndexOutOfRangeException when try to find year", e);
                 }
             }
 
+            if (!exist)
+            {
+                s = "ВВЕДІТЬ РІК";
+                sheet.Cells[6, "B"].Interior.Color
+                    = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                Log.Error("Year is incorrect in sheet '" + sheet.Name + "'");
+            }
+
+            exist = true;
             group.Year = s;
 
             //Read "Семестр для першого півріччя"
             s = sheet.Cells[15, "Y"].Value;
 
             if (string.IsNullOrEmpty(s))
-            {
-                s = "ВВЕДІТЬ СЕМЕСТР";
-                MassageError(sheet.Name, "Y15", "VII семестр        12  навчальних тижнів");
-            }
+                exist = false;
             else
             {
                 try
                 {
-                    s = s.Trim().Substring(0, s.Trim().IndexOf(' '));
+                    if (!s.Contains(' '))
+                        exist = false;
+                    else
+                        s = s.Trim().Substring(0, s.Trim().IndexOf(' '));
                 }
-                catch (Exception e)
+                catch (IndexOutOfRangeException e)
                 {
-                    MassageError(sheet.Name, "Y15", "VII семестр        12  навчальних тижнів\n" + e);
-                    throw;
+                    exist = false;
+                    Log.Warn("IndexOutOfRangeException when try to get semestr", e);
                 }
+            }
+            if (!exist)
+            {
+                s = "ВВЕДІТЬ СЕМЕСТР";
+                sheet.Cells[15, "Y"].Interior.Color
+                    = System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                Log.Error("Semestr is incorrect in sheet '" + sheet.Name + "'");
             }
 
             group.FirstRomeSemestr = s;
@@ -361,6 +430,7 @@ namespace myKR.Coding
             group.Practice = ReadPractice(sheet);
             group.StateExamination = ReadStateExamination(sheet);
 
+            Log.Info(LoggetConstats.EXIT);
             return group;
         }
 
