@@ -140,4 +140,13 @@
     <value>Невдале підключення до Microsoft Excel.
 Налаштуєте спочатку Excel, або ж зверніться до розробника</value>
   </data>
+  <data name="notFindJsonFileWithPaths" xml:space="preserve">
+    <value>У папці з інстальованою програмою повинен міститися файл 'paths.json'.
+Програма буде закритою!</value>
+  </data>
+  <data name="badParseJsonFile" xml:space="preserve">
+    <value>Усі поля у файлі з встановленою програмою 'paths.json' порожні
+або ж не вдалося іх зчитати
+Програма буде закритою</value>
+  </data>
 </root>

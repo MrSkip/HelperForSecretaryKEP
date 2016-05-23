@@ -90,6 +90,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=8.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -103,10 +107,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Coding\ApplicatinsExcel\App.cs" />
-    <Compile Include="Coding\ApplicatinsExcel\ApplicationExcel.cs" />
+    <Compile Include="Coding\ExcelApplication\App.cs" />
+    <Compile Include="Coding\ExcelApplication\ExcelApplication.cs" />
     <Compile Include="Coding\AppException.cs" />
-    <Compile Include="Coding\ApplicatinsExcel\WorkBook.cs" />
     <Compile Include="Coding\Control.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -128,6 +131,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Coding\Manager.cs" />
+    <Compile Include="Coding\PathsFile.cs" />
     <Compile Include="Coding\Subject.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -166,6 +170,7 @@
     <None Include="Data\Відомість обліку успішності %28КП - Технологічна практика%29.xls" />
     <None Include="Data\Зведена відомість.xls" />
     <None Include="Data\Куратори.xls" />
+    <None Include="packages.config" />
     <None Include="paths.json" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

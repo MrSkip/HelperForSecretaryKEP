@@ -9,17 +9,13 @@ namespace myKR.Coding
 {
     public static class ExcelFile
     {
-        public static Excel.Application App = new Excel.Application
-        {
-            Visible = false,
-            DisplayAlerts = false
-        };
-
-        public static string CurrentFolder = Environment.CurrentDirectory + "\\";
+        public static ExcelApplication.ExcelApplication App = ExcelApplication.ExcelApplication.CreateExcelApplication();
 
         public static void ReadRobPlan(string pathToRobPlan)
         {
-            Excel.Workbook book = App.Workbooks.Open(pathToRobPlan);
+            Excel.Workbook book = App.OpenBook(pathToRobPlan);
+            if (book == null)
+                return;
 
             foreach (Excel.Worksheet sheet in book.Worksheets)
             {
@@ -35,29 +31,34 @@ namespace myKR.Coding
 
         public static void ReadStudentsAndOlicAndCurators(string pathToDb)
         {
-            Excel.Workbook book = App.Workbooks.Open(pathToDb);
+            Excel.Workbook book = App.OpenBook(pathToDb);
+            if (book == null)
+                return;
 
             // Read [База студентів]
-            try
+            App.OpenWorksheet(book, "База студентів");
+            if (App.LastUsedObject != null)
             {
-                List<Student> students = ReadStudents((Excel.Worksheet)book.Worksheets.Item["База студентів"]);
+                List<Student> students = ReadStudents((Excel.Worksheet) App.LastUsedObject);
+
                 foreach (Group group in Manager.Groups)
                 {
                     group.Students = students.FindAll(student => student.Group.Equals(group.Name));
                 }
             }
-            catch (Exception e)
-            {
-                MassageError("База студентів", "", "Щось не гаразд із зчитуванням студентів\nМожливо, лист [База студентів] відсунтій - створіть його\n" + e);
-            }
 
             // Read [Реєстраційна відомість (журнал)]
-            try
+            App.OpenWorksheet(book, "Реєстраційна відомість (журнал)");
+            if (App.LastUsedObject != null)
             {
-                List<NumberOfOblic> oblics = ReadNumbersOfOblic((Excel.Worksheet)book.Worksheets.Item["Реєстраційна відомість (журнал)"]);
+
+                List<NumberOfOblic> oblics
+                    = ReadNumbersOfOblic((Excel.Worksheet) App.LastUsedObject);
+
                 foreach (Group group in Manager.Groups)
                 {
-                    foreach (NumberOfOblic numberOfOblic in oblics.FindAll(oblic => CustomEquals(oblic.Group, @group.Name)))
+                    foreach (
+                        NumberOfOblic numberOfOblic in oblics.FindAll(oblic => CustomEquals(oblic.Group, @group.Name)))
                     {
                         Subject find = @group.Subjects.Find(subject => CustomEquals(subject.Name, numberOfOblic.Subject));
                         if (find != null)
@@ -70,14 +71,14 @@ namespace myKR.Coding
                     }
                 }
             }
-            catch (Exception e)
-            {
-                MassageError("Реєстраційна відомість (журнал)", "", "Щось не гаразд із зчитуванням реєстраційної відомості\nМожливо, лист [Реєстраційна відомість (журнал)] відсунтій - створіть його\n" + e);
-            }
 
             // Read [Куратори]
             try
             {
+                App.OpenWorksheet(book, "Куратори");
+                if (App.LastUsedObject == null)
+                    return;
+
                 List<string[]> list =
                     ReadCurator((Excel.Worksheet) book.Worksheets.Item["Куратори"]);
                 foreach (Group group in Manager.Groups)
@@ -217,6 +218,9 @@ namespace myKR.Coding
 
         private static Group ReadSheetFromRobPlan(Excel.Worksheet sheet)
         {
+            if (sheet == null)
+                return null;
+
             Group group = new Group();
 
             group.Name = sheet.Name;
@@ -631,7 +635,10 @@ namespace myKR.Coding
                 return;
             }
 
-            Excel.Workbook bookCore = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
+            Excel.Workbook bookCore = App.OpenBook(CurrentFolder + "Data\\DataToProgram.xls");
+            if (bookCore == null)
+                return;
+
             if (string.IsNullOrEmpty(groupName) && string.IsNullOrEmpty(subjectName))
                 foreach (Group group in Manager.Groups)
                 {
@@ -745,7 +752,9 @@ namespace myKR.Coding
                 if (File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
                 {
                     bookOfOblic =
-                        App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
+                        App.OpenBook(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
+                    if (book == null)
+                        return;
                     exist = true;
                 }
 
