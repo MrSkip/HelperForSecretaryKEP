@@ -113,7 +113,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Coding\ExcelApplication\App.cs" />
     <Compile Include="Coding\ExcelApplication\ExcelApplication.cs" />
     <Compile Include="Coding\AppException.cs" />
     <Compile Include="Coding\Control.cs">
@@ -130,6 +129,7 @@
     </Compile>
     <Compile Include="Coding\ExcelFile.cs" />
     <Compile Include="Coding\ExcelWork.cs" />
+    <Compile Include="Coding\LoggerConstants.cs" />
     <Compile Include="Coding\MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

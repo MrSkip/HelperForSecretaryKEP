@@ -1,15 +1,12 @@
-﻿
-{
-    "PathToStudentDB": "D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\LastReadFromHere\База.xls",
-    "PathToWorkPlan": "D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\LastReadFromHere\Rp15.xls",
-
-    "PathToExcelDataForProgram": "D:\Project\C#\HelperForSecretary\Project\myKR\Data\DataToProgram.xls",
-
-    "PathToFolderWithOblicUspishnosti": "D:\Project\C#\HelperForSecretary\Project\myKR\User Data\Облік успішності\\",
-    "PathToFolderWithZvedeniaVidomistUspishnosti": "D:\Project\C#\HelperForSecretary\Project\myKR\User Data\Зведена відомість успішності\\",
-    "PathToArhive": "D:\Project\C#\HelperForSecretary\Project\myKR\User Data\Зведена відомість успішності\Архів\\",
-
-    "PathToFileWithMacros": "D:\Project\C#\HelperForSecretary\Project\myKR\bin\x86\Debug\Data\WithMacros.xls",
-
-    "ExcelExtensial" : ".xls"
+﻿{
+    "work": "",
+    "PathToStudentDB": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\bin\\Debug\\LastReadFromHere\\База.xls",
+    "PathToWorkPlan": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\bin\\Debug\\LastReadFromHere\\Rp15.xls",
+    "PathToExcelDataForProgram": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\Data\\DataToProgram.xls",
+    "PathToFolderWithOblicUspishnosti": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\User Data\\Облік успішності\\",
+    "PathToFolderWithZvedeniaVidomistUspishnosti": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\User Data\\Зведена відомість успішності\\",
+    "PathToArhive": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\User Data\\Зведена відомість успішності\\Архів\\",
+    "PathToAtestatFolder": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\User Data\\Атестат\\",
+    "PathToFileWithMacros": "D:\\Project\\C#\\HelperForSecretary\\Project\\myKR\\bin\\x86\\Debug\\Data\\WithMacros.xls",
+    "ExcelExtensial": ".xls"
 }

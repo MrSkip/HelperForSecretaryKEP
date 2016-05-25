@@ -14,22 +14,22 @@ namespace myKR.Coding.ExcelApplication
         private static readonly log4net.ILog Log =
             log4net.LogManager.GetLogger("Form1.cs");
 
-        private static ExcelApplication _excelApp;
+        private static ExcelApplication ExcelApp;
         public Object LastUsedObject;
        
         public static ExcelApplication CreateExcelApplication()
         {
             Log.Info("Create Excel Application");
-            return _excelApp ?? (_excelApp = new ExcelApplication());
+            return ExcelApp ?? (ExcelApp = new ExcelApplication());
         }
 
-        private static Excel.Application _app;
+        public static Excel.Application App;
         
         private ExcelApplication()
         {
             try
             {
-                _app = new Excel.Application
+                App = new Excel.Application
                 {
                     Visible = false,
                     DisplayAlerts = false
@@ -42,7 +42,7 @@ namespace myKR.Coding.ExcelApplication
                 Environment.Exit(-1);
             }
 
-            if (_app != null) return;
+            if (App != null) return;
 
             Log.Error(Resources.incorrectConnectToExcel);
             MessageBox.Show(Resources.incorrectConnectToExcel);
@@ -52,16 +52,16 @@ namespace myKR.Coding.ExcelApplication
         public void CloseApp(bool save)
         {
             Log.Info(LoggerConstants.ENTER);
-            _app.Quit();
-            Kill(_app);
-            _app = null;
+            App.Quit();
+            Kill(App);
+            App = null;
             Log.Info(LoggerConstants.EXIT);
         }
 
         public void SetVisibilityForApp(bool visibil)
         {
             Log.Info(LoggerConstants.ENTER_EXIT);
-            _app.Visible = visibil;
+            App.Visible = visibil;
         }
 
         public void CloseBook(Excel.Workbook book, bool save)
@@ -111,7 +111,7 @@ namespace myKR.Coding.ExcelApplication
             try
             {
                 Log.Info(LoggerConstants.EXIT);
-                return workbook = _app.Workbooks.Open(pathToBook);
+                return workbook = App.Workbooks.Open(pathToBook);
             }
             catch (COMException e)
             {
@@ -219,11 +219,11 @@ namespace myKR.Coding.ExcelApplication
         private Excel.Workbook IfBookExist(string bookName)
         {
             Log.Info(LoggerConstants.ENTER_EXIT);
-            return _app.Workbooks.Cast<Excel.Workbook>().FirstOrDefault(book =>
+            return App.Workbooks.Cast<Excel.Workbook>().FirstOrDefault(book =>
                 bookName.Equals(book.Name.Substring(0, book.Name.LastIndexOf(".", StringComparison.Ordinal))));
         }
 
-        public void Kill(Excel.Application app)
+        public static void Kill(Excel.Application app)
         {
             Log.Info(LoggerConstants.ENTER);
             if (app == null)
@@ -232,6 +232,7 @@ namespace myKR.Coding.ExcelApplication
                 Log.Info(LoggerConstants.EXIT);
                 return;
             }
+
             try
             {
                 int excelProcessId;

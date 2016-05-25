@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -8,25 +7,23 @@ namespace myKR.Coding
 {
     public partial class StartForm : Form
     {
+//        private PathsFile _pathsFile = PathsFile.GetPathsFile();
+
         public ExcelWork ExcelWork;
         public bool Cancel = true;
 
-        public StartForm(string field1, string fiedl2)
+        public StartForm()
         {
             InitializeComponent();
             label4.Visible = false;
 
-            textBox1.Text = field1;
-            textBox2.Text = fiedl2;
+            textBox1.Text = PathsFile.PathsDto.PathToWorkPlan;
+            textBox2.Text = PathsFile.PathsDto.PathToStudentDb;
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
-            foreach (System.Diagnostics.Process proc in excelProcs)
-            {
-                proc.Kill();
-            }
+            ExcelApplication.ExcelApplication.Kill(ExcelApplication.ExcelApplication.App);
             Environment.Exit(-1);
         }
 

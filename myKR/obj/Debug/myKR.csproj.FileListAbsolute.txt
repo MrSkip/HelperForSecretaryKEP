@@ -56,3 +56,8 @@ D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.csproj.GenerateReso
 D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.pdb
 D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.MainForm.resources
 D:\Project\C#\HelperForSecretary\Project\myKR\obj\Debug\myKR.Coding.Control.resources
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\log4net-loggly.dll
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\log4net.dll
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\Newtonsoft.Json.dll
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\log4net.xml
+D:\Project\C#\HelperForSecretary\Project\myKR\bin\Debug\Newtonsoft.Json.xml

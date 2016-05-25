@@ -1,38 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Windows.Forms;
-using Excel = Microsoft.Office.Interop.Excel;
 
 namespace myKR.Coding
 {
     public partial class MainForm : Form
     {
+        private PathsFile PathsFile = PathsFile.GetPathsFile();
+
         public MainForm()
         {
             InitializeComponent();
             label4.Visible = false;
+            Visible = false;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
             Visible = false;
-            string path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
-                                            + @"Data\start.txt";
-            StreamReader readFile = new StreamReader(path);
 
-            StartForm startForm = new StartForm(readFile.ReadLine().Substring(13), readFile.ReadLine().Substring(13));
-
-            readFile.Close();
-
+            StartForm startForm = new StartForm();
             startForm.ShowDialog();
 
-            if (startForm.Cancel) Environment.Exit(-1);
+            if (startForm.Cancel)
+            {
+                Environment.Exit(-1);
+            }
 
-            StreamWriter writeFile = new StreamWriter(path);
-            writeFile.WriteLine("[work plan] |" + startForm.GetTextBox()[0] + "\n"
-                                + "[data base] |" + startForm.GetTextBox()[1]);
-            writeFile.Close();
+            PathsFile.PathsDto.PathToWorkPlan = startForm.GetTextBox()[0];
+            PathsFile.PathsDto.PathToStudentDb = startForm.GetTextBox()[1];
+
+            PathsFile.WriteFromObjectToJson();
 
             foreach (Group @group in Manager.Groups)
             {
@@ -192,6 +190,11 @@ namespace myKR.Coding
             Manager.CreateAtestat(list);
 
             label4.Visible = false;
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            ExcelApplication.ExcelApplication.Kill(ExcelApplication.ExcelApplication.App);
         }
         
     }

@@ -263,14 +263,14 @@ namespace myKR.Coding
 
             bool exist = true;
 
-            if (string.IsNullOrEmpty(s) || s.Count(c => c.Equals('"')) != 2)
+            if (string.IsNullOrEmpty(s) || s.Count(c => c.Equals('"')) < 2)
                 exist = false;
             else
             {
                 int beginSlash = s.IndexOf("\"", StringComparison.Ordinal);
                 int lastSlash = s.LastIndexOf("\"", StringComparison.Ordinal);
 
-                s = s.Substring(beginSlash + 1, beginSlash - lastSlash - 1);
+                s = s.Substring(beginSlash + 1, lastSlash - beginSlash - 1);
 
                 if (string.IsNullOrEmpty(s))
                     exist = false;
@@ -298,7 +298,7 @@ namespace myKR.Coding
                 int beginSlash = s.IndexOf("\"", StringComparison.Ordinal);
                 int lastSlash = s.LastIndexOf("\"", StringComparison.Ordinal);
 
-                s = s.Substring(beginSlash + 1, beginSlash - lastSlash - 1);
+                s = s.Substring(beginSlash + 1, lastSlash - beginSlash - 1);
 
                 if (string.IsNullOrEmpty(s))
                     exist = false;
@@ -897,7 +897,7 @@ namespace myKR.Coding
                                 control.ShowDialog();
 
                                 newApp.Quit();
-                                App.Kill(newApp);
+                                ExcelApplication.ExcelApplication.Kill(newApp);
                             }
                             if (Control.ButtonClick == 2)
                                 return;
@@ -1370,7 +1370,7 @@ namespace myKR.Coding
                                 control.ShowDialog();
 
                                 newApp.Quit();
-                                App.Kill(newApp);
+                                ExcelApplication.ExcelApplication.Kill(newApp);
                             }
                             if (Control.ButtonClick == 2)
                             {
