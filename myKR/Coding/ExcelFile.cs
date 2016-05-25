@@ -38,7 +38,7 @@ namespace myKR.Coding
                 }
             }
             MovePracticeAndStateExam();
-            book.Close();
+            App.CloseBook(book, true);
             Log.Info(LoggerConstants.EXIT);
         }
 

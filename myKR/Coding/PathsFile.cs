@@ -38,7 +38,7 @@ namespace myKR.Coding
             PathsDto.PathToFileWithMacros = parentFolder + "\\Data\\WithMacros.xls";
             PathsDto.PathToStudentDb = parentFolder + "\\LastReadFromHere\\База.xls";
             PathsDto.PathToWorkPlan = parentFolder + "\\LastReadFromHere\\Rp15.xls";
-            PathsDto.PathToFolderWithOblicUspishnosti = parentFolder + "User Data\\Облік успішності\\";
+            PathsDto.PathToFolderWithOblicUspishnosti = parentFolder + "\\User Data\\Облік успішності\\";
             PathsDto.PathToFolderWithZvedeniaVidomistUspishnosti = parentFolder +
                                                                    "\\User Data\\Зведена відомість успішності\\";
             PathsDto.PathToArhive = parentFolder + "\\User Data\\Зведена відомість успішності\\Архів\\";

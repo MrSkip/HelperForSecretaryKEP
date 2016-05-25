@@ -94,19 +94,13 @@ namespace myKR.Coding.ExcelApplication
             Log.Info(LoggerConstants.ENTER);
             LastUsedObject = null;
 
-            if (string.IsNullOrEmpty(pathToBook))
+            if (string.IsNullOrEmpty(pathToBook) || !File.Exists(pathToBook))
             {
-                Log.Info(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.BAD_VALIDATION + ": " + pathToBook);
                 Log.Info(LoggerConstants.EXIT);
                 return null;
             }
 
-            if (!File.Exists(pathToBook))
-            {
-                Log.Warn(LoggerConstants.BAD_VALIDATION);
-                Log.Info(LoggerConstants.EXIT);
-                return null;
-            }
             Excel.Workbook workbook = null;
             try
             {
@@ -194,9 +188,9 @@ namespace myKR.Coding.ExcelApplication
                 return null;
             }
 
-            if (IfSheetExist(book, sheetName) == null)
+            if (IfSheetExist(book, sheetName) != null)
             {
-                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Warn(LoggerConstants.BAD_VALIDATION + "; bookName = " + book.Name + "; SheetName = " + sheetName);
                 Log.Info(LoggerConstants.EXIT);
                 return null;
             }
