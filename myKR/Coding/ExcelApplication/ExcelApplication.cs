@@ -51,26 +51,26 @@ namespace myKR.Coding.ExcelApplication
 
         public void CloseApp(bool save)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             _app.Quit();
-            Kill();
+            Kill(_app);
             _app = null;
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
         }
 
         public void SetVisibilityForApp(bool visibil)
         {
-            Log.Info(LoggetConstats.ENTER_EXIT);
+            Log.Info(LoggerConstants.ENTER_EXIT);
             _app.Visible = visibil;
         }
 
         public void CloseBook(Excel.Workbook book, bool save)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             if (book == null)
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return;
             }
             try
@@ -86,31 +86,31 @@ namespace myKR.Coding.ExcelApplication
             {
                 Log.Warn("Exception with closing `" + book.Name + "`", e);
             }
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
         }
 
         public Excel.Workbook OpenBook(string pathToBook)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             LastUsedObject = null;
 
             if (string.IsNullOrEmpty(pathToBook))
             {
-                Log.Info(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
 
             if (!File.Exists(pathToBook))
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
             Excel.Workbook workbook = null;
             try
             {
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.EXIT);
                 return workbook = _app.Workbooks.Open(pathToBook);
             }
             catch (COMException e)
@@ -125,79 +125,79 @@ namespace myKR.Coding.ExcelApplication
 
                     LastUsedObject = IfBookExist(bookName);
 
-                    Log.Info(LoggetConstats.EXIT);
+                    Log.Info(LoggerConstants.EXIT);
                     return (Excel.Workbook) LastUsedObject;
                 }
                 CloseBook(workbook, false);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
             catch (Exception e)
             {
                 Log.Warn("Exception while opening BOOK", e);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
         }
 
         public Excel.Worksheet OpenWorksheet(Excel.Workbook book, string sheetName)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             LastUsedObject = null;
 
             if (book == null || string.IsNullOrEmpty(sheetName))
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
 
             LastUsedObject = IfSheetExist(book, sheetName);
 
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return (Excel.Worksheet) LastUsedObject;
         }
 
         public Excel.Worksheet OpenWorksheet(Excel.Workbook book, int index)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             LastUsedObject = null;
 
             if (book == null)
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
             if (book.Worksheets.Count <= 0 || book.Worksheets.Count > index)
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
 
             LastUsedObject = book.Worksheets[index];
 
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return (Excel.Worksheet) LastUsedObject;
         }
 
         public Excel.Worksheet CreateNewSheet(Excel.Workbook book, string sheetName)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             LastUsedObject = null;
 
             if (book == null || string.IsNullOrEmpty(sheetName))
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
 
             if (IfSheetExist(book, sheetName) == null)
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return null;
             }
 
@@ -206,44 +206,43 @@ namespace myKR.Coding.ExcelApplication
 
             LastUsedObject = sheet;
 
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return sheet;
         }
 
         private Excel.Worksheet IfSheetExist(Excel.Workbook book, string sheetName)
         {
-            Log.Info(LoggetConstats.ENTER_EXIT);
+            Log.Info(LoggerConstants.ENTER_EXIT);
             return book.Worksheets.Cast<Excel.Worksheet>().FirstOrDefault(sheet => sheet.Name.Equals(sheetName));
         }
 
         private Excel.Workbook IfBookExist(string bookName)
         {
-            Log.Info(LoggetConstats.ENTER_EXIT);
+            Log.Info(LoggerConstants.ENTER_EXIT);
             return _app.Workbooks.Cast<Excel.Workbook>().FirstOrDefault(book =>
                 bookName.Equals(book.Name.Substring(0, book.Name.LastIndexOf(".", StringComparison.Ordinal))));
         }
 
-        private void Kill()
+        public void Kill(Excel.Application app)
         {
-            Log.Info(LoggetConstats.ENTER);
-            if (_app == null)
+            Log.Info(LoggerConstants.ENTER);
+            if (app == null)
             {
-                Log.Warn(LoggetConstats.BAD_VALIDATION);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Warn(LoggerConstants.BAD_VALIDATION);
+                Log.Info(LoggerConstants.EXIT);
                 return;
             }
             try
             {
                 int excelProcessId;
-                GetWindowThreadProcessId(_app.Hwnd, out excelProcessId);
+                GetWindowThreadProcessId(app.Hwnd, out excelProcessId);
                 Process p = Process.GetProcessById(excelProcessId);
                 p.Kill();
-                _app = null;
             }
             catch(Exception e)
             {
                 Log.Warn("Exception while killed process", e);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.EXIT);
             }
         }
 

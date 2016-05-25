@@ -9,6 +9,8 @@ namespace myKR.Coding
 {
     public static class ExcelFile
     {
+        private static readonly PathsFile PathsFile = PathsFile.GetPathsFile();
+
         private static readonly log4net.ILog Log =
             log4net.LogManager.GetLogger("ExcelFile.cs");
 
@@ -16,13 +18,13 @@ namespace myKR.Coding
 
         public static void ReadRobPlan(string pathToRobPlan)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
 
             Excel.Workbook book = App.OpenBook(pathToRobPlan);
             if (book == null)
             {
                 Log.Error("Can`t opet book from path: " + pathToRobPlan);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.EXIT);
                 return;
             }
 
@@ -37,19 +39,19 @@ namespace myKR.Coding
             }
             MovePracticeAndStateExam();
             book.Close();
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
         }
 
         public static void ReadStudentsAndOlicAndCurators(string pathToDb)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
 
             Excel.Workbook book = App.OpenBook(pathToDb);
 
             if (book == null)
             {
                 Log.Error("Path to DB with students, obliks and curators not correct: " + pathToDb);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.EXIT);
                 return;
             }
 
@@ -100,7 +102,7 @@ namespace myKR.Coding
             {
                 Log.Info("Can`t open sheet `Куратори`");
                 App.CloseBook(book, false);
-                Log.Info(LoggetConstats.EXIT);
+                Log.Info(LoggerConstants.EXIT);
                 return;
             }
             List<string[]> list =
@@ -113,12 +115,12 @@ namespace myKR.Coding
             }
 
             App.CloseBook(book, false);
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
         }
 
         public static List<string[]> ReadCurator(Excel.Worksheet sheet)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             List<string[]> curators = new List<string[]>();
             try
             {
@@ -146,22 +148,22 @@ namespace myKR.Coding
             {
                 Log.Warn("Something wrong with reading curators", e);
             }
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return curators;
         }
 
         private static bool CustomEquals(string first, string second)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             first = first.ToLower().Trim().Replace("*", "");
             second = second.ToLower().Trim().Replace("*", "");
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return first.Equals(second);
         }
 
         public static List<NumberOfOblic> ReadNumbersOfOblic(Excel.Worksheet sheet)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             List<NumberOfOblic> oblics = new List<NumberOfOblic>();
 
             int n = 2;
@@ -197,13 +199,13 @@ namespace myKR.Coding
             {
                 Log.Warn("Something wrang", e);
             }
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return oblics;
         }
 
         public static List<Student> ReadStudents(Excel.Worksheet sheet)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
             List<Student> students = new List<Student>();
 
             int n = 1;
@@ -245,13 +247,13 @@ namespace myKR.Coding
                 }
             }
 
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return students;
         }
 
         private static Group ReadSheetFromRobPlan(Excel.Worksheet sheet)
         {
-            Log.Info(LoggetConstats.ENTER);
+            Log.Info(LoggerConstants.ENTER);
 
             Group group = new Group();
             group.Name = sheet.Name;
@@ -430,12 +432,13 @@ namespace myKR.Coding
             group.Practice = ReadPractice(sheet);
             group.StateExamination = ReadStateExamination(sheet);
 
-            Log.Info(LoggetConstats.EXIT);
+            Log.Info(LoggerConstants.EXIT);
             return group;
         }
 
         private static List<Subject> ReadSubject(Excel.Worksheet sheet)
         {
+            Log.Info(LoggerConstants.ENTER);
             List<Subject> subjects = new List<Subject>();
             //[0] - Hours; [1] - Cursova; [2] - Ispyt (Examen) [3] - DyfZalikOrZalic; [4] - DyfZalik (if exist)
             string[]
@@ -449,7 +452,9 @@ namespace myKR.Coding
             var s = sheet.Cells[15, "C"].Value;
             if (s == null || string.IsNullOrWhiteSpace(s.ToString()) || !s.Trim().ToLower().Equals("назви навчальних  дисциплін"))
             {
-                MassageError(sheet.Name, "C15", "Назви навчальних  дисциплін");
+                sheet.Cells[15, "C"].Interior.Color =
+                            System.Drawing.ColorTranslator.ToOle(System.Drawing.Color.Red);
+                Log.Error("Expekted at the `C15` value 'Назви навчальних  дисциплін'");
                 return new List<Subject>();
             }
 
@@ -469,6 +474,12 @@ namespace myKR.Coding
             {
                 try
                 {
+                    if (n == 100)
+                    {
+                        Log.Warn("Exit with bad parameter");
+                        break;
+                    }
+
                     n++;
 
                     var subjectName = sheet.Cells[n, "C"].Value;
@@ -538,14 +549,16 @@ namespace myKR.Coding
                 }
                 catch (Exception exception)
                 {
-                    MassageError(sheet.Name, "", "Щось не гараз із записами про предмет\n" + exception);
+                    Log.Warn("Something wrong", exception);
                 }
             }
+            Log.Info(LoggerConstants.EXIT);
             return subjects;
         }
 
         private static string RemoveSymbolFromSubjectName(string subjectName)
         {
+            Log.Info(LoggerConstants.ENTER);
             if (string.IsNullOrEmpty(subjectName)) return "";
             string withoutSymbol = "";
             foreach (char c in subjectName)
@@ -553,6 +566,7 @@ namespace myKR.Coding
                 if (c != '*')
                     withoutSymbol += c;
             }
+            Log.Info(LoggerConstants.EXIT);
             return withoutSymbol;
         }
 
@@ -616,18 +630,20 @@ namespace myKR.Coding
                             }
                             catch (Exception e)
                             {
-                                MassageError(sheet.Name, "", "Щось не гаразд із зчитуванням практики\n" + e);
+                                Log.Warn("Something wrong while was reading practice", e);
                             }
                         }
                     }
                     break;
                 }
             }
+            Log.Info(LoggerConstants.EXIT);
             return practices;
         }
 
         private static List<StateExamination> ReadStateExamination(Excel.Worksheet sheet)
         {
+            Log.Info(LoggerConstants.ENTER);
             List<StateExamination> examinations = new List<StateExamination>();
             string[][] position =
             {
@@ -668,9 +684,10 @@ namespace myKR.Coding
                 }
                 catch (Exception e)
                 {
-                    MassageError(sheet.Name, "", "Щось не гаразд із зчитуванням державних екзаменів\n" + e);
+                    Log.Warn("Something wrong while was reading state examinations", e);
                 }
             }
+            Log.Info(LoggerConstants.EXIT);
             return examinations;
         }
 
@@ -681,6 +698,7 @@ namespace myKR.Coding
 
         private static int GetPositionForCellCource(string str)
         {
+            Log.Info(LoggerConstants.ENTER);
             int x = -1;
             foreach (var c in str)
             {
@@ -688,6 +706,7 @@ namespace myKR.Coding
                 if (c.Equals('I') || c.Equals('V') || c.Equals('І'))
                     break;
             }
+            Log.Info(LoggerConstants.EXIT);
             return x;
         }
 
@@ -699,15 +718,15 @@ namespace myKR.Coding
         */
         public static void CreateOblicUspishnosti(string groupName, string subjectName, int pivricha)
         {
-            if (!File.Exists(CurrentFolder + "Data\\DataToProgram.xls"))
+            Log.Info(LoggerConstants.ENTER);
+
+            Excel.Workbook bookCore = App.OpenBook(PathsFile.PathsDto.PathToExcelDataForProgram);
+            if (bookCore == null)
             {
-                MessageBox.Show("В папці [" + CurrentFolder + "Data] повинен знайходитися файл [DataToProgram.xls]");
+                Log.Error("Path to Excel file with all templates are not exist");
+                Log.Info(LoggerConstants.EXIT);
                 return;
             }
-
-            Excel.Workbook bookCore = App.OpenBook(CurrentFolder + "Data\\DataToProgram.xls");
-            if (bookCore == null)
-                return;
 
             if (string.IsNullOrEmpty(groupName) && string.IsNullOrEmpty(subjectName))
                 foreach (Group group in Manager.Groups)
@@ -738,11 +757,14 @@ namespace myKR.Coding
             }
 
             Control.IfShow = false;
-            bookCore.Close(false);
+            App.CloseBook(bookCore, false);
+
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static void MovePracticeAndStateExam()
         {
+            Log.Info(LoggerConstants.ENTER);
             foreach (Group group in Manager.Groups)
             {
                 group.FirstRomeSemestr = ArabNormalize(group.FirstRomeSemestr);
@@ -792,10 +814,12 @@ namespace myKR.Coding
                         }
                     }
             }
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static void CreateOblicForOneSubject(Excel.Workbook book, Group group, string subjectName, int pivricha)
         {
+            Log.Info(LoggerConstants.ENTER);
             Excel.Workbook bookOfOblic = null;
             try
             {
@@ -810,46 +834,45 @@ namespace myKR.Coding
                             ? CreateSheetName("КП" + subjectName)
                             : CreateSheetName(subjectName);
                     }
-                    else return;
+                    else
+                    {
+                        Log.Info(LoggerConstants.EXIT);
+                        return;
+                    }
                 }
                 else
                 {
-                    MessageBox.Show("У групі [" + group.Name + "] не знайдено предмет - [" + subjectName + "]");
+                    Log.Warn("For group `" + group.Name + "` don`t find any subjects");
+                    Log.Info(LoggerConstants.EXIT);
                     return;
                 }
-                bool exist = false;
 
-                if (File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
-                {
-                    bookOfOblic =
-                        App.OpenBook(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
-                    if (book == null)
-                        return;
-                    exist = true;
-                }
+                bookOfOblic = App.OpenBook(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti 
+                    + group.Name + PathsFile.PathsDto.ExcelExtensial);
 
                 Excel.Worksheet sheetOfOblic;
-                if (!exist)
+
+                if (bookOfOblic == null)
                 {
-                    if (!File.Exists(CurrentFolder + "Data\\WithMacros.xls"))
+                    if (!File.Exists(PathsFile.PathsDto.PathToFileWithMacros))
                     {
-                        MessageBox.Show("Файл не існує - [" + CurrentFolder + "Data\\WithMacros.xls" + "]");
+                        Log.Error(LoggerConstants.FILE_NOT_EXIST + ": " + PathsFile.PathsDto.PathToFileWithMacros);
+                        Log.Info(LoggerConstants.EXIT);
                         return;
                     }
 
-                    File.Copy(CurrentFolder + "Data\\WithMacros.xls",
-                        CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
+                    File.Copy(PathsFile.PathsDto.PathToFileWithMacros,
+                        PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + ".xls");
 
-                    bookOfOblic =
-                        App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
-                    sheetOfOblic = (Excel.Worksheet) bookOfOblic.Worksheets[1];
+                    bookOfOblic = App.OpenBook(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + ".xls");
+
+                    sheetOfOblic = App.OpenWorksheet(bookOfOblic, 1);
                     sheetOfOblic.Name = nameOfOblic;
                 }
                 else
                 {
-                    exist =
-                        bookOfOblic.Worksheets.Cast<object>()
-                            .Any(sheet => ((Excel.Worksheet) sheet).Name.Equals(nameOfOblic));
+                    var exist = bookOfOblic.Worksheets.Cast<object>()
+                        .Any(sheet => ((Excel.Worksheet) sheet).Name.Equals(nameOfOblic));
                     if (exist)
                     {
                         if (!Control.IfShow)
@@ -861,16 +884,20 @@ namespace myKR.Coding
                             if (Control.ButtonClick == 1)
                             {
 
-                                Excel.Application newApp = new Excel.Application() {Visible = true};
+                                Excel.Application newApp = new Excel.Application
+                                {
+                                    Visible = true
+                                };
                                 ((Excel.Worksheet)
-                                    newApp.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name +
-                                                          ".xls").Worksheets[nameOfOblic]).Select();
+                                    newApp.Workbooks.Open(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name 
+                                    +".xls").Worksheets[nameOfOblic]).Select();
 
                                 Control.ButtonClick = 0;
                                 control.SetButtonReseachEnabled(false);
                                 control.ShowDialog();
 
                                 newApp.Quit();
+                                App.Kill(newApp);
                             }
                             if (Control.ButtonClick == 2)
                                 return;
@@ -882,15 +909,17 @@ namespace myKR.Coding
                         else
                         {
                             if (Control.ButtonClick == 2)
+                            {
+                                Log.Info(LoggerConstants.EXIT);
                                 return;
+                            }
                             sheetOfOblic = bookOfOblic.Worksheets[nameOfOblic];
                             sheetOfOblic.Cells.Delete();
                         }
                     }
                     else
                     {
-                        sheetOfOblic = bookOfOblic.Worksheets.Add(Type.Missing);
-                        sheetOfOblic.Name = nameOfOblic;
+                        sheetOfOblic = App.CreateNewSheet(bookOfOblic, nameOfOblic);
                     }
                 }
 
@@ -921,27 +950,18 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MassageError("", "", "Щось не гаразд із підключенням до обліків успішності:\n" + e);
+                Log.Warn("Something wrong while reading obliks uspishnosti", e);
             }
             finally
             {
-                try
-                {
-                    if (bookOfOblic != null)
-                    {
-                        bookOfOblic.Save();
-                        bookOfOblic.Close();
-                    }
-                }
-                catch (Exception)
-                {
-                   // ignored
-                }
+                App.CloseBook(bookOfOblic, true);
+                Log.Info(LoggerConstants.EXIT);
             }
         }
 
         private static void CreateKpOrPractice(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
         {
+            Log.Info(LoggerConstants.ENTER);
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
 
             sheet.Cells[13, "E"].Value = group.TrainingDirection.Equals("Програмна інженерія") ? "Програмної інженерії"
@@ -967,10 +987,12 @@ namespace myKR.Coding
             }
             if (n != 75)
                 sheet.Range["B" + n, "Q" + 74].Delete();
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static void CreateStateExamen(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, Group group, Subject subject, Semestr semestr, int pivricha)
         {
+            Log.Info(LoggerConstants.ENTER);
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
             sheet.Cells[4, "H"].Value = subject.Name;
             sheet.Cells[9, "C"].Value = group.Name;
@@ -989,11 +1011,13 @@ namespace myKR.Coding
 
             // Count of students in group
             sheet.Cells[12, "G"] = "__" + (n - 46) + "__";
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static void CreateZalicExamenAndDufZalic(Excel.Worksheet sheetTamplate, Excel.Worksheet sheet, 
             Group group, Subject subject, Semestr semestr, int pivricha)
         {
+            Log.Info(LoggerConstants.ENTER);
             sheet.Cells.PasteSpecial(sheetTamplate.Cells.Copy());
 
             sheet.Cells[13, "E"].Value = group.TrainingDirection.Equals("Програмна інженерія") ? "Програмної інженерії" 
@@ -1019,10 +1043,12 @@ namespace myKR.Coding
             }
             if (n != 69)
                 sheet.Range["B" + n, "Q" + 68].Delete();
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static string CreateNumberOfOblic(string number, string currentYear)
         {
+            Log.Info(LoggerConstants.ENTER);
             int x = 0;
             if (!string.IsNullOrEmpty(number))
             x = int.Parse(number.Trim());
@@ -1033,11 +1059,13 @@ namespace myKR.Coding
             int n = int.Parse(currentYear.Trim()) - 2000;
 
             number = "" + n + "." + number;
+            Log.Info(LoggerConstants.EXIT);
             return number;
         }
 
         private static string FormaZdachi(Semestr semestr)
         {
+            Log.Info(LoggerConstants.ENTER);
             string s = "";
 
             if (semestr.CursovaRobota > 0) s = "курсовий проект";
@@ -1047,11 +1075,13 @@ namespace myKR.Coding
             else if (semestr.Zalic > 0) s = "залік";
             else if (semestr.StateExamination > 0) s = "протокол";
 
+            Log.Info(LoggerConstants.EXIT);
             return s;
         }
 
         private static string CreateSheetName(string s)
         {
+            Log.Info(LoggerConstants.ENTER);
             string s2 = "";
             foreach (char c in s)
             {
@@ -1060,12 +1090,13 @@ namespace myKR.Coding
                     continue;
                 s2 += c;
             }
-
+            Log.Info(LoggerConstants.EXIT);
             return s2.Length <= 31 ? s2 : s2.Substring(0, 31);
         }
 
         private static int FromRomeToArab(string rome)
         {
+            Log.Info(LoggerConstants.ENTER);
             int arab = 0;
             rome = ArabNormalize(rome);
 
@@ -1078,11 +1109,13 @@ namespace myKR.Coding
             else if (rome.Equals("VII")) arab = 7;
             else if (rome.Equals("VIII")) arab = 8;
 
+            Log.Info(LoggerConstants.EXIT);
             return arab;
         }
 
         private static string ArabToRome(int arab)
         {
+            Log.Info(LoggerConstants.ENTER);
             var rome = "";
             switch (arab)
             {
@@ -1111,11 +1144,13 @@ namespace myKR.Coding
                     rome = "VIII";
                     break;
             }
+            Log.Info(LoggerConstants.EXIT);
             return rome;
         }
 
         private static string ArabNormalize(string str)
         {
+            Log.Info(LoggerConstants.ENTER);
             char[] ch = str.ToCharArray();
             for (int i = 0; i < str.Length; i++)
             {
@@ -1123,6 +1158,7 @@ namespace myKR.Coding
                 if (arg == 1030) arg = 73;
                 ch[i] = (char)arg;
             }
+            Log.Info(LoggerConstants.EXIT);
             return new string(ch);
         }
 
@@ -1132,16 +1168,17 @@ namespace myKR.Coding
         // Read Oblics Uspisnosti
         public static void CreateVidomist(Group group, int pivricha, string month)
         {
-            if (!File.Exists(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls"))
+            Log.Info(LoggerConstants.ENTER);
+            if (!File.Exists(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + ".xls"))
             {
-                MessageBox.Show("У вас немає обліків успішності для групи - " + group.Name + " за " + pivricha +
-                    " півріччя" + (string.IsNullOrEmpty(month) ? "" : ". За місяць - " + month));
+                Log.Warn("Don`t find any obliks yspishnosti");
             }
             else
             {
                 try
                 {
-                    Excel.Workbook book = App.Workbooks.Open(CurrentFolder + "User Data\\Облік успішності\\" + group.Name + ".xls");
+                    Excel.Workbook book = App.OpenBook(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti
+                        + group.Name + ".xls");
                     foreach (object sheetO in book.Worksheets)
                     {
                         Excel.Worksheet sheet = (Excel.Worksheet) sheetO;
@@ -1170,15 +1207,17 @@ namespace myKR.Coding
                 }
                 catch (Exception e)
                 {
-                    MessageBox.Show("Щось не так із методом CreateVidomist()\n" + e);
+                    Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
                 }
             }
             CreateZvedeniaVidomist(group, pivricha, month);
+            Log.Info(LoggerConstants.EXIT);
         }
 
         // if type == 1 than DufZalicZalic else if == 2 than PracticeOrKP else StateExamen
         private static void ReadOcinkaFromOblics(Group @group, Excel.Worksheet sheet, int pivricha, int type)
         {
+            Log.Info(LoggerConstants.ENTER);
             try
             {
                 List<Ocinka> list = new List<Ocinka>();
@@ -1258,8 +1297,9 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MessageBox.Show("Щось не гаразд із зчитуванням оцінок із Обліків Успішності\n" + e);
+                Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
             }
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static void CreateZvedeniaVidomist(Group @group, int pivricha, string mount)
@@ -1270,36 +1310,44 @@ namespace myKR.Coding
             try
             {
                 string stringPivricha = pivricha == 1 ? "1-ше півріччя.xls" : "2-ге півріччя.xls";
-                string pathToVidomist = CurrentFolder +
-                                        "User Data\\Зведена відомість успішності\\Зведена відомість успішності за " +
-                                        (string.IsNullOrEmpty(mount) ? stringPivricha : mount + ".xls");
+                string pathToVidomist = PathsFile.PathsDto.PathToFolderWithZvedeniaVidomistUspishnosti
+                    + "Зведена відомість успішності за " + (string.IsNullOrEmpty(mount) ? stringPivricha : mount + ".xls");
 
-                if (!File.Exists(CurrentFolder + "Data\\DataToProgram.xls"))
+                if (!File.Exists(PathsFile.PathsDto.PathToExcelDataForProgram))
                 {
-                    MessageBox.Show("Відсутній файл:\n" + CurrentFolder + "Data\\DataToProgram.xls");
+                    Log.Error(LoggerConstants.FILE_NOT_EXIST + ": DataToProgram");
+                    Log.Info(LoggerConstants.EXIT);
                     return;
                 }
 
-                bookTamplate = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
-                Excel.Worksheet sheetTamplate = (Excel.Worksheet) bookTamplate.Worksheets["Зведена відомість"];
+                bookTamplate = App.OpenBook(PathsFile.PathsDto.PathToExcelDataForProgram);
+                Excel.Worksheet sheetTamplate = App.OpenWorksheet(bookTamplate, "Зведена відомість");
+
+                if (sheetTamplate == null)
+                {
+                    Log.Error("DataToProgram must contains sheet with name `Зведена відомість`");
+                    Log.Info(LoggerConstants.EXIT);
+                    return;
+                }
 
                 Excel.Worksheet sheet;
 
                 if (!File.Exists(pathToVidomist))
                 {
-                    if (!File.Exists(CurrentFolder + "Data\\WithMacros.xls"))
+                    if (!File.Exists(PathsFile.PathsDto.PathToFileWithMacros))
                     {
-                        MessageBox.Show("Файл не існує - [" + CurrentFolder + "Data\\WithMacros.xls" + "]");
+                        Log.Warn("Empty Excel file with macros not find");
+                        Log.Info(LoggerConstants.EXIT);
                         return;
                     }
-                    File.Copy(CurrentFolder + "Data\\WithMacros.xls", pathToVidomist);
-                    book = App.Workbooks.Open(pathToVidomist);
-                    sheet = (Excel.Worksheet) book.Worksheets[1];
-                    sheet.Name = group.Name;
+                    File.Copy(PathsFile.PathsDto.PathToFileWithMacros, pathToVidomist);
+
+                    book = App.OpenBook(pathToVidomist);
+                    sheet = App.OpenWorksheet(book, group.Name);
                 }
                 else
                 {
-                    book = App.Workbooks.Open(pathToVidomist);
+                    book = App.OpenBook(pathToVidomist);
                     bool exist =
                         book.Worksheets.Cast<object>()
                             .Any(sheet2 => ((Excel.Worksheet) sheet2).Name.Equals(group.Name));
@@ -1322,25 +1370,41 @@ namespace myKR.Coding
                                 control.ShowDialog();
 
                                 newApp.Quit();
+                                App.Kill(newApp);
                             }
                             if (Control.ButtonClick == 2)
+                            {
+                                Log.Info(LoggerConstants.EXIT);
                                 return;
+                            }
 
-                            sheet = book.Worksheets[group.Name];
-                            sheet.Cells.Delete();
+                            sheet = App.OpenWorksheet(book, group.Name);
+                            if (sheet != null)
+                                sheet.Cells.Delete();
+                            else
+                            {
+                                Log.Warn("Some sheet == null");
+                            }
                         }
                         else
                         {
                             if (Control.ButtonClick == 2)
+                            {
+                                Log.Info(LoggerConstants.EXIT);
                                 return;
-                            sheet = book.Worksheets[group.Name];
-                            sheet.Cells.Delete();
+                            }
+                            sheet = App.OpenWorksheet(book, group.Name);
+                            if (sheet != null)
+                                sheet.Cells.Delete();
+                            else
+                            {
+                                Log.Warn("Some sheet == null");
+                            }
                         }
                     }
                     else
                     {
-                        sheet = book.Worksheets.Add(Type.Missing);
-                        sheet.Name = group.Name;
+                        sheet = App.CreateNewSheet(book, group.Name);
                     }
                 }
 
@@ -1565,30 +1629,19 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MessageBox.Show(e + "" + "\n" + group.Name);
+                Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
             }
             finally
             {
-                if (book != null)
-                {
-                    try
-                    {
-                        book.Save();
-                        book.Close();
-                    }
-                    catch (Exception)
-                    {
-                        //ignored
-                    }
-                }
-                if (bookTamplate != null)
-                    bookTamplate.Close();
+                App.CloseBook(book, true);
+                App.CloseBook(bookTamplate, true);
             }
             Control.IfShow = false;
         }
 
         private static double ColumnWidth(string s)
         {
+            Log.Info(LoggerConstants.ENTER_EXIT);
             if (s.Length <= 21) return 5.57;
             if (s.Length <= 40) return 9.70;
             if (s.Length <= 55) return 11;
@@ -1597,24 +1650,27 @@ namespace myKR.Coding
 
         private static void ArhiveZvedVidomist(Excel.Worksheet sheet, string semesterRome)
         {
+            Log.Info(LoggerConstants.ENTER);
             Excel.Workbook book = null;
             try
             {
-                if (string.IsNullOrEmpty(semesterRome)) return;
+                if (string.IsNullOrEmpty(semesterRome))
+                {
+                    Log.Info(LoggerConstants.EXIT);
+                    return;
+                }
 
-                string pathToArhiveFile = CurrentFolder + "User Data\\Зведена відомість успішності\\Архів\\" +
-                                          sheet.Name +
-                                          ".xls";
+                string pathToArhiveFile = PathsFile.PathsDto.PathToArhive + sheet.Name + ".xls";
 
                 bool existSheet = false;
 
                 if (!File.Exists(pathToArhiveFile))
                 {
-                    File.Copy(CurrentFolder + "Data\\WithMacros.xls", pathToArhiveFile);
+                    File.Copy(PathsFile.PathsDto.PathToFileWithMacros, pathToArhiveFile);
                     existSheet = true;
                 }
 
-                book = App.Workbooks.Open(pathToArhiveFile);
+                book = App.OpenBook(pathToArhiveFile);
                 Excel.Worksheet sheetArhive;
 
                 string sheetNameOfArhive = semesterRome + " семестр";
@@ -1640,8 +1696,7 @@ namespace myKR.Coding
                         sheetArhive = book.Sheets[1];
                     else
                     {
-                        sheetArhive = book.Worksheets.Add(Type.Missing);
-                        sheetArhive.Name = sheetNameOfArhive;
+                        sheetArhive = App.CreateNewSheet(book, sheetNameOfArhive);
                     }
                 }
 
@@ -1649,15 +1704,12 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MessageBox.Show("Помилка!\n Архівування зведеної відомості: " + sheet.Name + "\nКод помилки:\n" + e);
+                Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
             }
             finally
             {
-                if (book != null)
-                {
-                    book.Save();
-                    book.Close();
-                }
+                App.CloseBook(book, true);
+                Log.Info(LoggerConstants.EXIT);
             }
         }
 
@@ -1665,19 +1717,20 @@ namespace myKR.Coding
 
         private static List<NewSubject> GetSubjectsForAtestat()
         {
+            Log.Info(LoggerConstants.ENTER);
             Excel.Workbook bookTemplate = null;
             List<NewSubject> subjects = new List<NewSubject>();
             try
             {
-                if (!File.Exists(CurrentFolder + "Data\\DataToProgram.xls"))
+                if (!File.Exists(PathsFile.PathsDto.PathToExcelDataForProgram))
                 {
-                    MessageBox.Show("У вас немає обов'язкових шаблонів (" + CurrentFolder + "Data\\DataToProgram.xls" +
-                                    ")");
+                    Log.Error("Excel file DataToProgram not find");
+                    Log.Info(LoggerConstants.EXIT);
                     return new List<NewSubject>();
                 }
 
-                bookTemplate = App.Workbooks.Open(CurrentFolder + "Data\\DataToProgram.xls");
-                Excel.Worksheet sheet = (Excel.Worksheet)bookTemplate.Worksheets.Item["Формування атестату - предмети"];
+                bookTemplate = App.OpenBook(PathsFile.PathsDto.PathToExcelDataForProgram);
+                Excel.Worksheet sheet = App.OpenWorksheet(bookTemplate, "Формування атестату - предмети");
 
                 int startRow = 2;
 
@@ -1694,9 +1747,8 @@ namespace myKR.Coding
                 }
                 if (subjects.Count == 0)
                 {
-                    MessageBox.Show("У книзі (" + CurrentFolder + "Data\\DataToProgram.xls" +
-                                    ")\n Лист (Формування атестату - предмети) не " +
-                                    "\nзаписано жодного предмету для винесення в атестат");
+                    Log.Error("In book DataToProgram not wrote any subjects for atestat");
+                    Log.Info(LoggerConstants.EXIT);
                     return subjects;
                 }
 
@@ -1730,41 +1782,33 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MessageBox.Show("Щось не гаразд із методом (GetSubjectsForAtestat)\n" + e);
+                Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
+                Log.Info(LoggerConstants.EXIT);
                 return subjects;
             }
             finally
             {
-                try
-                {
-                    if (bookTemplate != null)
-                    {
-                        bookTemplate.Close();
-                    }
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
+                App.CloseBook(bookTemplate, false);
             }
+            Log.Info(LoggerConstants.EXIT);
             return subjects;
         }
 
         public static List<NewSubject> ReadAllNeedSheetsFromArhiveZVtoAtestat(string groupName)
         {
+            Log.Info(LoggerConstants.ENTER);
             Excel.Workbook book = null;
             List<NewSubject> subjects = GetSubjectsForAtestat();
 
             try
             {
-                string pathToArhive = CurrentFolder + "User Data\\" + "Зведена відомість успішності\\" + "Архів\\" +
-                                      groupName + ".xls";
+                string pathToArhive = PathsFile.PathsDto.PathToArhive + groupName + ".xls";
                 if (!File.Exists(pathToArhive))
                 {
-                    MessageBox.Show("У вас немає зведених відомостей успішності для групи + [" + groupName +
-                                    "] у папці 'Архів'");
+                    Log.Warn("Dont have vidomostey yspishnosti for group: " + groupName);
                 }
-                book = App.Workbooks.Open(pathToArhive);
+                book = App.OpenBook(pathToArhive);
+
                 foreach (Excel.Worksheet sheet in book.Worksheets)
                 {
                     int semestr = sheet.Name.Trim().IndexOf(" ") > 0
@@ -1776,29 +1820,22 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MessageBox.Show("Метод - (ReadDataFromArhiveZvedVidForAtestat) \n" + e);
+                Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
+                Log.Info(LoggerConstants.EXIT);
                 return subjects;
             }
             finally
             {
-                try
-                {
-                    if (book != null)
-                    {
-                        book.Close(false);
-                    }
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
+                App.CloseBook(book, false);
             }
 
+            Log.Info(LoggerConstants.EXIT);
             return subjects;
         }
 
         private static void ReadOneSheetFromArhiveZVtoAtestat(List<NewSubject> subjects, Excel.Worksheet sheet, int semestr, string groupName)
         {
+            Log.Info(LoggerConstants.ENTER);
             try
             {
                 char startColumn = 'F';
@@ -1868,12 +1905,14 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MessageBox.Show("У методі (ReadOneSheetFromArhiveZVtoAtestat)\n" + e);
+                Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
             }
+            Log.Info(LoggerConstants.EXIT);
         }
 
         public static void CreateAtestatForOneGroup(string groupName)
         {
+            Log.Info(LoggerConstants.ENTER);
             Excel.Workbook
                 book = null,
                 bookTemplate = null;
@@ -1883,13 +1922,15 @@ namespace myKR.Coding
 
             try
             {
-                string pathToAtestat = CurrentFolder + "User Data\\Атестат\\" + groupName + ".xls";
-                string pathToTemplateWithMacros = CurrentFolder + "Data\\WithMacros.xls";
-                string pathToTemplateWithSheet = CurrentFolder + "Data\\DataToProgram.xls";
+                string pathToAtestat = PathsFile.PathsDto.PathToAtestatFolder + groupName + ".xls";
+                string pathToTemplateWithMacros = PathsFile.PathsDto.PathToFileWithMacros;
+                string pathToTemplateWithSheet = PathsFile.PathsDto.PathToExcelDataForProgram;
 
                 if (!File.Exists(pathToTemplateWithSheet) || !File.Exists(pathToTemplateWithMacros))
                 {
                     MessageBox.Show("Немає потрібних книг\n" + pathToTemplateWithSheet + "\n" + pathToTemplateWithMacros);
+                    Log.Warn("Don`t have needed books");
+                    Log.Info(LoggerConstants.EXIT);
                     return;
                 }
                 bool exist = true;
@@ -1899,8 +1940,8 @@ namespace myKR.Coding
                     exist = false;
                 }
 
-                book = App.Workbooks.Open(pathToAtestat);
-                bookTemplate = App.Workbooks.Open(pathToTemplateWithSheet);
+                book = App.OpenBook(pathToAtestat);
+                bookTemplate = App.OpenBook(pathToTemplateWithSheet);
                 Excel.Worksheet
                     sheet = !exist ? book.Sheets[1] : null,
                     sheetTempPZVY = bookTemplate.Sheets["Підсумкова ЗВУ"],
@@ -1963,27 +2004,14 @@ namespace myKR.Coding
             }
             catch (Exception e)
             {
-                MessageBox.Show("У методі (CreateAtestatForOneGroup)\n" + e);
+                Log.Warn(LoggerConstants.SOMETHING_WRONG, e);
             }
             finally
             {
-                try
-                {
-                    if (bookTemplate != null)
-                    {
-                        bookTemplate.Close(false);
-                    }
-                    if (book != null)
-                    {
-                        book.Save();
-                        book.Close();
-                    }
-                }
-                catch (Exception)
-                {
-                    // ignored
-                }
+                App.CloseBook(bookTemplate, false);
+                App.CloseBook(book, true);
             }
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static Group GetGroupByName(string groupName)
@@ -1998,9 +2026,13 @@ namespace myKR.Coding
 
         private static void InsertValuesIntoPVY(Excel.Worksheet sheet, string groupName, NewSubject newSubject)
         {
+            Log.Info(LoggerConstants.ENTER);
             Group group = GetGroupByName(groupName);
             if (group == null)
+            {
+                Log.Info(LoggerConstants.EXIT);
                 return;
+            }
 
             byte countOfStudent = 0;
             
@@ -2084,12 +2116,18 @@ namespace myKR.Coding
             pasPosition++;
             if (pasPosition < 'J')
                 sheet.Range[pasPosition.ToString() + 1, "I65536"].Delete();
+            Log.Info(LoggerConstants.EXIT);
         }
 
         private static void InsertValuesIntoPZVY(Excel.Worksheet sheet, string groupName, List<NewSubject> newSubject)
         {
+            Log.Info(LoggerConstants.ENTER);
             Group group = GetGroupByName(groupName);
-            if (group == null) return;
+            if (group == null)
+            {
+                Log.Info(LoggerConstants.EXIT);
+                return;
+            }
 
             sheet.Cells[7, "B"].Value = "Група " + groupName + " (" + groupName
                 .Substring(groupName.IndexOf("-", StringComparison.Ordinal) + 1, groupName.IndexOf("-", StringComparison.Ordinal)) + ")";
@@ -2139,6 +2177,7 @@ namespace myKR.Coding
                 }
                 startColumn++;
             }
+            Log.Info(LoggerConstants.EXIT);
         }
     }
 }

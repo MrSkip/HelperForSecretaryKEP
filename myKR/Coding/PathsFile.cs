@@ -77,6 +77,9 @@ namespace myKR.Coding
             public string PathToFolderWithZvedeniaVidomistUspishnosti;
             public string PathToArhive;
 
+            public string PathToFileWithMacros;
+            
+            public string ExcelExtensial;
         }
     }
 }
