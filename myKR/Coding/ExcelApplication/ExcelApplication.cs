@@ -49,7 +49,7 @@ namespace myKR.Coding.ExcelApplication
             Environment.Exit(-1);
         }
 
-        public void CloseApp(bool save)
+        public void CloseApp()
         {
             Log.Info(LoggerConstants.ENTER);
             App.Quit();
@@ -76,7 +76,9 @@ namespace myKR.Coding.ExcelApplication
             try
             {
                 Log.Info("Book name is `" + book.Name + "`");
-                book.Close(save);
+                if (save)
+                    book.Save();
+                book.Close();
             }
             catch (COMException e)
             {

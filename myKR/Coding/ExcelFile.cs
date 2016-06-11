@@ -862,9 +862,9 @@ namespace myKR.Coding
                     }
 
                     File.Copy(PathsFile.PathsDto.PathToFileWithMacros,
-                        PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + ".xls");
+                        PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + PathsFile.PathsDto.ExcelExtensial);
 
-                    bookOfOblic = App.OpenBook(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + ".xls");
+                    bookOfOblic = App.OpenBook(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + PathsFile.PathsDto.ExcelExtensial);
 
                     sheetOfOblic = App.OpenWorksheet(bookOfOblic, 1);
                     sheetOfOblic.Name = nameOfOblic;
@@ -890,7 +890,7 @@ namespace myKR.Coding
                                 };
                                 ((Excel.Worksheet)
                                     newApp.Workbooks.Open(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name 
-                                    +".xls").Worksheets[nameOfOblic]).Select();
+                                    +PathsFile.PathsDto.ExcelExtensial).Worksheets[nameOfOblic]).Select();
 
                                 Control.ButtonClick = 0;
                                 control.SetButtonReseachEnabled(false);
@@ -1068,12 +1068,12 @@ namespace myKR.Coding
             Log.Info(LoggerConstants.ENTER);
             string s = "";
 
-            if (semestr.CursovaRobota > 0) s = "курсовий проект";
-            else if (semestr.DyfZalik > 0) s = "диф залік";
-            else if (semestr.Isput > 0) s = "екзамен";
+            if (semestr.CursovaRobota > 0) s = ConstantExcel.KURSOVYI_PROEKT;
+            else if (semestr.DyfZalik > 0) s = ConstantExcel.DYF_ZALIK;
+            else if (semestr.Isput > 0) s = ConstantExcel.EXAMEN;
             else if (!string.IsNullOrEmpty(semestr.PracticeFormOfControl)) s = semestr.PracticeFormOfControl;
-            else if (semestr.Zalic > 0) s = "залік";
-            else if (semestr.StateExamination > 0) s = "протокол";
+            else if (semestr.Zalic > 0) s = ConstantExcel.ZALIK;
+            else if (semestr.StateExamination > 0) s = ConstantExcel.PROTOKOL;
 
             Log.Info(LoggerConstants.EXIT);
             return s;
@@ -1169,16 +1169,17 @@ namespace myKR.Coding
         public static void CreateVidomist(Group group, int pivricha, string month)
         {
             Log.Info(LoggerConstants.ENTER);
-            if (!File.Exists(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + ".xls"))
+            if (!File.Exists(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti + group.Name + PathsFile.PathsDto.ExcelExtensial))
             {
-                Log.Warn("Don`t find any obliks yspishnosti");
+                Log.Warn("Don`t find any obliks uspishnosti");
+                //TODOO enter path to folder with ObLisk Uspishnosti
             }
             else
             {
                 try
                 {
                     Excel.Workbook book = App.OpenBook(PathsFile.PathsDto.PathToFolderWithOblicUspishnosti
-                        + group.Name + ".xls");
+                        + group.Name + PathsFile.PathsDto.ExcelExtensial);
                     foreach (object sheetO in book.Worksheets)
                     {
                         Excel.Worksheet sheet = (Excel.Worksheet) sheetO;
@@ -1189,8 +1190,8 @@ namespace myKR.Coding
                             var formaZdachi = sheet.Cells[30, "F"].Value;
                             if (formaZdachi == null || string.IsNullOrEmpty(formaZdachi.ToString())) continue;
 
-                            if (formaZdachi.ToString().Equals("диф залік") || formaZdachi.ToString().Equals("екзамен") ||
-                                formaZdachi.ToString().Equals("залік"))
+                            if (formaZdachi.ToString().Equals(ConstantExcel.DYF_ZALIK) || formaZdachi.ToString().Equals(ConstantExcel.EXAMEN) ||
+                                formaZdachi.ToString().Equals(ConstantExcel.ZALIK))
                                 ReadOcinkaFromOblics(group, sheet, pivricha, 1);
                             else if (string.IsNullOrEmpty(month))
                             {
@@ -1202,8 +1203,7 @@ namespace myKR.Coding
                             ReadOcinkaFromOblics(group, sheet, pivricha, 3);
                         }
                     }
-                    book.Save();
-                    book.Close();
+                    App.CloseBook(book, false);
                 }
                 catch (Exception e)
                 {
@@ -1304,6 +1304,8 @@ namespace myKR.Coding
 
         private static void CreateZvedeniaVidomist(Group @group, int pivricha, string mount)
         {
+            Log.Info(LoggerConstants.ENTER);
+
             Excel.Workbook bookTamplate = null;
             Excel.Workbook book = null;
 
@@ -1311,7 +1313,9 @@ namespace myKR.Coding
             {
                 string stringPivricha = pivricha == 1 ? "1-ше півріччя.xls" : "2-ге півріччя.xls";
                 string pathToVidomist = PathsFile.PathsDto.PathToFolderWithZvedeniaVidomistUspishnosti
-                    + "Зведена відомість успішності за " + (string.IsNullOrEmpty(mount) ? stringPivricha : mount + ".xls");
+                    + "Зведена відомість успішності за " + (string.IsNullOrEmpty(mount)
+                    ? stringPivricha
+                    : mount + PathsFile.PathsDto.ExcelExtensial);
 
                 if (!File.Exists(PathsFile.PathsDto.PathToExcelDataForProgram))
                 {
@@ -1343,7 +1347,10 @@ namespace myKR.Coding
                     File.Copy(PathsFile.PathsDto.PathToFileWithMacros, pathToVidomist);
 
                     book = App.OpenBook(pathToVidomist);
-                    sheet = App.OpenWorksheet(book, group.Name);
+                    sheet = App.OpenWorksheet(book, 1);
+
+                    sheet.Cells.Delete();
+                    sheet.Name = group.Name;
                 }
                 else
                 {
@@ -1542,7 +1549,7 @@ namespace myKR.Coding
                             break;
                         case 4:
                         {
-                            sheet.Cells[8, c[0].ToString()].Value = "Залік";
+                            sheet.Cells[8, c[0].ToString()].Value = ConstantExcel.ZALIK;
                             char ch = c[1];
                             ch--;
                             sheet.Range[c[0].ToString() + 8, ch.ToString() + 8].Merge();
@@ -1660,7 +1667,7 @@ namespace myKR.Coding
                     return;
                 }
 
-                string pathToArhiveFile = PathsFile.PathsDto.PathToArhive + sheet.Name + ".xls";
+                string pathToArhiveFile = PathsFile.PathsDto.PathToArhive + sheet.Name + PathsFile.PathsDto.ExcelExtensial;
 
                 bool existSheet = false;
 
@@ -1802,7 +1809,7 @@ namespace myKR.Coding
 
             try
             {
-                string pathToArhive = PathsFile.PathsDto.PathToArhive + groupName + ".xls";
+                string pathToArhive = PathsFile.PathsDto.PathToArhive + groupName + PathsFile.PathsDto.ExcelExtensial;
                 if (!File.Exists(pathToArhive))
                 {
                     Log.Warn("Dont have vidomostey yspishnosti for group: " + groupName);
@@ -1922,7 +1929,7 @@ namespace myKR.Coding
 
             try
             {
-                string pathToAtestat = PathsFile.PathsDto.PathToAtestatFolder + groupName + ".xls";
+                string pathToAtestat = PathsFile.PathsDto.PathToAtestatFolder + groupName + PathsFile.PathsDto.ExcelExtensial;
                 string pathToTemplateWithMacros = PathsFile.PathsDto.PathToFileWithMacros;
                 string pathToTemplateWithSheet = PathsFile.PathsDto.PathToExcelDataForProgram;
 
@@ -2178,6 +2185,11 @@ namespace myKR.Coding
                 startColumn++;
             }
             Log.Info(LoggerConstants.EXIT);
+        }
+
+        public static void KillMainEecelApp()
+        {
+            App.CloseApp();
         }
     }
 }

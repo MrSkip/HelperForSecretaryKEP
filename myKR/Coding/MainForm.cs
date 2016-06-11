@@ -109,18 +109,6 @@ namespace myKR.Coding
 
         private void button3_Click(object sender, EventArgs e)
         {
-//            ExcelWork ex = new ExcelWork();
-//            OpenFileDialog openFile = new OpenFileDialog
-//            {
-//                Filter = "Excel *.xls|*.xls",
-//                Title = "Виберіть зведену відомість за поточне півріччя",
-//                FileName = "Зведена відомість успішності за"
-//            };
-//            if (openFile.ShowDialog() != DialogResult.OK) return;
-//            label4.Visible = true;
-//            label4.Text = "Занесення у архів зведеної відомості";
-//            ex.ArhiveZvedVid(openFile.FileName);
-//            label4.Visible = false;
         }
 
         private void button4_Click(object sender, EventArgs e)
@@ -143,26 +131,12 @@ namespace myKR.Coding
 
         private void button5_Click(object sender, EventArgs e)
         {
-//            ExcelFile.App.Quit();
-//            System.Diagnostics.Process[] excelProcs = System.Diagnostics.Process.GetProcessesByName("EXCEL");
-//            bool bl = true;
-//            foreach (System.Diagnostics.Process proc in excelProcs)
-//            {
-//                if (bl)
-//                    MessageBox.Show("Переконайтеся, що всі застосунки Excel закриті,\n не збережені дані будуть втрачені!", "Уважно!");
-//                proc.Kill();
-//                bl = false;
-//            }
+            Manager.CloseMainExcelApp();
             Environment.Exit(-1);
         }
 
         private void списокКураторівToolStripMenuItem_Click(object sender, EventArgs e)
         {
-//            String path = Environment.CurrentDirectory.Substring(0, Environment.CurrentDirectory.Length - 9)
-//                                 + @"Data\Куратори.xls";
-//
-//            Excel.Application xlApp = new Excel.Application {Visible = true};
-//            xlApp.Workbooks.Open(path);
         }
 
         private void button3_Click_1(object sender, EventArgs e)
@@ -194,6 +168,7 @@ namespace myKR.Coding
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
+            Manager.CloseMainExcelApp();
             ExcelApplication.ExcelApplication.Kill(ExcelApplication.ExcelApplication.App);
         }
         

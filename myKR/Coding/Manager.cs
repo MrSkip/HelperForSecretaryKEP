@@ -63,6 +63,12 @@ namespace myKR.Coding
                 ExcelFile.CreateAtestatForOneGroup(s);
             }
         }
+
+        public static void CloseMainExcelApp()
+        {
+            ExcelFile.KillMainEecelApp();
+        }
+
     }
 
 }
