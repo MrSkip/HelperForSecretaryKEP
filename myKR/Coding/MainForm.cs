@@ -13,6 +13,9 @@ namespace myKR.Coding
             InitializeComponent();
             label4.Visible = false;
             Visible = false;
+
+            comboBox2.SelectedIndex = 0;
+            comboBox4.SelectedIndex = 0;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -37,31 +40,34 @@ namespace myKR.Coding
                 comboBox1.Items.Add(group.Name);
             }
 
+            comboBox1.SelectedIndex = 0;
+
             comboBox1.Items.Add("Усі групи");
-            comboBox1.Text = comboBox1.Items[0].ToString();
             Visible = true;
         }
 
         private void ReloadSubject()
         {
             if (comboBox1.Items.Count == 0) return;
-            if (!comboBox2.Text.Equals("1") && !comboBox2.Text.Equals("2")) return;
+
+            if (comboBox1.SelectedItem.Equals(comboBox1.Items[comboBox1.Items.Count - 1]))
+            {
+                comboBox3.SelectedIndex = comboBox3.Items.Count - 1;
+                return;
+            }
 
             comboBox3.Items.Clear();
 
-            if (comboBox1.Text.Equals(comboBox1.Items[comboBox1.Items.Count - 1]))
-                return;
-
-            foreach (Subject subject in Manager.GetGroupByName(comboBox1.Text).Subjects)
+            foreach (Subject subject in Manager.GetGroupByName(comboBox1.SelectedItem.ToString()).Subjects)
             {
                 Semestr semestr =
-                    comboBox2.Text.Equals("1") ? subject.FirstSemestr : subject.SecondSemestr;
+                    comboBox2.SelectedItem.ToString().Equals("1") ? subject.FirstSemestr : subject.SecondSemestr;
                 if (semestr != null)
                     comboBox3.Items.Add(subject.Name);
             }
-
+            
             comboBox3.Items.Add("Усі предмети");
-            comboBox3.Text = comboBox3.Items[0].ToString();
+            comboBox3.SelectedIndex = 0;
         }
 
         private void comboBox1_TextChanged(object sender, EventArgs e)
@@ -76,34 +82,38 @@ namespace myKR.Coding
 
         private void button1_Click_1(object sender, EventArgs e)
         {
-            if(string.IsNullOrEmpty(comboBox1.Text))
+            if (comboBox1.Items.Count == 0)
                 return;
 
             label4.Visible = true;
-            label4.Text = comboBox1.Text.Equals("Усі групи") || comboBox3.Text.Equals("Усі предмети")
+            label4.Text = comboBox1.SelectedItem.ToString().Equals("Усі групи")
+                || comboBox3.SelectedItem.ToString().Equals("Усі предмети")
                 ? "Працюю, створення обліків успішності ..." : "Працюю, створення обліку успішності ...";
 
-            Manager.CreateOblicUspishnosti(comboBox1.Text.Equals("Усі групи") ? "" : comboBox1.Text,
-                comboBox3.Text.Equals("Усі предмети") ? "" : comboBox3.Text, Int32.Parse(comboBox2.Text));
+            Manager.CreateOblicUspishnosti(comboBox1.SelectedItem.ToString().Equals("Усі групи") 
+                    ? "" 
+                    : comboBox1.SelectedItem.ToString(),
+                comboBox3.SelectedItem.ToString().Equals("Усі предмети") 
+                    ? ""
+                    : comboBox3.SelectedItem.ToString(), Int32.Parse(comboBox2.SelectedItem.ToString()));
 
             label4.Visible = false;
-
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(comboBox1.Text) || string.IsNullOrEmpty(comboBox3.Text)) 
+            if (comboBox1.Items.Count == 0 || comboBox3.Items.Count == 0)
                 return;
 
             label4.Visible = true;
-            label4.Text = comboBox1.Text == "Усі групи"
+            label4.Text = comboBox1.SelectedItem.ToString() == "Усі групи"
                 ? "Працюю, створення зведених відомостей успішності ..."
                 : "Працюю, створення зведеної відомості успішності ...";
 
-            label4.Text = comboBox1.Text.Equals("Усі групи")
+            label4.Text = comboBox1.SelectedItem.ToString().Equals("Усі групи")
                 ? "Працюю, створення зведених відомостей ..." : "Працюю, створення зведеної відомості ...";
 
-            Manager.CreateVidomistUspishnosti(comboBox1.Text, Int32.Parse(comboBox2.Text), null);
+            Manager.CreateVidomistUspishnosti(comboBox1.SelectedItem.ToString(), Int32.Parse(comboBox2.SelectedItem.ToString()), null);
 
             label4.Visible = false;
         }
@@ -114,18 +124,18 @@ namespace myKR.Coding
 
         private void button4_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(comboBox1.Text) || string.IsNullOrEmpty(comboBox2.Text)
-                || string.IsNullOrEmpty(comboBox4.Text))
+            if (comboBox1.Items.Count == 0 || comboBox2.Items.Count == 0)
             {
-                MessageBox.Show("Заповніть поля 1, 2 і 4");
+                MessageBox.Show("Заповніть поля 1, 2");
                 return;
             }
 
             label4.Visible = true;
-            label4.Text = comboBox1.Text.Equals("Усі групи")
+            label4.Text = comboBox1.SelectedItem.ToString().Equals("Усі групи")
                 ? "Працюю, створення зведених відомостей за місяць" : "Працюю, створення зведеної відомості за місяць";
 
-            Manager.CreateVidomistUspishnosti(comboBox1.Text, Int32.Parse(comboBox2.Text), comboBox4.Text);
+            Manager.CreateVidomistUspishnosti(comboBox1.SelectedItem.ToString(), Int32.Parse(comboBox2.SelectedItem.ToString()),
+                comboBox4.SelectedItem.ToString());
 
             label4.Visible = false;
         }
@@ -142,11 +152,11 @@ namespace myKR.Coding
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(comboBox1.Text))
+            if (comboBox1.Items.Count == 0)
                 return;
 
             label4.Visible = true;
-            label4.Text = comboBox1.Text.Equals("Усі групи")
+            label4.Text = comboBox1.SelectedItem.ToString().Equals("Усі групи")
                 ? "Працюю, створення атесатів" : "Працюю, створення атесату";
 
             List<string> list = new List<string>();
@@ -159,7 +169,7 @@ namespace myKR.Coding
             }
             else
             {
-                list.Add(comboBox1.Text);
+                list.Add(comboBox1.SelectedItem.ToString());
             }
 
             Manager.CreateAtestat(list);
@@ -171,6 +181,11 @@ namespace myKR.Coding
         {
             Manager.CloseMainExcelApp();
             ExcelApplication.ExcelApplication.Kill(ExcelApplication.ExcelApplication.App);
+        }
+
+        private void SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ReloadSubject();
         }
         
     }
