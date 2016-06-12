@@ -31,7 +31,7 @@ namespace myKR.Coding.ExcelApplication
             {
                 App = new Excel.Application
                 {
-                    Visible = false,
+                    Visible = true,
                     DisplayAlerts = false
                 };
             }

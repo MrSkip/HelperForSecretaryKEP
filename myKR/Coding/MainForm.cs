@@ -45,6 +45,7 @@ namespace myKR.Coding
         private void ReloadSubject()
         {
             if (comboBox1.Items.Count == 0) return;
+            if (!comboBox2.Text.Equals("1") && !comboBox2.Text.Equals("2")) return;
 
             comboBox3.Items.Clear();
 

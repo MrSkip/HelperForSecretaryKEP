@@ -8,10 +8,15 @@ namespace myKR
 {
     class ConstantExcel
     {
-        public static string DYF_ZALIK = "диф залік";
-        public static string EXAMEN = "екзамен";
-        public static string ZALIK = "залік";
-        public static string PROTOKOL = "протокол";
-        public static string KURSOVYI_PROEKT = "курсовий проект";
+        public const string DyfZalik = "диф залік";
+        public const string Examen = "екзамен";
+        public const string Zalik = "залік";
+        public const string Protokol = "протокол";
+        public const string KursovyiProekt = "курсовий проект";
+
+        public const string Dz = "Д/З";
+        public const string Ispyt = "Іспит";
+        public const string Practice = "Практика";
+        public const string ZalicFirstSymbolIsUpperCase = "Залік";
     }
 }

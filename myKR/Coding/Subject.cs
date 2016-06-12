@@ -18,6 +18,7 @@ namespace myKR.Coding
         public List<StateExamination> StateExamination;
         public List<Student> Students;
     }
+
     public class Subject
     {
         public string Name;
@@ -27,7 +28,7 @@ namespace myKR.Coding
             FirstSemestr,
             SecondSemestr;
 
-        public List<Ocinka> Ocinka;
+        public List<Ocinka> Ocinka = new List<Ocinka>();
     }
 
     public class NewSubject
@@ -134,9 +135,15 @@ namespace myKR.Coding
         public string Group;
         public string FormaTeaching;
         public string Benefits = "";
+        public string PibChanged;
         public List<Ocinka> Ocinkas = new List<Ocinka>();
-    }
 
+        public string GetPib()
+        {
+            return string.IsNullOrWhiteSpace(PibChanged) ? Pib : PibChanged;
+        }
+    }
+    
     public class NumberOfOblic
     {
         public string Number;
@@ -146,7 +153,8 @@ namespace myKR.Coding
 
     public class Ocinka
     {
-        public string Name;
-        public string Number;
+        public string Mark;
+        public string SubjectName;
+        public string StudentName;
     }
 }

@@ -103,7 +103,6 @@
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(134, 21);
             this.comboBox2.TabIndex = 4;
-            this.comboBox2.Text = "1";
             this.comboBox2.TextChanged += new System.EventHandler(this.comboBox2_TextChanged);
             // 
             // comboBox3
@@ -173,7 +172,6 @@
             this.comboBox4.Name = "comboBox4";
             this.comboBox4.Size = new System.Drawing.Size(134, 21);
             this.comboBox4.TabIndex = 11;
-            this.comboBox4.Text = "Вересень";
             // 
             // label5
             // 
