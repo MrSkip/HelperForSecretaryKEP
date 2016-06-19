@@ -169,6 +169,7 @@
     </EmbeddedResource>
     <None Include="ClassDiagram1.cd" />
     <None Include="ClassDiagram2.cd" />
+    <None Include="ClassDiagram3.cd" />
     <None Include="Data\Empty book.xls" />
     <None Include="Data\Відомість обліку успішності %28Державний екзамен%29 - протокол.xls" />
     <None Include="Data\Відомість обліку успішності %28залік - диф. залік - екзамен%29.xls" />

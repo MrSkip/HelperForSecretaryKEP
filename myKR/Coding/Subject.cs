@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace myKR.Coding
 {
@@ -31,22 +32,23 @@ namespace myKR.Coding
         public List<Ocinka> Ocinka = new List<Ocinka>();
     }
 
-    public class NewSubject
+    public class SubjectForAtestat
     {
-        public string Name;
+        public string SubjectName;
         public string Teacher;
-        public List<NewSemestr> Semestrs = new List<NewSemestr>();
-        public List<string> GroupPrefixStatemets = new List<string>();
-        private List<string> _pidsumkovaOcinka;
+
+        public List<SemestrForAtestat> Semestrs = new List<SemestrForAtestat>();
+        public List<string> GroupPrefixForExam = new List<string>();
+        private List<string> _pidsumkovaOcinka = new List<string>();
 
         public List<string> GetPidsumkovaOcinka()
         {
             double countOfHour = 0;
             int indexOfLastExistSubject = -1;
 
-            foreach (NewSemestr newSemestr in Semestrs)
+            foreach (SemestrForAtestat newSemestr in Semestrs)
             {
-                if (newSemestr.Ocinkas.Count > 0 && !newSemestr.StateExamenExist)
+                if (newSemestr.Marks.Count > 0 && !newSemestr.StateExamenExist)
                 {
                     indexOfLastExistSubject = Semestrs.IndexOf(newSemestr);
                     countOfHour += newSemestr.CountOfHours;
@@ -56,46 +58,40 @@ namespace myKR.Coding
             if (!(countOfHour > 0)) return new List<string>();
             if (indexOfLastExistSubject < 0) return new List<string>();
 
-            _pidsumkovaOcinka = new List<string>();
-
-            for (int i = 0; i < Semestrs[indexOfLastExistSubject].Ocinkas.Count; i++)
+            for (int i = 0; i < Semestrs[indexOfLastExistSubject].Marks.Count; i++)
             {
                 double lastExpression = 0;
                 string someString = "";
 
-                foreach (NewSemestr newSemestr in Semestrs)
+                foreach (SemestrForAtestat newSemestr in Semestrs)
                 {
-                    if (newSemestr.Ocinkas.Count > 0 && !newSemestr.StateExamenExist)
+                    if (newSemestr.Marks.Count > 0 && !newSemestr.StateExamenExist)
                     {
                         double ocinka;
                         lastExpression += newSemestr.CountOfHours
-                            * (double.TryParse(newSemestr.Ocinkas[i], out ocinka) ? ocinka : 0);
-                        someString += double.TryParse(newSemestr.Ocinkas[i], out ocinka) ? "" : newSemestr.Ocinkas[i];
+                            * (double.TryParse(newSemestr.Marks[i], out ocinka) ? ocinka : 0);
+                        someString += double.TryParse(newSemestr.Marks[i], out ocinka) ? "" : newSemestr.Marks[i];
                     }
                 }
 
                 _pidsumkovaOcinka.Add(string.IsNullOrEmpty(someString.Trim()) ? Math.Round(lastExpression/countOfHour, 0) + "": someString);
-            }
+            }  
 
             return _pidsumkovaOcinka;
         }
+
         public bool GroupExist(string groupName)
         {
-            foreach (string groupPrefixStatemet in GroupPrefixStatemets)
-            {
-                if (groupPrefixStatemet.Equals(groupName.Substring(0, groupName.IndexOf("-", StringComparison.Ordinal))))
-                    return true;
-            }
-            return false;
+            return GroupPrefixForExam.Any(groupPrefixStatemet => groupPrefixStatemet.Equals(groupName.Split('-')[0]));
         }
     }
 
-    public class NewSemestr
+    public class SemestrForAtestat
     {
-        public int NumberOfSemestr;
+        public int Semestr;
         public double CountOfHours = 0;
         public bool StateExamenExist = false;
-        public List<string> Ocinkas = new List<string>();
+        public List<RecordStudmark> Marks = new List<RecordStudmark>();
     }
 
     public class Semestr
@@ -155,6 +151,12 @@ namespace myKR.Coding
     {
         public string Mark;
         public string SubjectName;
+        public string StudentName;
+    }
+
+    public class RecordStudmark
+    {
+        public string Mark;
         public string StudentName;
     }
 }
