@@ -18,5 +18,7 @@ namespace myKR
         public const string Ispyt = "Іспит";
         public const string Practice = "Практика";
         public const string ZalicFirstSymbolIsUpperCase = "Залік";
+
+        public const string SumMarkForAtestat = "Підсумкова оцінка";
     }
 }

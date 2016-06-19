@@ -2254,7 +2254,7 @@ namespace myKR.Coding
                 }
 
                 sheet.Cells.PasteSpecial(sheetTempPzvy.Cells.Copy());
-                InsertValuesIntoPzvy(sheet, groupName, subjects);
+                InsertValuesIntoPzvy(sheet, groupName, subjects, book);
             }
             catch (Exception e)
             {
@@ -2394,7 +2394,13 @@ namespace myKR.Coding
                         break;
                 }
 
-                sheet.Cells[12 + i, markPositionColumn.ToString()].Formula = "=ROUND(" + formula + ", 0)";
+                string cellValue = sheet.Cells[12 + i, (char)(markPositionColumn - (char)1) + ""].Value + "";
+                double tryPasre;
+
+                sheet.Cells[12 + i, markPositionColumn.ToString()].Value =
+                    double.TryParse(cellValue.Trim(), out tryPasre)
+                        ? "=ROUND(" + formula + ", 0)"
+                        : cellValue;
             }
 
             // insert stateExamen
@@ -2453,7 +2459,52 @@ namespace myKR.Coding
             return markWithStudName == null;
         }
 
-        private static void InsertValuesIntoPzvy(Worksheet sheet, string groupName, List<SubjectForAtestat> subjects)
+        public static Dictionary<string, List<string>> GetMarksForSubjectList(List<Student> students, 
+            Workbook book, List<SubjectForAtestat> subjects)
+        {
+            Dictionary<string, List<string>> marks = new Dictionary<string, List<string>>();
+
+            if (subjects.Count == 0)
+                return marks;
+
+            const int markRowPosition = 12;
+            const int nameRowPosition = 11;
+
+            foreach (SubjectForAtestat subject in subjects)
+            {
+                string sheetName = CreateSheetName(subject.SubjectName.Trim());
+                Worksheet sheet = App.OpenWorksheet(book, sheetName);
+                marks.Add(sheetName, new List<string>());
+
+                if (sheet == null)
+                    continue;
+
+                int nameColumnPosition = 3;
+
+                for (int i = 0; i < 6; i++)
+                {
+                    string cellValue = sheet.Cells[nameRowPosition, ++nameColumnPosition].Value + "";
+
+                    if (string.IsNullOrWhiteSpace(cellValue))
+                        continue;
+
+                    if (cellValue.Trim().Equals(ConstantExcel.SumMarkForAtestat))
+                        break;
+                }
+
+                if (nameColumnPosition == 3) continue;
+
+                for (var i = 0; i < students.Count; i++)
+                {
+                    string cellValue = sheet.Cells[markRowPosition + i, nameColumnPosition].Value + "";
+                    marks[sheetName].Add(cellValue);
+                }
+            }
+
+            return marks;
+        }
+
+        private static void InsertValuesIntoPzvy(Worksheet sheet, string groupName, List<SubjectForAtestat> subjects, Workbook book)
         {
             Log.Info(LoggerConstants.ENTER);
             var group = GetGroupByName(groupName);
@@ -2512,44 +2563,110 @@ namespace myKR.Coding
                 }
             }
 
+            Dictionary<string, List<string>> marks = GetMarksForSubjectList(group.Students, book, subjects);
+
+            if (marks.Count == 0)
+            {
+                Log.Info(LoggerConstants.EXIT);
+                return;
+            }
+
             foreach (var subject in subjects)
             {
                 sheet.Cells[11, startColumn].Value = subject.SubjectName;
 
+                List<string> curMarks = marks[subject.SubjectName];
+
+                if (curMarks == null || curMarks.Count == 0)
+                {
+                    startColumn++;
+                    continue;
+                }
+
                 byte startRowForOcinka = 12;
 
-                SubjectForAtestat atestat = null;
-
-                try
+                foreach (string mark in curMarks)
                 {
-                    atestat = new SubjectForAtestat();
-                    atestat.Semestrs.Add(new SemestrForAtestat());
-                    atestat.Semestrs[0].Marks.AddRange(subject.GetPidsumkovaOcinka());
-                }
-                catch (Exception e)
-                {
-                    MessageBox.Show(e + "");
-                }
-
-                for (int i = 0; i < group.Students.Count; i++)
-                {
-                    var studentName = sheet.Cells[startRowForOcinka++, "C"].Value + "";
-
-                    if (string.IsNullOrWhiteSpace(studentName))
-                        break;
-
-                    RecordStudmark markWithStudName;
-
-                    if (GetMarkByStudentName(atestat, 0, studentName, @group, out markWithStudName))
-                        continue;
-
-                    sheet.Cells[startRowForOcinka, startColumn].Value = markWithStudName.Mark;
+                    sheet.Cells[startRowForOcinka++, startColumn].Value = mark;
                 }
 
                 startColumn++;
             }
 
+            if (startColumn < 31)
+                sheet.Range[sheet.Cells[1, startColumn], "AD" + 74].Delete();
+
             Log.Info(LoggerConstants.EXIT);
+        }
+
+        public static List<Record> GetPidsumkovaOcinka(List<SemestrForAtestat> semestrs, Group group)
+        {
+            CalculationsDto sum = new CalculationsDto();
+
+            List<SemestrForAtestat> list =
+                semestrs.Where(newSemestr => newSemestr.Marks.Count > 0 && !newSemestr.StateExamenExist).ToList();
+
+            foreach (SemestrForAtestat atestat in list)
+                sum.CountOfHour += atestat.CountOfHours;
+
+            if (sum.CountOfHour <= 0)
+                return new List<Record>();
+
+            foreach (Student student in @group.Students)
+            {
+                sum.Studmarks.Add(new Record
+                {
+                    StudentName = student.Pib,
+                    StudentNameChanged = student.PibChanged
+                });
+            }
+
+            foreach (SemestrForAtestat semestr in list)
+            {
+                foreach (RecordStudmark studMark in semestr.Marks)
+                {
+                    Record studentExist = sum.Studmarks.Find(record => ComparePibs(record.StudentName, studMark.StudentName)) ??
+                                          sum.Studmarks.Find(record => ComparePibs(record.StudentNameChanged, studMark.StudentName));
+
+                    if (studentExist == null)
+                        continue;
+
+                    double mark;
+                    mark = double.TryParse(studMark.Mark.Trim(), out mark) ? mark : 0;
+
+                    if (mark <= 0)
+                    {
+                        studentExist.IfMarkCanParse = false;
+                        studentExist.Mark = studMark.Mark;
+                        continue;
+                    }
+
+                    if (studentExist.IfMarkCanParse)
+                        continue;
+
+                    studentExist.IfMarkCanParse = true;
+
+                    if (string.IsNullOrWhiteSpace(studentExist.Mark))
+                        studentExist.Mark = semestr.CountOfHours*mark + "";
+                    else
+                    {
+                        double mark2;
+                        mark2 = double.TryParse(studMark.Mark.Trim(), out mark2) ? mark2 : 0;
+
+                        studentExist.Mark = mark2 <= 0 ? mark2 + "" : mark2 + semestr.CountOfHours*mark + "";
+                    }
+                }
+            }
+
+            foreach (Record studmark in sum.Studmarks)
+            {
+                if (studmark.IfMarkCanParse)
+                {
+                    studmark.Mark = Math.Round(double.Parse(studmark.Mark) / sum.CountOfHour, 0) + "";
+                }
+            }
+
+            return sum.Studmarks;
         }
 
         public static void KillMainEecelApp()

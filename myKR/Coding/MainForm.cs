@@ -157,7 +157,7 @@ namespace myKR.Coding
 
             label4.Visible = true;
             label4.Text = comboBox1.SelectedItem.ToString().Equals("Усі групи")
-                ? "Працюю, створення атесатів" : "Працюю, створення атесату";
+                ? "Працюю, створення атестатів" : "Працюю, створення атестату";
 
             List<string> list = new List<string>();
             if (comboBox1.Text.Equals("Усі групи"))
