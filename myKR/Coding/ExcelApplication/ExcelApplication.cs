@@ -14,13 +14,13 @@ namespace myKR.Coding.ExcelApplication
         private static readonly log4net.ILog Log =
             log4net.LogManager.GetLogger("Form1.cs");
 
-        private static ExcelApplication ExcelApp;
+        private static ExcelApplication _excelApp;
         public Object LastUsedObject;
        
         public static ExcelApplication CreateExcelApplication()
         {
             Log.Info("Create Excel Application");
-            return ExcelApp ?? (ExcelApp = new ExcelApplication());
+            return _excelApp ?? (_excelApp = new ExcelApplication());
         }
 
         public static Excel.Application App;
@@ -31,7 +31,7 @@ namespace myKR.Coding.ExcelApplication
             {
                 App = new Excel.Application
                 {
-                    Visible = false,
+                    Visible = true,
                     DisplayAlerts = false
                 };
             }

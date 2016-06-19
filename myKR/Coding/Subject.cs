@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -39,42 +40,46 @@ namespace myKR.Coding
 
         public List<SemestrForAtestat> Semestrs = new List<SemestrForAtestat>();
         public List<string> GroupPrefixForExam = new List<string>();
-        private List<string> _pidsumkovaOcinka = new List<string>();
+        private List<RecordStudmark> _pidsumkovaOcinka = new List<RecordStudmark>();
 
-        public List<string> GetPidsumkovaOcinka()
+        public List<RecordStudmark> GetPidsumkovaOcinka()
         {
             double countOfHour = 0;
             int indexOfLastExistSubject = -1;
 
-            foreach (SemestrForAtestat newSemestr in Semestrs)
+            foreach (SemestrForAtestat newSemestr in Semestrs.Where(newSemestr =>
+                newSemestr.Marks.Count > 0 && !newSemestr.StateExamenExist))
             {
-                if (newSemestr.Marks.Count > 0 && !newSemestr.StateExamenExist)
-                {
-                    indexOfLastExistSubject = Semestrs.IndexOf(newSemestr);
-                    countOfHour += newSemestr.CountOfHours;
-                }
+                indexOfLastExistSubject = Semestrs.IndexOf(newSemestr);
+                countOfHour += newSemestr.CountOfHours;
             }
 
-            if (!(countOfHour > 0)) return new List<string>();
-            if (indexOfLastExistSubject < 0) return new List<string>();
+            if (!(countOfHour > 0) || indexOfLastExistSubject < 0)
+                return new List<RecordStudmark>();
 
             for (int i = 0; i < Semestrs[indexOfLastExistSubject].Marks.Count; i++)
             {
                 double lastExpression = 0;
                 string someString = "";
+                string studName = "";
 
-                foreach (SemestrForAtestat newSemestr in Semestrs)
+                foreach (SemestrForAtestat newSemestr in Semestrs.Where(newSemestr => 
+                    newSemestr.Marks.Count > 0 && !newSemestr.StateExamenExist))
                 {
-                    if (newSemestr.Marks.Count > 0 && !newSemestr.StateExamenExist)
-                    {
-                        double ocinka;
-                        lastExpression += newSemestr.CountOfHours
-                            * (double.TryParse(newSemestr.Marks[i], out ocinka) ? ocinka : 0);
-                        someString += double.TryParse(newSemestr.Marks[i], out ocinka) ? "" : newSemestr.Marks[i];
-                    }
+                    double ocinka;
+                    lastExpression += newSemestr.CountOfHours
+                                      * (double.TryParse(newSemestr.Marks[i].Mark, out ocinka) ? ocinka : 0);
+                    someString += double.TryParse(newSemestr.Marks[i].Mark, out ocinka) ? "" : newSemestr.Marks[i].Mark;
+                    studName = newSemestr.Marks[i].StudentName;
                 }
 
-                _pidsumkovaOcinka.Add(string.IsNullOrEmpty(someString.Trim()) ? Math.Round(lastExpression/countOfHour, 0) + "": someString);
+                _pidsumkovaOcinka.Add(new RecordStudmark
+                {
+                    Mark = string.IsNullOrEmpty(someString.Trim())
+                    ? Math.Round(lastExpression / countOfHour, 0) + ""
+                    : someString,
+                    StudentName = studName
+                });
             }  
 
             return _pidsumkovaOcinka;
@@ -86,12 +91,16 @@ namespace myKR.Coding
         }
     }
 
-    public class SemestrForAtestat
+    public class SemestrForAtestat : IEnumerable
     {
         public int Semestr;
         public double CountOfHours = 0;
         public bool StateExamenExist = false;
         public List<RecordStudmark> Marks = new List<RecordStudmark>();
+        public IEnumerator GetEnumerator()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class Semestr

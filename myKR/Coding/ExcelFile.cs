@@ -2225,17 +2225,17 @@ namespace myKR.Coding
                         if (exist)
                         {
                             sheet.Name = sheetName;
+                            exist = false;
                         }
                         else
                         {
                             sheet = book.Worksheets.Add(Type.Missing);
                             sheet.Name = sheetName;
-                            exist = true;
                         }
                     }
 
                     sheet.Cells.PasteSpecial(sheetTempPvy.Cells.Copy());
-                    CreatePivyForOneSubject(sheet, groupName, newSubject);
+                    CreatePvyForOneSubject(sheet, groupName, newSubject);
                 }
 
                 // create Pidsumkova Zvedena Vidomist Uspishnosti
@@ -2273,7 +2273,27 @@ namespace myKR.Coding
             return Manager.Groups.FirstOrDefault(@group => @group.Name.Equals(groupName));
         }
 
-        private static void CreatePivyForOneSubject(Worksheet sheet, string groupName, SubjectForAtestat subjectForAtestat)
+        private static bool ComparePibs(string pib1, string pib2)
+        {
+            if (string.IsNullOrWhiteSpace(pib1) || string.IsNullOrWhiteSpace(pib2))
+                return false;
+
+            pib1 = pib1.Trim().Replace(".", " ").Replace("  ", " ").Trim();
+            pib2 = pib2.Trim().Replace(".", " ").Replace("  ", " ").Trim();
+
+            if (pib2.Split(' ').Length != 3 || pib1.Split(' ').Length != 3)
+                return false;
+
+            string[] s1 = pib1.Split(' ');
+            string[] s2 = pib2.Split(' ');
+
+            string name1 = s1[0] + s1[1][0] + s1[2][0];
+            string name2 = s2[0] + s2[1][0] + s2[2][0];
+
+            return name2.Equals(name1);
+        }
+
+        private static void CreatePvyForOneSubject(Worksheet sheet, string groupName, SubjectForAtestat subjectForAtestat)
         {
             Log.Info(LoggerConstants.ENTER);
             var group = GetGroupByName(groupName);
@@ -2287,24 +2307,24 @@ namespace myKR.Coding
             byte countOfStudent = 0;
 
             sheet.Cells[6, "B"].Value = "з дисципліни " + subjectForAtestat.SubjectName;
-            var groupSpexific = groupName;
+            var groupSpexific = "Група " + groupName;
 
-            if (groupName.Split('-').Length == 2)
-                groupSpexific += " (" + groupName.Split('-')[1] + ")";
+            if (groupName.Split('-').Length == 3)
+                groupSpexific += "(" + groupName.Split('-')[1] + ")";
 
-            sheet.Cells[7, "B"].Value = "Група " + groupSpexific;
+            sheet.Cells[7, "B"].Value = groupSpexific;
             sheet.Cells[8, "B"].Value = "Спеціальність: \"" + group.Speciality + "\"";
             sheet.Cells[9, "B"].Value = "Викладач " + subjectForAtestat.Teacher;
 
             foreach (var student in @group.Students)
             {
-                sheet.Cells[12 + countOfStudent, "C"].Value = student.Pib;
+                sheet.Cells[12 + countOfStudent, "C"].Value = student.GetPib();
                 countOfStudent++;
             }
 
             subjectForAtestat.Semestrs = subjectForAtestat.Semestrs.OrderBy(semestr => semestr.Semestr).ToList();
 
-            var markPosition = 'D';
+            var markPositionColumn = 'D';
             byte countOfSemestrWithoutStateExame = 0;
             var columnOfStateExame = -1;
 
@@ -2318,47 +2338,41 @@ namespace myKR.Coding
 
                 countOfSemestrWithoutStateExame++;
 
-                sheet.Cells[10, markPosition.ToString()].Value = subjectForAtestat.Semestrs[i].CountOfHours;
-                sheet.Cells[11, markPosition.ToString()].Value = ArabToRome(subjectForAtestat.Semestrs[i].Semestr) +
+                sheet.Cells[10, markPositionColumn.ToString()].Value = subjectForAtestat.Semestrs[i].CountOfHours;
+                sheet.Cells[11, markPositionColumn.ToString()].Value = ArabToRome(subjectForAtestat.Semestrs[i].Semestr) +
                                                                 " семестр Оцінка в балах";
 
                 byte markPositionRow = 12;
 
                 for (byte i2 = 1; i2 <= countOfStudent; i2++)
                 {
-                    var studentName = sheet.Cells[markPositionRow, "C"].Value + "";
+                    var studentName = sheet.Cells[markPositionRow + i2 - 1, "C"].Value + "";
 
                     if (string.IsNullOrWhiteSpace(studentName))
                         continue;
 
-                    RecordStudmark markWithStudName = subjectForAtestat.Semestrs[i].Marks.Find(studmark =>
-                        studmark.StudentName.Trim().Equals(studentName.Trim()));
+                    RecordStudmark markWithStudName;
 
-                    if (markWithStudName == null)
-                    {
-                        Student student = @group.Students.Find(student1 =>
-                            student1.Pib.Equals(studentName.Trim()) || student1.PibChanged.Equals(studentName.Trim()));
+                    if (GetMarkByStudentName(subjectForAtestat, i, studentName, @group, out markWithStudName))
+                        continue;
 
-                        markWithStudName = subjectForAtestat.Semestrs[i].Marks.Find(studmark =>
-                        studmark.StudentName.Trim().Equals(student.Pib)
-                        || studmark.StudentName.Trim().Equals(student.PibChanged));
-
-                        if (markWithStudName == null)
-                            continue;
-                    }
-
-                    sheet.Cells[markPositionRow, markPosition.ToString()].Value = markWithStudName.Mark;
+                    sheet.Cells[markPositionRow + i2 - 1, markPositionColumn.ToString()].Value = markWithStudName.Mark;
                 }
 
-                markPosition++;
+                markPositionColumn++;
             }
 
-            if (countOfSemestrWithoutStateExame == 0) return;
-            var average = markPosition;
+            if (countOfSemestrWithoutStateExame == 0)
+            {
+                Log.Info(LoggerConstants.EXIT);
+                return;
+            }
+
+            var average = markPositionColumn;
             average--;
 
-            sheet.Cells[10, markPosition.ToString()].Formula = "=SUM(D10:" + average + 10 + ")";
-            sheet.Cells[11, markPosition.ToString()].Value = "Підсумкова оцінка";
+            sheet.Cells[10, markPositionColumn.ToString()].Formula = "=SUM(D10:" + average + 10 + ")";
+            sheet.Cells[11, markPositionColumn.ToString()].Value = "Підсумкова оцінка";
 
             for (var i = 0; i < countOfStudent; i++)
             {
@@ -2366,33 +2380,43 @@ namespace myKR.Coding
                 switch (countOfSemestrWithoutStateExame)
                 {
                     case 1:
-                        formula = "(D10*D" + (i + 12) + ")/" + markPosition + "10";
+                        formula = "(D10*D" + (i + 12) + ")/" + markPositionColumn + "10";
                         break;
                     case 2:
-                        formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + ")/" + markPosition + "10";
+                        formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + ")/" + markPositionColumn + "10";
                         break;
                     case 3:
-                        formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + "+F10*F" + (i + 12) + ")/" + markPosition + "10";
+                        formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + "+F10*F" + (i + 12) + ")/" + markPositionColumn + "10";
                         break;
                     case 4:
                         formula = "(D10*D" + (i + 12) + "+E10*E" + (i + 12) + "+F10*F" + (i + 12) + "+G10*G" + (i + 12) +
-                                  ")/" + markPosition + "10";
+                                  ")/" + markPositionColumn + "10";
                         break;
                 }
 
-                sheet.Cells[12 + i, markPosition.ToString()].Formula = "=ROUND(" + formula + ", 0)";
+                sheet.Cells[12 + i, markPositionColumn.ToString()].Formula = "=ROUND(" + formula + ", 0)";
             }
 
             // insert stateExamen
             if (columnOfStateExame >= 0)
             {
-                markPosition++;
-                sheet.Cells[11, markPosition.ToString()].Value = "Державна підсумкова атестація";
+                markPositionColumn++;
+                sheet.Cells[11, markPositionColumn.ToString()].Value = "Державна підсумкова атестація";
 
                 for (byte i = 0; i < subjectForAtestat.Semestrs[columnOfStateExame].Marks.Count; i++)
                 {
-                    sheet.Cells[12 + i, markPosition.ToString()].Value =
-                        subjectForAtestat.Semestrs[columnOfStateExame].Marks[i];
+                    var studentName = sheet.Cells[12 + i, "C"].Value + "";
+
+                    if (string.IsNullOrWhiteSpace(studentName))
+                        break;
+
+
+                    RecordStudmark markWithStudName;
+
+                    if (GetMarkByStudentName(subjectForAtestat, columnOfStateExame, studentName, @group, out markWithStudName))
+                        continue;
+
+                    sheet.Cells[12 + i, markPositionColumn.ToString()].Value = markWithStudName.Mark;
                 }
             }
 
@@ -2400,25 +2424,52 @@ namespace myKR.Coding
             if (countOfStudent < 30)
                 sheet.Range["A" + (12 + countOfStudent), "IV41"].Delete();
 
-            markPosition++;
-            if (markPosition < 'J')
-                sheet.Range[markPosition.ToString() + 1, "I65536"].Delete();
+            markPositionColumn++;
+
+            if (markPositionColumn < 'J')
+                sheet.Range[markPositionColumn.ToString() + 1, "I65536"].Delete();
+
             Log.Info(LoggerConstants.EXIT);
         }
 
-        private static void InsertValuesIntoPzvy(Worksheet sheet, string groupName, List<SubjectForAtestat> newSubject)
+        private static bool GetMarkByStudentName(SubjectForAtestat subjectForAtestat, int semestr, string studentName, Group @group,
+            out RecordStudmark markWithStudName)
+        {
+            markWithStudName = subjectForAtestat.Semestrs[semestr].Marks.Find(studmark =>
+                ComparePibs(studentName, studmark.StudentName));
+
+            if (markWithStudName != null) return false;
+
+            Student student = @group.Students.Find(student1 =>
+                    ComparePibs(student1.Pib, studentName) || ComparePibs(student1.PibChanged, studentName));
+
+            if (student == null)
+                return true;
+
+            markWithStudName = subjectForAtestat.Semestrs[semestr].Marks.Find(studmark =>
+                ComparePibs(studmark.StudentName, student.Pib)
+                || ComparePibs(studmark.StudentName, student.PibChanged));
+
+            return markWithStudName == null;
+        }
+
+        private static void InsertValuesIntoPzvy(Worksheet sheet, string groupName, List<SubjectForAtestat> subjects)
         {
             Log.Info(LoggerConstants.ENTER);
             var group = GetGroupByName(groupName);
+
             if (group == null)
             {
                 Log.Info(LoggerConstants.EXIT);
                 return;
             }
 
-            sheet.Cells[7, "B"].Value = "Група " + groupName + " (" + groupName
-                .Substring(groupName.IndexOf("-", StringComparison.Ordinal) + 1,
-                    groupName.IndexOf("-", StringComparison.Ordinal)) + ")";
+            var groupSpexific = "Група " + groupName;
+
+            if (groupName.Split('-').Length == 2)
+                groupSpexific += " (" + groupName.Split('-')[1] + ")";
+
+            sheet.Cells[7, "B"].Value = groupSpexific;
             sheet.Cells[8, "B"].Value = "Спеціальність: \"" + group.Speciality + "\"";
 
             byte startRow = 12;
@@ -2426,45 +2477,78 @@ namespace myKR.Coding
 
             foreach (var student in @group.Students)
             {
-                sheet.Cells[startRow, "C"].Value = student.Pib;
+                sheet.Cells[startRow, "C"].Value = student.GetPib();
                 startRow++;
             }
 
             if (startRow < 41)
                 sheet.Range[sheet.Cells[startRow, "A"], "IV41"].Delete();
 
-            foreach (var subject in newSubject)
+            foreach (var subject in subjects)
             {
                 if (subject.GroupExist(groupName))
                     sheet.Cells[11, startColumn++].Value = subject.SubjectName + "\n" + "ДА";
 
-                foreach (var newSemestr in subject.Semestrs)
+                SemestrForAtestat subjectForAtestat = subject.Semestrs.Find(atestat1 => atestat1.StateExamenExist);
+
+                if (subjectForAtestat == null)
+                    continue;
+
+                for (int i = 0; i < group.Students.Count; i++)
                 {
-                    if (newSemestr.StateExamenExist)
-                    {
-                        byte startRowForOcinka = 12;
-                        foreach (var ocinka in newSemestr.Marks)
-                        {
-                            sheet.Cells[startRowForOcinka, startColumn - 1].Value = ocinka;
-                            startRowForOcinka++;
-                        }
+                    var studentName = sheet.Cells[12 + i, "C"].Value + "";
+
+                    if (string.IsNullOrWhiteSpace(studentName))
                         break;
-                    }
+
+                    RecordStudmark markWithStudName;
+
+                    int nSemestr = subject.Semestrs.IndexOf(subjectForAtestat);
+
+                    if (GetMarkByStudentName(subject, nSemestr, studentName, @group, out markWithStudName))
+                        continue;
+
+                    sheet.Cells[12 + i, startColumn - 1].Value = markWithStudName.Mark;
                 }
             }
 
-            foreach (var subject in newSubject)
+            foreach (var subject in subjects)
             {
                 sheet.Cells[11, startColumn].Value = subject.SubjectName;
 
                 byte startRowForOcinka = 12;
-                foreach (var s in subject.GetPidsumkovaOcinka())
+
+                SubjectForAtestat atestat = null;
+
+                try
                 {
-                    sheet.Cells[startRowForOcinka, startColumn].Value = s;
-                    startRowForOcinka++;
+                    atestat = new SubjectForAtestat();
+                    atestat.Semestrs.Add(new SemestrForAtestat());
+                    atestat.Semestrs[0].Marks.AddRange(subject.GetPidsumkovaOcinka());
                 }
+                catch (Exception e)
+                {
+                    MessageBox.Show(e + "");
+                }
+
+                for (int i = 0; i < group.Students.Count; i++)
+                {
+                    var studentName = sheet.Cells[startRowForOcinka++, "C"].Value + "";
+
+                    if (string.IsNullOrWhiteSpace(studentName))
+                        break;
+
+                    RecordStudmark markWithStudName;
+
+                    if (GetMarkByStudentName(atestat, 0, studentName, @group, out markWithStudName))
+                        continue;
+
+                    sheet.Cells[startRowForOcinka, startColumn].Value = markWithStudName.Mark;
+                }
+
                 startColumn++;
             }
+
             Log.Info(LoggerConstants.EXIT);
         }
 
